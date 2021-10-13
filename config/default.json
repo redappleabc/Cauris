@@ -1,0 +1,5 @@
+{
+  "mongoDB": "mongodb://localhost/servichain",
+  "secret": "DEV SECRET MUST BE REPLACED IN PROD",
+  "defaultExpiresIn": 604800
+}

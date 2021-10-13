@@ -1,0 +1,17 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+      "module": "commonjs",
+      "rootDir": "./src",
+      "moduleResolution": "node",
+      "target": "es6",
+      "composite": true,
+      "sourceMap": true,
+      "declaration": true,
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "typeRoots": [
+          "node_modules/@types"
+      ]
+  }
+}
