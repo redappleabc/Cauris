@@ -39,7 +39,8 @@ class JwtHelper {
             },
             async (err: Error, req: Request, res: Response, next: NextFunction) => {
                 if (err) {
-                    throw new ErrorResponse(err['status'], err['message'])
+                    const handler = new ErrorResponse(400, err)
+                    return handler.handleResponse(res)
                 }
                 next()
             }

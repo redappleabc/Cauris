@@ -5,6 +5,8 @@ import Controller from '../../helpers/Controller'
 import UserService from './user.service'
 import { Request, Response } from 'express'
 import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
+import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
+
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 
@@ -15,15 +17,18 @@ class UserController extends Controller {
   }
 
   public async authenticate(req: Request, res: Response) {
-    const {email, password} = req.body
-    const ipAddress: string = req.ip;
-    (this.service as UserService).authenticate({email, password, ipAddress})
-    .then((responseHandler: ValidResponse) => {
-      const refreshToken = responseHandler.getBody()
+    try {
+      const {email, password} = req.body
+      const ipAddress: string = req.ip;
+      const handler: ValidResponse = await (this.service as UserService).authenticate({email, password, ipAddress})
+      const refreshToken = handler.getBody()
       this.setTokenCookie(res, refreshToken)
-      delete responseHandler.message.refreshToken
-      responseHandler.handleResponse(res)
-    })
+      delete handler.message.refreshToken
+      handler.handleResponse(res)
+    } catch (err) {
+      const handler = new ErrorResponse(err.code, err.message)
+      handler.handleResponse(res)
+    }
   }
 
   protected setTokenCookie(res: Response, token: any) {

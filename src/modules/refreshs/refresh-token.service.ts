@@ -16,7 +16,7 @@ class RefreshService extends Service {
     this.generate = this.generate.bind(this)
   }
 
-  public async refresh(token, ipAddress: String) {
+  public async refresh(token: any, ipAddress: string) {
     try {
       const refreshToken = await this.model.findOne(token.id)
       const { user } = refreshToken
@@ -33,7 +33,7 @@ class RefreshService extends Service {
     }
   }
 
-  public async generate(id: String, ipAddress: String) {
+  public async generate(id: string, ipAddress: string) {
     try {
       const refreshToken: any = {
         user: id,

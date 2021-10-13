@@ -12,19 +12,15 @@ class WalletService extends Service {
     this.generate = this.generate.bind(this)
   }
 
-  public async generate(userId: String, network: string, userMnemonic: string = null) {
-    try {
-      console.log("got there")
-      const wallet: HDWallet = new EthereumWallet(userMnemonic)
-      const {mnemonic, seed} = wallet.getWallet()
-      return super.insert({
-        user: userId,
-        mnemonic,
-        seed
-      })
-    } catch(err) {
-      return new ErrorResponse(500, err)
-    }
+  public async generate(userId: string, network: string, userMnemonic: string = null) {
+    console.log("got there")
+    const wallet: HDWallet = new EthereumWallet(userMnemonic)
+    const {mnemonic, seed} = wallet.getWallet()
+    return super.insert({
+      user: userId,
+      mnemonic,
+      seed
+    })
   }
 }
 

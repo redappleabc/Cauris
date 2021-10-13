@@ -12,20 +12,17 @@ class AccountService extends Service {
   }
 
   public async generate(userId: string, coinIndex: number, accountIndex: number = 0, change: number = 0, addressIndex: number = 0) {
-    try {
-      const userWallet = await db.Wallet.findOne({user: userId})
-      const coin = await db.Coin.findOne({coinIndex})
-      const wallet: HDWallet = new EthereumWallet(userWallet.mnemonic)
-      const newAccount = wallet.generateKeyPair(coinIndex, accountIndex, change, addressIndex)
-      return super.insert({
-        wallet: userWallet,
-        coin,
-        accountIndex,
-        change,
-        addressIndex, ...newAccount})
-    } catch (err) {
-      return new ErrorResponse(500, err)
-    }
+    const userWallet = await db.Wallet.findOne({user: userId})
+    const coin = await db.Coin.findOne({coinIndex})
+    const wallet: HDWallet = new EthereumWallet(userWallet.mnemonic)
+    const newAccount = wallet.generateKeyPair(coinIndex, accountIndex, change, addressIndex)
+    return super.insert({
+      wallet: userWallet,
+      coin,
+      accountIndex,
+      change,
+      addressIndex, ...newAccount
+    })
   }
 
   //getAllCoins

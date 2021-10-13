@@ -22,18 +22,14 @@ export class EthersRPCHelper implements IRPC {
   }
 
   public async sendTransaction(to: string, value: number, contractAddress = null) {
-    try {
-      const signer = this.provider.getSigner()
-      var tx: any
-      if (contractAddress) {
-        var contract = new ethers.Contract(contractAddress, abi, signer)
-        tx = await contract.transfer(to, value)
-      } else {
-        tx = await signer.sendTransaction({to, value})
-      }
-      return tx.hash
-    } catch(err) {
-      throw err
+    const signer = this.provider.getSigner()
+    var tx: any
+    if (contractAddress) {
+      var contract = new ethers.Contract(contractAddress, abi, signer)
+      tx = await contract.transfer(to, value)
+    } else {
+      tx = await signer.sendTransaction({to, value})
     }
+    return tx.hash
   }
 }

@@ -29,7 +29,7 @@ export default class Service implements IService {
       try {
         query._id = new mongoose.mongo.ObjectId(query._id)
       } catch (error) {
-        throw new ErrorResponse(400, "Invalid query ID")
+        return new ErrorResponse(400, "Invalid query ID")
       }
     }
 
@@ -42,7 +42,7 @@ export default class Service implements IService {
         total
       })
     } catch (error) {
-      throw new ErrorResponse(500, error)
+      return new ErrorResponse(500, error)
     }
   }
 
@@ -52,7 +52,7 @@ export default class Service implements IService {
       if (item)
         return new ValidResponse(200, item)
     } catch (error) {
-      throw new ErrorResponse(500, error)
+      return new ErrorResponse(500, error)
     }
   }
 
@@ -62,7 +62,7 @@ export default class Service implements IService {
       if (item)
         return new ValidResponse(200, item)
     } catch (error) {
-      throw new ErrorResponse(500, error)
+      return new ErrorResponse(500, error)
     }
   }
 
@@ -70,11 +70,11 @@ export default class Service implements IService {
     try {
       let item = await this.model.findByIdAndUpdate(id, data, {new: true})
       if (!item) {
-        throw new ErrorResponse(404, "Item not found.")
+        return new ErrorResponse(404, "Item not found.")
       }
       return new ValidResponse(202, item)
     } catch (error) {
-      throw new ErrorResponse(500, error)
+      return new ErrorResponse(500, error)
     }
   }
 
@@ -82,11 +82,11 @@ export default class Service implements IService {
     try {
       let item = await this.model.findByIdAndDelete(id)
       if (!item) {
-        throw new ErrorResponse(404, "Item not found.")
+        return new ErrorResponse(404, "Item not found.")
       }
       return new ValidResponse(202, item)
     } catch (error) {
-      throw new ErrorResponse(500, error)
+      return new ErrorResponse(500, error)
     }
   }
 }

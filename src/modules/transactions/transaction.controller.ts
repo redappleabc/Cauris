@@ -3,6 +3,8 @@ import Service from '../../helpers/Service'
 import TransactionService from './transaction.service'
 import { Request, Response } from 'express'
 import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
+import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
+import { IResponseHandler } from '../../interfaces/IResponseHandler'
 
 class TransactionController extends Controller {
   constructor(service: Service) {
@@ -10,12 +12,15 @@ class TransactionController extends Controller {
     this.send = this.send.bind(this)
   }
 
-  send(req: Request, res: Response) {
-    let {coinId, networkId, from, to, value} = req.body;
-    (this.service as TransactionService).send(req.user['id'], coinId, networkId, from, to, value)
-    .then((responseHandler: ValidResponse) => {
-      responseHandler.handleResponse(res)
-    })
+  public async send(req: Request, res: Response) {
+    try {
+      let {coinId, networkId, from, to, value} = req.body;
+      const handler: IResponseHandler = await (this.service as TransactionService).send(req.user['id'], coinId, networkId, from, to, value)
+      handler.handleResponse(res)
+    } catch (err) {
+      const handler = new ErrorResponse(err.code, err.message)
+      handler.handleResponse(res)
+    }
   }
 }
 

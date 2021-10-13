@@ -3,7 +3,8 @@ import Service from '../../helpers/Service'
 import WalletService from './wallet.service'
 import db from '../../helpers/MongooseClient'
 import { Request, Response } from 'express'
-import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
+import { IResponseHandler } from '../../interfaces/IResponseHandler'
+import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
 
 class WalletController extends Controller {
   constructor(service: Service) {
@@ -11,12 +12,15 @@ class WalletController extends Controller {
     this.generate = this.generate.bind(this)
   }
 
-  generate(req: Request, res: Response) {
-    let {mnemonic, network} = req.body;
-    (this.service as WalletService).generate(req.user['id'], network, mnemonic)
-    .then((responseHandler: ValidResponse) => {
-      responseHandler.handleResponse(res)
-    })
+  public async generate(req: Request, res: Response) {
+    try {
+      let {mnemonic, network} = req.body;
+      const handler: IResponseHandler = await (this.service as WalletService).generate(req.user['id'], network, mnemonic)
+      handler.handleResponse(res)
+    } catch (err) {
+      const handler = new ErrorResponse(err.code, err.message)
+      handler.handleResponse(res)
+    }
   }
 }
 

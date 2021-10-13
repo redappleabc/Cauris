@@ -5,6 +5,7 @@ import db from '../../helpers/MongooseClient'
 import config from 'config'
 import { Request, Response } from 'express'
 import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
+import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
 import { EUserRole } from '../../enums/EUserRole'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
@@ -17,30 +18,35 @@ class RefreshController extends Controller {
   }
 
   public async refresh(req: Request, res: Response) {
-    const token: string = req.cookies.refreshToken
-    const ip: string = req.ip;
-    (this.service as RefreshService).refresh(token, ip)
-    .then((responseHandler: ValidResponse) => {
-      const {refreshToken, user} = responseHandler.getBody()
+    try {
+      const token: string = req.cookies.refreshToken
+      const ip: string = req.ip;
+      let handler: ValidResponse = await (this.service as RefreshService).refresh(token, ip);
+      const {refreshToken, user} = handler.getBody()
       this.setTokenCookie(res, refreshToken)
-      responseHandler.handleResponse(res, user)
-    })
+      handler.handleResponse(res, user)
+    } catch (err) {
+      const handler = new ErrorResponse(err.code, err.message)
+      handler.handleResponse(res)
+    }
   }
 
   public async revoke(req: Request, res: Response) {
-    const token = req.body.token || req.cookies.refreshToken;
-    const ip = req.ip;
+    try {
+      const token = req.body.token || req.cookies.refreshToken;
+      const ip = req.ip;
 
-    if (!token) return res.status(400).json({ message: 'Token is required' });
-    if (!res['locals'].user.ownsToken(token) && res['locals'].user.role !== EUserRole.Admin) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    };
-    (this.service as RefreshService).revoke(token, ip)
-    .then(() => {
-      const responseHandler =  new ValidResponse(200, "Token revoked")
-      responseHandler.handleResponse(res)
-    })
-
+      if (!token) return res.status(400).json({ message: 'Token is required' });
+      if (!res['locals'].user.ownsToken(token) && res['locals'].user.role !== EUserRole.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      };
+      await (this.service as RefreshService).revoke(token, ip)
+      let handler: ValidResponse = new ValidResponse(200, "Token revoked")
+      handler.handleResponse(res)
+    } catch (err) {
+      const handler = new ErrorResponse(err.code, err.message)
+      handler.handleResponse(res)
+    }
   }
 
   protected setTokenCookie(res: Response, token: any) {

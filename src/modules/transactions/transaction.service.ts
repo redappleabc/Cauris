@@ -13,27 +13,23 @@ class TransactionService extends Service {
   }
 
   public async send(userId: string, coinId: string, networkId: string, from: string, to: string, value: number) {
-    try {
-      const coin = await db.Coin.findById(coinId)
-      const network = await db.Network.findById(networkId)
-      const account = await db.Account.findOne({address: from}).populate('wallet')
-      if (!account)
-        return new ErrorResponse(EHttpStatusCode.NotFound, "Account not found")
-      else if (account && account.wallet.user != userId)
-        return new ErrorResponse(EHttpStatusCode.Unauthorized, "Invalid access to this account")
-      const RPCHelper: IRPC = new EthersRPCHelper(network.url, network.chainId, account)
-      const tx = await RPCHelper.sendTransaction(to, value, coin.contractAddress)
-      return super.insert({
-        owner: userId,
-        coin,
-        fromAddress: from,
-        toAddress: to,
-        value,
-        transactionHash: tx
-      })
-    } catch (err) {
-      throw err//new ErrorResponse(500, err.message)
-    }
+    const coin = await db.Coin.findById(coinId)
+    const network = await db.Network.findById(networkId)
+    const account = await db.Account.findOne({address: from}).populate('wallet')
+    if (!account)
+      return new ErrorResponse(EHttpStatusCode.NotFound, "Account not found")
+    else if (account && account.wallet.user != userId)
+      return new ErrorResponse(EHttpStatusCode.Unauthorized, "Invalid access to this account")
+    const RPCHelper: IRPC = new EthersRPCHelper(network.url, network.chainId, account)
+    const tx = await RPCHelper.sendTransaction(to, value, coin.contractAddress)
+    return super.insert({
+      owner: userId,
+      coin,
+      fromAddress: from,
+      toAddress: to,
+      value,
+      transactionHash: tx
+    })
   }
 }
 

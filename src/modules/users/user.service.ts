@@ -30,13 +30,9 @@ class UserService extends Service {
   }
 
    public async insert(data: any)  {
-     try {
-       data.role = await this.checkFirstUser()
-       data.password = await hash(data.password, 10)
-       return super.insert(data)
-     } catch (err) {
-        throw new ErrorResponse(400, "No password found")
-     }
+    data.role = await this.checkFirstUser()
+    data.password = await hash(data.password, 10)
+    return super.insert(data)
   }
 
   private async checkFirstUser(): Promise<EUserRole> {
