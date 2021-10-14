@@ -1,11 +1,12 @@
 import db from '../../helpers/MongooseClient'
 import Service from '../../helpers/Service'
 import { Model } from 'mongoose'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
+import { BaseError } from '../../helpers/BaseError'
 import generateRandomToken from '../../helpers/randomToken'
 import config from 'config'
 import JwtHelper from '../../middlewares/JwtHelper'
 import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
+import { EHttpStatusCode } from '../../enums/EHttpError'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 
@@ -29,7 +30,7 @@ class RefreshService extends Service {
 
       return new ValidResponse(200, {user, jwtToken, refreshToken: newToken})
     } catch(err) {
-      throw new ErrorResponse(500, "could not refresh token")
+      throw new BaseError(EHttpStatusCode.NotFound, "Could not Refresh Token", true)
     }
   }
 
@@ -43,7 +44,7 @@ class RefreshService extends Service {
       }
       return refreshToken
     } catch(err) {
-      throw new ErrorResponse(500, "Could not generate refresh token")
+      throw new BaseError(EHttpStatusCode.InternalServerError, "Could not generate refresh token", true)
     }
   }
 

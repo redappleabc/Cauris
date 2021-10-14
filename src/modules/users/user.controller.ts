@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { NextFunction } from 'express'
 import config from 'config'
 import db from '../../helpers/MongooseClient'
 import Controller from '../../helpers/Controller'
@@ -16,7 +16,7 @@ class UserController extends Controller {
     this.authenticate = this.authenticate.bind(this)
   }
 
-  public async authenticate(req: Request, res: Response) {
+  public async authenticate(req: Request, res: Response, next: NextFunction) {
     try {
       const {email, password} = req.body
       const ipAddress: string = req.ip;
@@ -26,8 +26,7 @@ class UserController extends Controller {
       delete handler.message.refreshToken
       handler.handleResponse(res)
     } catch (err) {
-      const handler = new ErrorResponse(err.code, err.message)
-      handler.handleResponse(res)
+      next(err)
     }
   }
 

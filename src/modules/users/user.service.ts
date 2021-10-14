@@ -2,11 +2,12 @@ import bcrypt, { hash } from 'bcryptjs'
 import db from '../../helpers/MongooseClient'
 import Service from '../../helpers/Service'
 import { Model } from 'mongoose'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
+import { BaseError } from '../../helpers/BaseError'
 import JwtHelper from '../../middlewares/JwtHelper'
 import RefreshService from '../refreshs/refresh-token.service'
 import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
 import { EUserRole } from '../../enums/EUserRole'
+import { EHttpStatusCode } from '../../enums/EHttpError'
 
 class UserService extends Service {
   firstUser: boolean = true
@@ -19,14 +20,14 @@ class UserService extends Service {
     const user = await this.model.findOne({email})
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
-      throw new ErrorResponse(400, "Could not found User")
+      throw new BaseError(EHttpStatusCode.NotFound, "Could not found User", true)
     }
 
     const {jwtToken} = JwtHelper.generate(user)
     const refreshService = new RefreshService()
     const refreshToken = await refreshService.generate(user.id, ipAddress)
     await refreshService.insert(refreshToken)
-    return new ValidResponse(200, { user, jwtToken, refreshToken})
+    return new ValidResponse(EHttpStatusCode.OK, { user, jwtToken, refreshToken})
   }
 
    public async insert(data: any)  {

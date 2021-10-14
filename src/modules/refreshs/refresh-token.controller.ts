@@ -3,9 +3,8 @@ import Service from '../../helpers/Service'
 import RefreshService from './refresh-token.service'
 import db from '../../helpers/MongooseClient'
 import config from 'config'
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
 import { EUserRole } from '../../enums/EUserRole'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
@@ -17,7 +16,7 @@ class RefreshController extends Controller {
     this.revoke = this.revoke.bind(this)
   }
 
-  public async refresh(req: Request, res: Response) {
+  public async refresh(req: Request, res: Response, next: NextFunction) {
     try {
       const token: string = req.cookies.refreshToken
       const ip: string = req.ip;
@@ -26,12 +25,11 @@ class RefreshController extends Controller {
       this.setTokenCookie(res, refreshToken)
       handler.handleResponse(res, user)
     } catch (err) {
-      const handler = new ErrorResponse(err.code, err.message)
-      handler.handleResponse(res)
+      next(err)
     }
   }
 
-  public async revoke(req: Request, res: Response) {
+  public async revoke(req: Request, res: Response, next: NextFunction) {
     try {
       const token = req.body.token || req.cookies.refreshToken;
       const ip = req.ip;
@@ -44,8 +42,7 @@ class RefreshController extends Controller {
       let handler: ValidResponse = new ValidResponse(200, "Token revoked")
       handler.handleResponse(res)
     } catch (err) {
-      const handler = new ErrorResponse(err.code, err.message)
-      handler.handleResponse(res)
+      next(err)
     }
   }
 

@@ -17,8 +17,7 @@ class AccountController extends Controller {
       let handler: IResponseHandler = await (this.service as AccountService).generate(req.user['id'], coinIndex, accountIndex, change, addressIndex)
       return handler.handleResponse(res)
     } catch (err) {
-      const handler = new ErrorResponse(err.code, err.message)
-      handler.handleResponse(res)
+      next(err)
     }
   }
 }

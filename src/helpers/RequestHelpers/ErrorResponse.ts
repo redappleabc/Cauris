@@ -1,22 +1,22 @@
-import { Response } from 'express'
+import { Response, Errback } from 'express'
 import { EHttpStatusCode } from '../../enums/EHttpError'
 import { IResponseHandler } from '../../interfaces/IResponseHandler'
+import { BaseError } from '../BaseError'
 
 export class ErrorResponse implements IResponseHandler {
   statusCode: EHttpStatusCode
   message: String
 
-  constructor(code: EHttpStatusCode, error: Error | String) {
-    console.log(error)
-    this.formatMessage(code, error)
+  constructor(error: Error) {
+    if (error instanceof BaseError) {
+      this.statusCode = error.status
+      this.message = error.message
+    } else
+      this.formatMessage(error)
   }
 
-  private formatMessage(statusCode: EHttpStatusCode, error: String | Error) {
+  private formatMessage(error: Error) {
     switch(true) {
-      case(typeof error === 'string'):
-        this.statusCode = statusCode
-        this.message = error as String
-        break;
       case((error as Error).name === 'ValidationError'):
         this.statusCode = EHttpStatusCode.BadRequest
         this.message = (error as Error).message
@@ -26,7 +26,7 @@ export class ErrorResponse implements IResponseHandler {
         this.message = (error as Error).message
         break;
       default:
-        this.statusCode = EHttpStatusCode.InternalServerError
+        this.statusCode = (error as BaseError).status
         this.message = (error as Error).message
         break;
     }

@@ -13,7 +13,6 @@ class WalletService extends Service {
   }
 
   public async generate(userId: string, network: string, userMnemonic: string = null) {
-    console.log("got there")
     const wallet: HDWallet = new EthereumWallet(userMnemonic)
     const {mnemonic, seed} = wallet.getWallet()
     return super.insert({

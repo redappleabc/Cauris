@@ -1,8 +1,9 @@
-import { ErrorResponse } from "./RequestHelpers/ErrorResponse"
 import { ValidResponse } from './RequestHelpers/ValidResponse'
 import { IResponseHandler } from '../interfaces/IResponseHandler'
+import { BaseError } from './BaseError'
 import { Model, ObjectId } from 'mongoose'
 import { IService } from "../interfaces/IService";
+import { EHttpStatusCode } from '../enums/EHttpError';
 const mongoose = require("mongoose")
 
 export default class Service implements IService {
@@ -29,7 +30,7 @@ export default class Service implements IService {
       try {
         query._id = new mongoose.mongo.ObjectId(query._id)
       } catch (error) {
-        return new ErrorResponse(400, "Invalid query ID")
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid query ID", true)
       }
     }
 
@@ -37,12 +38,12 @@ export default class Service implements IService {
       let items = await this.model.find(query).skip(skip).limit(limit)
       let total = await this.model.count()
 
-      return new ValidResponse(200, {
+      return new ValidResponse(EHttpStatusCode.OK, {
         data: items,
         total
       })
     } catch (error) {
-      return new ErrorResponse(500, error)
+      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
     }
   }
 
@@ -50,9 +51,9 @@ export default class Service implements IService {
     try {
       let item = this.model.findById(id)
       if (item)
-        return new ValidResponse(200, item)
+        return new ValidResponse(EHttpStatusCode.OK, item)
     } catch (error) {
-      return new ErrorResponse(500, error)
+      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
     }
   }
 
@@ -60,9 +61,9 @@ export default class Service implements IService {
     try {
       let item = await this.model.create(data)
       if (item)
-        return new ValidResponse(200, item)
+        return new ValidResponse(EHttpStatusCode.Created, item)
     } catch (error) {
-      return new ErrorResponse(500, error)
+      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
     }
   }
 
@@ -70,11 +71,11 @@ export default class Service implements IService {
     try {
       let item = await this.model.findByIdAndUpdate(id, data, {new: true})
       if (!item) {
-        return new ErrorResponse(404, "Item not found.")
+        throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
       }
-      return new ValidResponse(202, item)
+      return new ValidResponse(EHttpStatusCode.Accepted, item)
     } catch (error) {
-      return new ErrorResponse(500, error)
+      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
     }
   }
 
@@ -82,11 +83,11 @@ export default class Service implements IService {
     try {
       let item = await this.model.findByIdAndDelete(id)
       if (!item) {
-        return new ErrorResponse(404, "Item not found.")
+        throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
       }
-      return new ValidResponse(202, item)
+      return new ValidResponse(EHttpStatusCode.Accepted, item)
     } catch (error) {
-      return new ErrorResponse(500, error)
+      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
     }
   }
 }
