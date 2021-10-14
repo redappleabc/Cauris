@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { ErrorResponse } from "../helpers/RequestHelpers/ErrorResponse";
 import { BaseError } from '../helpers/BaseError'
 
-export async function errorMiddleware(err: BaseError, req: Request, res: Response, next: NextFunction) {
+export async function errorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
   const handler = new ErrorResponse(err)
-  handler.handleResponse(res)
+  return handler.handleResponse(res)
 }
 
 export async function isOperationalError(err: Error) {

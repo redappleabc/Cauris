@@ -1,4 +1,3 @@
-import * as ErrorHandler from '../../middlewares/ErrorHandler'
 import express from 'express'
 import JwtHelper from '../../middlewares/JwtHelper'
 import {EUserRole} from '../../enums/EUserRole'
@@ -11,7 +10,5 @@ const router = express.Router()
 router.get('/:id', JwtHelper.middleware(), AccountController.getById)
 router.post('/', JwtHelper.middleware(), generateSchema, AccountController.generate)
 router.delete('/', JwtHelper.middleware([EUserRole.Admin]), AccountController.delete)
-
-router.use(ErrorHandler.errorMiddleware)
 
 export default router

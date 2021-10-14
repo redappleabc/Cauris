@@ -4,7 +4,7 @@
   "description": "Servichain's main API",
   "main": "server.ts",
   "scripts": {
-    "test": "mocha --require ts-node/register ./test/*.ts",
+    "test": "mocha --require ts-node/register ./test/*.ts --exit",
     "start": "nodemon server.ts"
   },
   "repository": {

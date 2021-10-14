@@ -49,7 +49,7 @@ export default class Service implements IService {
 
   public async getById(id: string): Promise<IResponseHandler> {
     try {
-      let item = this.model.findById(id)
+      let item = await this.model.findById(id)
       if (item)
         return new ValidResponse(EHttpStatusCode.OK, item)
     } catch (error) {
@@ -63,7 +63,10 @@ export default class Service implements IService {
       if (item)
         return new ValidResponse(EHttpStatusCode.Created, item)
     } catch (error) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
+      if (error instanceof mongoose.Error) {
+        throw new BaseError(EHttpStatusCode.BadRequest, error, true)
+      } else
+        throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
     }
   }
 

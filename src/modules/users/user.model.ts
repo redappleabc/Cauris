@@ -3,7 +3,7 @@ import { EUserRole } from '../../enums/EUserRole';
 const {Schema} = mongoose;
 
 const schema = new Schema({
-  email: {type: String, required: true, index: true},
+  email: {type: String, required: true, index: true, unique: true},
   password: {type: String, required: true},
   firstName: String,
   lastName: String,

@@ -16,6 +16,7 @@ import refreshs from './src/modules/refreshs/refresh-token.router'
 import networks from './src/modules/networks/network.router'
 import coins from './src/modules/coins/coin.router'
 import transactions from './src/modules/transactions/transaction.router'
+import * as ErrorHandler from './src/middlewares/ErrorHandler'
 
 const secret = config.get('secret')
 const mongoDB = config.get('mongoDB')
@@ -43,5 +44,7 @@ app.use('/refresh-tokens', refreshs)
 app.use('/networks', networks)
 app.use('/coins', coins)
 app.use('/transactions', transactions)
+
+app.use(ErrorHandler.errorMiddleware)
 
 module.exports = app

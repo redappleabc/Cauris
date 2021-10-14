@@ -17,17 +17,20 @@ export class ErrorResponse implements IResponseHandler {
 
   private formatMessage(error: Error) {
     switch(true) {
-      case((error as Error).name === 'ValidationError'):
+      case(error.name === 'ValidationError'):
         this.statusCode = EHttpStatusCode.BadRequest
-        this.message = (error as Error).message
+        this.message = error.message
         break;
-      case((error as Error).name === 'Unauthorized'):
+      case(error.name === 'Unauthorized'):
         this.statusCode = EHttpStatusCode.Unauthorized
-        this.message = (error as Error).message
+        this.message = error.message
         break;
+      case(error.name === 'MongooseError'):
+        this.statusCode = EHttpStatusCode.BadRequest
+        this.message = error.message
       default:
         this.statusCode = (error as BaseError).status
-        this.message = (error as Error).message
+        this.message = error.message
         break;
     }
   }

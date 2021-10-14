@@ -18,7 +18,7 @@ export class ValidResponse implements IResponseHandler {
     res.status(this.statusCode).send({
       status: 'success',
       statusCode: this.statusCode,
-      body: (body != null) ? body : this.message
+      data: (body != null) ? body : this.message
     })
   }
 }
