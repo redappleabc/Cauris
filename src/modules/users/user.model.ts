@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { EUserRole } from '../../enums/EUserRole';
+import { EUserRole } from '@servichain/enums/EUserRole';
 const {Schema} = mongoose;
 
 const schema = new Schema({

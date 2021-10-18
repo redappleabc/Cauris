@@ -1,9 +1,7 @@
-import Controller from '../../helpers/Controller'
-import Service from '../../helpers/Service'
-import AccountService from './account.service'
+import Controller from '@servichain/helpers/controllers/Controller'
+import AccountService from '@servichain/modules/accounts/account.service'
 import { Request, Response, NextFunction } from 'express'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
-import { IResponseHandler } from '../../interfaces/IResponseHandler'
+import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
 
 class AccountController extends Controller {
   constructor(service: AccountService) {

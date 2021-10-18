@@ -1,9 +1,9 @@
-import db from '../../helpers/MongooseClient'
-import Service from '../../helpers/Service'
+import db from '@servichain/helpers/MongooseClient'
+import Service from '@servichain/helpers/services/Service'
 import { Model } from 'mongoose'
-import { EthereumWallet } from '../../helpers/WalletHelpers/EthereumWallet'
-import { HDWallet } from '../../helpers/WalletHelpers/HDWallet'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
+import { EthereumWallet } from '@servichain/helpers/hdwallets/EthereumWallet'
+import { HDWallet } from '@servichain/helpers/hdwallets/HDWallet'
+import { ErrorResponse } from '@servichain/helpers/responses/ErrorResponse'
 import walletModel from './wallet.model'
 
 class WalletService extends Service {

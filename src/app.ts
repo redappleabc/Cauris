@@ -9,14 +9,14 @@ var bearerToken = require('express-bearer-token')
 var MongoStore = require('connect-mongo')
 var config = require('config')
 
-import users from './src/modules/users/user.router'
-import wallets from './src/modules/wallets/wallet.router'
-import accounts from './src/modules/accounts/account.router'
-import refreshs from './src/modules/refreshs/refresh-token.router'
-import networks from './src/modules/networks/network.router'
-import coins from './src/modules/coins/coin.router'
-import transactions from './src/modules/transactions/transaction.router'
-import * as ErrorHandler from './src/middlewares/ErrorHandler'
+import users from '@servichain/modules/users/user.router'
+import wallets from '@servichain/modules/wallets/wallet.router'
+import accounts from '@servichain/modules/accounts/account.router'
+import refreshs from '@servichain/modules/refreshs/refresh-token.router'
+import networks from '@servichain/modules/networks/network.router'
+import coins from '@servichain/modules/coins/coin.router'
+import transactions from '@servichain/modules/transactions/transaction.router'
+import * as ErrorHandler from '@servichain/middlewares/ErrorHandler'
 
 const secret = config.get('secret')
 const mongoDB = config.get('mongoDB')

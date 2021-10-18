@@ -1,10 +1,10 @@
-import Controller from '../../helpers/Controller'
-import Service from '../../helpers/Service'
+import Controller from '@servichain/helpers/controllers/Controller'
+import Service from '@servichain/helpers/services/Service'
 import TransactionService from './transaction.service'
 import { Request, Response, NextFunction } from 'express'
-import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
-import { IResponseHandler } from '../../interfaces/IResponseHandler'
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
+import { ErrorResponse } from '@servichain/helpers/responses/ErrorResponse'
+import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
 
 class TransactionController extends Controller {
   constructor(service: Service) {

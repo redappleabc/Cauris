@@ -1,6 +1,6 @@
 import Joi from '@hapi/joi';
 import { Request, Response, NextFunction} from 'express'
-import { JoiValidator } from '../../middlewares/JoiValidator';
+import { JoiValidator } from '@servichain/middlewares/JoiValidator';
 
 export function authenticateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
@@ -27,8 +27,6 @@ export function registerSchema(req: Request, res: Response, next: NextFunction) 
 export function updateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     email: Joi.string().email().empty(''),
-    password: Joi.string().min(6).empty(''),
-    confirmPassword: Joi.string().valid(Joi.ref('password')).empty(''),
     firstName: Joi.string().empty(''),
     lastName: Joi.string().empty('')
   })

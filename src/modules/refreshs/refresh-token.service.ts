@@ -1,12 +1,12 @@
-import db from '../../helpers/MongooseClient'
-import Service from '../../helpers/Service'
+import db from '@servichain/helpers/MongooseClient'
+import Service from '@servichain/helpers/services/Service'
 import { Model } from 'mongoose'
-import { BaseError } from '../../helpers/BaseError'
-import generateRandomToken from '../../helpers/randomToken'
+import { BaseError } from '@servichain/helpers/BaseError'
+import generateRandomToken from '@servichain/helpers/randomToken'
 import config from 'config'
-import JwtHelper from '../../middlewares/JwtHelper'
-import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
-import { EHttpStatusCode } from '../../enums/EHttpError'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
+import { EHttpStatusCode } from '@servichain/enums/EHttpError'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 

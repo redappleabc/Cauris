@@ -1,10 +1,10 @@
-import Controller from '../../helpers/Controller'
-import Service from '../../helpers/Service'
+import Controller from '@servichain/helpers/controllers/Controller'
+import Service from '@servichain/helpers/services/Service'
 import WalletService from './wallet.service'
-import db from '../../helpers/MongooseClient'
+import db from '@servichain/helpers/MongooseClient'
 import { Request, Response, NextFunction } from 'express'
-import { IResponseHandler } from '../../interfaces/IResponseHandler'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
+import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
+import { ErrorResponse } from '@servichain/helpers/responses/ErrorResponse'
 
 class WalletController extends Controller {
   constructor(service: Service) {

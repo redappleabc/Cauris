@@ -1,5 +1,7 @@
 import Joi from "@hapi/joi";
 import { Request, NextFunction } from "express";
+import { EHttpStatusCode } from "@servichain/enums/EHttpError";
+import { BaseError } from '@servichain/helpers/BaseError';
 
 export class JoiValidator {
     private joiSchema?
@@ -16,7 +18,7 @@ export class JoiValidator {
         }
         const { error, value } = this.joiSchema.validate(req.body, options)
         if (error) {
-            next(`Validation error: ${error.details.map(x => x.message).join(', ')}`)
+            throw new BaseError(EHttpStatusCode.BadRequest, `Validation error: ${error.details.map(x => x.message).join(', ')}`)
         } else {
             req.body = value
             next()

@@ -1,11 +1,9 @@
-import express, { NextFunction } from 'express'
 import config from 'config'
-import db from '../../helpers/MongooseClient'
-import Controller from '../../helpers/Controller'
+import db from '@servichain/helpers/MongooseClient'
+import Controller from '@servichain/helpers/controllers/Controller'
 import UserService from './user.service'
-import { Request, Response } from 'express'
-import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
+import { Request, Response, NextFunction } from 'express'
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')

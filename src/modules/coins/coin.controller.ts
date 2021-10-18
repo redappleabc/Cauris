@@ -1,6 +1,6 @@
-import Controller from '../../helpers/Controller'
-import Service from '../../helpers/Service'
-import CoinService from './coin.service'
+import Controller from '@servichain/helpers/controllers/Controller'
+import Service from '@servichain/helpers/services/Service'
+import CoinService from '@servichain/modules/coins/coin.service'
 
 class CoinController extends Controller {
   constructor(service: Service) {

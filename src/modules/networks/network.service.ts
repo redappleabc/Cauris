@@ -1,5 +1,5 @@
-import db from '../../helpers/MongooseClient'
-import Service from '../../helpers/Service'
+import db from '@servichain/helpers/MongooseClient'
+import Service from '@servichain/helpers/services/Service'
 import { Model } from 'mongoose'
 
 class NetworkService extends Service {

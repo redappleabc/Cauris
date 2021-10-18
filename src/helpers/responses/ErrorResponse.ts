@@ -1,7 +1,7 @@
-import { Response, Errback } from 'express'
-import { EHttpStatusCode } from '../../enums/EHttpError'
-import { IResponseHandler } from '../../interfaces/IResponseHandler'
-import { BaseError } from '../BaseError'
+import { Response } from 'express'
+import { EHttpStatusCode } from '@servichain/enums/EHttpError'
+import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
+import { BaseError } from '@servichain/helpers/BaseError'
 
 export class ErrorResponse implements IResponseHandler {
   statusCode: EHttpStatusCode

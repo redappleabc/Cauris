@@ -1,13 +1,13 @@
 import bcrypt, { hash } from 'bcryptjs'
-import db from '../../helpers/MongooseClient'
-import Service from '../../helpers/Service'
+import db from '@servichain/helpers/MongooseClient'
+import Service from '@servichain/helpers/services/Service'
 import { Model } from 'mongoose'
-import { BaseError } from '../../helpers/BaseError'
-import JwtHelper from '../../middlewares/JwtHelper'
+import { BaseError } from '@servichain/helpers/BaseError'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
 import RefreshService from '../refreshs/refresh-token.service'
-import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
-import { EUserRole } from '../../enums/EUserRole'
-import { EHttpStatusCode } from '../../enums/EHttpError'
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
+import { EUserRole } from '@servichain/enums/EUserRole'
+import { EHttpStatusCode } from '@servichain/enums/EHttpError'
 
 class UserService extends Service {
   firstUser: boolean = true

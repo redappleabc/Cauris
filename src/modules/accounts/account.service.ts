@@ -1,9 +1,8 @@
-import db from '../../helpers/MongooseClient'
-import Service from '../../helpers/Service'
+import db from '@servichain/helpers/MongooseClient'
+import Service from '@servichain/helpers/services/Service'
 import { Model } from 'mongoose'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
-import { HDWallet } from '../../helpers/WalletHelpers/HDWallet'
-import { EthereumWallet } from '../../helpers/WalletHelpers/EthereumWallet'
+import { HDWallet } from '@servichain/helpers/hdwallets/HDWallet'
+import { EthereumWallet } from '@servichain/helpers/hdwallets/EthereumWallet'
 
 class AccountService extends Service {
   constructor(model: Model<any> = db.Account) {

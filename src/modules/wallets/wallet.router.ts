@@ -1,7 +1,7 @@
 import express from 'express'
 
-import JwtHelper from '../../middlewares/JwtHelper'
-import {EUserRole} from '../../enums/EUserRole'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
+import {EUserRole} from '@servichain/enums/EUserRole'
 
 import WalletController from './wallet.controller'
 import {generateSchema} from './wallet.validators'

@@ -1,10 +1,10 @@
 import express from 'express'
 
-import JwtHelper from '../../middlewares/JwtHelper'
-import {EUserRole} from '../../enums/EUserRole'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
+import {EUserRole} from '@servichain/enums/EUserRole'
 
-import RefreshController from './refresh-token.controller'
-import {revokeTokenSchema} from './refresh-token.validators'
+import RefreshController from '@servichain/modules/refreshs/refresh-token.controller'
+import {revokeTokenSchema} from '@servichain/modules/refreshs/refresh-token.validators'
 
 const router = express.Router()
 

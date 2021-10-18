@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { ETokenType } from '../../enums/ETokenType';
+import { ETokenType } from '@servichain/enums/ETokenType';
 const Schema = mongoose.Schema
 
 const schema = new Schema({

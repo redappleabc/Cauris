@@ -1,9 +1,9 @@
 import express, { Router } from 'express'
-import JwtHelper from '../../middlewares/JwtHelper'
-import {EUserRole} from '../../enums/EUserRole'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
+import {EUserRole} from '@servichain/enums/EUserRole'
 
-import NetworkController from './network.controller'
-import {insertSchema} from './network.validators'
+import NetworkController from '@servichain/modules/networks/network.controller'
+import {insertSchema} from '@servichain/modules/networks/network.validators'
 
 const router = express.Router()
 

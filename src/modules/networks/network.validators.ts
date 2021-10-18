@@ -1,6 +1,6 @@
 import Joi from '@hapi/joi';
 import { Request, Response, NextFunction} from 'express'
-import { JoiValidator } from '../../middlewares/JoiValidator';
+import { JoiValidator } from '@servichain/middlewares/JoiValidator';
 
 export function insertSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({

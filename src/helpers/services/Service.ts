@@ -1,9 +1,9 @@
-import { ValidResponse } from './RequestHelpers/ValidResponse'
-import { IResponseHandler } from '../interfaces/IResponseHandler'
-import { BaseError } from './BaseError'
-import { Model, ObjectId } from 'mongoose'
-import { IService } from "../interfaces/IService";
-import { EHttpStatusCode } from '../enums/EHttpError';
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
+import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
+import { BaseError } from '@servichain/helpers/BaseError'
+import { Model } from 'mongoose'
+import { IService } from "@servichain/interfaces/IService";
+import { EHttpStatusCode } from '@servichain/enums/EHttpError';
 const mongoose = require("mongoose")
 
 export default class Service implements IService {
@@ -15,6 +15,7 @@ export default class Service implements IService {
     this.insert = this.insert.bind(this)
     this.update = this.update.bind(this)
     this.delete = this.delete.bind(this)
+    this.getById = this.getById.bind(this)
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {

@@ -1,4 +1,4 @@
-import {HDWallet} from './HDWallet'
+import {HDWallet} from '@servichain/helpers/hdwallets/HDWallet'
 import * as ethereum from 'ethereumjs-util'
 
 export class EthereumWallet extends HDWallet {

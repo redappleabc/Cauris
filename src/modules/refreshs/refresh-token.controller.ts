@@ -1,11 +1,11 @@
-import Controller from '../../helpers/Controller'
-import Service from '../../helpers/Service'
-import RefreshService from './refresh-token.service'
-import db from '../../helpers/MongooseClient'
+import Controller from '@servichain/helpers/controllers/Controller'
+import Service from '@servichain/helpers/services/Service'
+import RefreshService from '@servichain/modules/refreshs/refresh-token.service'
+import db from '@servichain/helpers/MongooseClient'
 import config from 'config'
 import { Request, Response, NextFunction } from 'express'
-import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
-import { EUserRole } from '../../enums/EUserRole'
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
+import { EUserRole } from '@servichain/enums/EUserRole'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 
