@@ -6,7 +6,7 @@ import { sign, verify } from 'jsonwebtoken'
 import jwt from 'express-jwt';
 import db from "@servichain/helpers/MongooseClient";
 import config from 'config'
-import { EHttpStatusCode } from "@servichain/enums/EHttpError";
+import { EHttpStatusCode } from "@servichain/enums";
 
 const secret: string = config.get('secret')
 const defaultExpiresIn: number = config.get('defaultExpiresIn')

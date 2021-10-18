@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-const Schema = mongoose.Schema;
+const {Schema} = mongoose;
 
 const schema = new Schema({
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true},
@@ -30,4 +30,4 @@ schema.set('toJSON', {
     }
 });
 
-export default mongoose.model('RefreshToken', schema);
+export const RefreshModel = mongoose.model('RefreshToken', schema);

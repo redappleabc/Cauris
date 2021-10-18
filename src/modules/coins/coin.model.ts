@@ -18,4 +18,4 @@ schema.set('toJSON', {
   }
 })
 
-export default mongoose.model('Coin', schema)
+export const CoinModel = mongoose.model('Coin', schema)

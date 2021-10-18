@@ -1,12 +1,10 @@
-import Controller from '@servichain/helpers/controllers/Controller'
-import Service from '@servichain/helpers/services/Service'
-import TransactionService from './transaction.service'
+import {Controller} from '@servichain/helpers/controllers'
+import { Service } from '@servichain/helpers/services'
+import {TransactionService} from '@servichain/modules/transactions'
 import { Request, Response, NextFunction } from 'express'
-import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
-import { ErrorResponse } from '@servichain/helpers/responses/ErrorResponse'
-import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
+import { IResponseHandler } from '@servichain/interfaces'
 
-class TransactionController extends Controller {
+export class TransactionController extends Controller {
   constructor(service: Service) {
     super(service)
     this.send = this.send.bind(this)
@@ -22,7 +20,3 @@ class TransactionController extends Controller {
     }
   }
 }
-
-const service = new TransactionService()
-
-export default new TransactionController(service)

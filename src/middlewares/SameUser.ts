@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { BaseError } from "@servichain/helpers/BaseError";
-import { EHttpStatusCode } from "@servichain/enums/EHttpError";
+import { EHttpStatusCode } from "@servichain/enums";
 
 export function sameUserMiddleware(req: Request, res: Response, next: NextFunction) {
   const { id } = req.params

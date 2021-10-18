@@ -1,16 +1,17 @@
-import express, { Router } from 'express'
+import express from 'express'
 import JwtHelper from '@servichain/middlewares/JwtHelper'
 import {EUserRole} from '@servichain/enums/EUserRole'
 
-import CoinController from '@servichain/modules/coins/coin.controller'
-import {insertSchema} from '@servichain/modules/coins/coin.validators'
+import {CoinService, CoinController, insertSchema} from '@servichain/modules/coins'
 
 const router = express.Router()
+const service = new CoinService()
+const controller = new CoinController(service)
 
-router.get('/', CoinController.insert)
-router.get('/:id', JwtHelper.middleware(), CoinController.getById)
-router.post('/', JwtHelper.middleware([EUserRole.Partner, EUserRole.Admin]), insertSchema, CoinController.insert)
-router.put('/:id', JwtHelper.middleware([EUserRole.Admin]), CoinController.update)
-router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), CoinController.delete)
+router.get('/', controller.insert)
+router.get('/:id', JwtHelper.middleware(), controller.getById)
+router.post('/', JwtHelper.middleware([EUserRole.Partner, EUserRole.Admin]), insertSchema, controller.insert)
+router.put('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.update)
+router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
-export default router
+export {router as CoinRouter}

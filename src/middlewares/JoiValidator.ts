@@ -1,6 +1,6 @@
 import Joi from "@hapi/joi";
 import { Request, NextFunction } from "express";
-import { EHttpStatusCode } from "@servichain/enums/EHttpError";
+import { EHttpStatusCode } from "@servichain/enums";
 import { BaseError } from '@servichain/helpers/BaseError';
 
 export class JoiValidator {

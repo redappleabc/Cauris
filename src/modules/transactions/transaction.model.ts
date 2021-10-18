@@ -21,4 +21,4 @@ schema.set('toJSON', {
   }
 })
 
-export default mongoose.model('Transaction', schema)
+export const TransactionModel = mongoose.model('Transaction', schema)

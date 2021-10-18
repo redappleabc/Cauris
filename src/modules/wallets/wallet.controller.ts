@@ -1,12 +1,10 @@
-import Controller from '@servichain/helpers/controllers/Controller'
-import Service from '@servichain/helpers/services/Service'
-import WalletService from './wallet.service'
-import db from '@servichain/helpers/MongooseClient'
+import {Controller} from '@servichain/helpers/controllers'
+import { Service } from '@servichain/helpers/services'
+import {WalletService} from '@servichain/modules/wallets'
 import { Request, Response, NextFunction } from 'express'
-import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
-import { ErrorResponse } from '@servichain/helpers/responses/ErrorResponse'
+import { IResponseHandler } from '@servichain/interfaces'
 
-class WalletController extends Controller {
+export class WalletController extends Controller {
   constructor(service: Service) {
     super(service)
     this.generate = this.generate.bind(this)
@@ -22,6 +20,3 @@ class WalletController extends Controller {
     }
   }
 }
-
-const service = new WalletService(db.Wallet)
-export default new WalletController(service)

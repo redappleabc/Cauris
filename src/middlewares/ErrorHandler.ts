@@ -13,12 +13,3 @@ export async function isOperationalError(err: Error) {
   else
     return false
 }
-
-process.on('uncaughtException', err => {
-  if (!isOperationalError(err))
-    process.exit(1)
-})
-
-process.on('unhandledRejection', err => {
-  throw err
-})

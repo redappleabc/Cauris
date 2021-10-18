@@ -24,4 +24,4 @@ schema.set('toJSON', {
   }
 })
 
-export default mongoose.model('Account', schema)
+export const AccountModel = mongoose.model('Account', schema)

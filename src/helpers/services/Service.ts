@@ -1,12 +1,11 @@
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
-import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { Model } from 'mongoose'
-import { IService } from "@servichain/interfaces/IService";
-import { EHttpStatusCode } from '@servichain/enums/EHttpError';
+import { IService, IResponseHandler } from "@servichain/interfaces";
+import { EHttpStatusCode } from '@servichain/enums';
 const mongoose = require("mongoose")
 
-export default class Service implements IService {
+export class Service implements IService {
   model: Model<any>;
 
   constructor(model: Model<any>) {

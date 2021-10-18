@@ -1,9 +1,9 @@
-import Controller from '@servichain/helpers/controllers/Controller'
-import AccountService from '@servichain/modules/accounts/account.service'
+import {Controller} from '@servichain/helpers/controllers'
+import {AccountService} from '@servichain/modules/accounts'
 import { Request, Response, NextFunction } from 'express'
-import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
+import { IResponseHandler } from '@servichain/interfaces'
 
-class AccountController extends Controller {
+export class AccountController extends Controller {
   constructor(service: AccountService) {
     super(service)
     this.generate = this.generate.bind(this)
@@ -19,7 +19,3 @@ class AccountController extends Controller {
     }
   }
 }
-
-const service = new AccountService()
-
-export default new AccountController(service)

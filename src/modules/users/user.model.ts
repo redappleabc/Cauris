@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { EUserRole } from '@servichain/enums/EUserRole';
+import { EUserRole } from '@servichain/enums';
 const {Schema} = mongoose;
 
 const schema = new Schema({
@@ -23,4 +23,4 @@ schema.set('toJSON', {
   }
 })
 
-export default mongoose.model('User', schema)
+export const UserModel = mongoose.model('User', schema)

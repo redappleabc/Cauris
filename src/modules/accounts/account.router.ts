@@ -1,14 +1,15 @@
 import express from 'express'
 import JwtHelper from '@servichain/middlewares/JwtHelper'
-import {EUserRole} from '@servichain/enums/EUserRole'
+import {EUserRole} from '@servichain/enums'
 
-import AccountController from '@servichain/modules/accounts/account.controller'
-import {generateSchema} from '@servichain/modules/accounts/account.validators'
+import {AccountController, AccountService, generateSchema} from '@servichain/modules/accounts'
 
 const router = express.Router()
+const service = new AccountService()
+const controller = new AccountController(service)
 
-router.get('/:id', JwtHelper.middleware(), AccountController.getById)
-router.post('/', JwtHelper.middleware(), generateSchema, AccountController.generate)
-router.delete('/', JwtHelper.middleware([EUserRole.Admin]), AccountController.delete)
+router.get('/:id', JwtHelper.middleware(), controller.getById)
+router.post('/', JwtHelper.middleware(), generateSchema, controller.generate)
+router.delete('/', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
-export default router
+export {router as AccountRouter}

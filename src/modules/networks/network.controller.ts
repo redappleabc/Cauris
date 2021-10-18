@@ -1,13 +1,8 @@
-import Controller from '@servichain/helpers/controllers/Controller'
-import Service from '@servichain/helpers/services/Service'
-import NetworkService from '@servichain/modules/networks/network.service'
+import {Controller} from '@servichain/helpers/controllers'
+import { Service } from '@servichain/helpers/services'
 
-class NetworkController extends Controller {
+export class NetworkController extends Controller {
   constructor(service: Service) {
     super(service)
   }
 }
-
-const service = new NetworkService()
-
-export default new NetworkController(service)

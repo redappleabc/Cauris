@@ -18,4 +18,4 @@ schema.set('toJSON', {
   }
 })
 
-export default mongoose.model('Network', schema)
+export const NetworkModel = mongoose.model('Network', schema)

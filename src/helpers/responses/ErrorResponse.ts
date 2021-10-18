@@ -1,6 +1,6 @@
 import { Response } from 'express'
-import { EHttpStatusCode } from '@servichain/enums/EHttpError'
-import { IResponseHandler } from '@servichain/interfaces/IResponseHandler'
+import { EHttpStatusCode } from '@servichain/enums'
+import { IResponseHandler } from '@servichain/interfaces'
 import { BaseError } from '@servichain/helpers/BaseError'
 
 export class ErrorResponse implements IResponseHandler {

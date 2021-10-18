@@ -1,9 +1,8 @@
-import { IController } from "@servichain/interfaces/IController";
+import { IController, IResponseHandler } from "@servichain/interfaces";
 import { Request, Response, NextFunction } from 'express'
-import Service from "@servichain/helpers/services/Service";
-import { IResponseHandler } from "@servichain/interfaces/IResponseHandler";
+import { Service } from '@servichain/helpers/services';
 
-export default class Controller implements IController {
+export class Controller implements IController {
   service: Service
 
   constructor(service: Service) {

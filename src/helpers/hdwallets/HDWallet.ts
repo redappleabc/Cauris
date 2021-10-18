@@ -1,6 +1,6 @@
 import * as bip39 from 'bip39'
 import * as bip32 from 'bip32'
-import {IHDWallet} from '@servichain/interfaces/IHDWallet'
+import {IHDWallet} from '@servichain/interfaces'
 
 const bip44Constant = 44
 

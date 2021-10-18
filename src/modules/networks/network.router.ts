@@ -1,16 +1,17 @@
-import express, { Router } from 'express'
+import express from 'express'
 import JwtHelper from '@servichain/middlewares/JwtHelper'
-import {EUserRole} from '@servichain/enums/EUserRole'
+import {EUserRole} from '@servichain/enums'
 
-import NetworkController from '@servichain/modules/networks/network.controller'
-import {insertSchema} from '@servichain/modules/networks/network.validators'
+import {NetworkService, NetworkController, insertSchema} from '@servichain/modules/networks'
 
 const router = express.Router()
+const service = new NetworkService()
+const controller = new NetworkController(service)
 
-router.get('/', NetworkController.insert)
-router.get('/:id', JwtHelper.middleware(), NetworkController.getById)
-router.post('/', JwtHelper.middleware([EUserRole.Partner, EUserRole.Admin]), insertSchema, NetworkController.insert)
-router.put('/:id', JwtHelper.middleware([EUserRole.Admin]), NetworkController.update)
-router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), NetworkController.delete)
+router.get('/', controller.insert)
+router.get('/:id', JwtHelper.middleware(), controller.getById)
+router.post('/', JwtHelper.middleware([EUserRole.Partner, EUserRole.Admin]), insertSchema, controller.insert)
+router.put('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.update)
+router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
-export default router
+export {router as NetworkRouter}

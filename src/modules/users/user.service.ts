@@ -1,15 +1,14 @@
 import bcrypt, { hash } from 'bcryptjs'
 import db from '@servichain/helpers/MongooseClient'
-import Service from '@servichain/helpers/services/Service'
+import { Service } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
 import { BaseError } from '@servichain/helpers/BaseError'
 import JwtHelper from '@servichain/middlewares/JwtHelper'
-import RefreshService from '../refreshs/refresh-token.service'
+import {RefreshService} from '@servichain/modules/refreshs'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
-import { EUserRole } from '@servichain/enums/EUserRole'
-import { EHttpStatusCode } from '@servichain/enums/EHttpError'
+import { EUserRole, EHttpStatusCode } from '@servichain/enums'
 
-class UserService extends Service {
+export class UserService extends Service {
   firstUser: boolean = true
   constructor(model: Model<any> = db.User) {
     super(model)
@@ -46,5 +45,3 @@ class UserService extends Service {
     return EUserRole.User
   }
 }
-
-export default UserService
