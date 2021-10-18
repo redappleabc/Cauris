@@ -19,5 +19,6 @@
         "node_modules/@types"
     ]
   },
-  "exclude": ["../test/*", "**/*.spec.ts", "node_modules"]
+  "exclude": ["../test/*", "**/*.spec.ts", "node_modules"],
+  "include": ["src/**/*", "./src/files/erc20.abi.json"]
 }

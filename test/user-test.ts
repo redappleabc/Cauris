@@ -153,5 +153,3 @@ describe('Users', () => {
 
   })
 })
-
-process.exit(0)
