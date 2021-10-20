@@ -1,11 +1,11 @@
-import {Controller} from '@servichain/helpers/controllers'
-import { Service } from '@servichain/helpers/services'
-import {WalletService} from '@servichain/modules/wallets'
+import { ServiceProtected } from '@servichain/helpers/services'
+import { WalletService } from '@servichain/modules/wallets'
 import { Request, Response, NextFunction } from 'express'
 import { IResponseHandler } from '@servichain/interfaces'
+import { ControllerProtected } from '@servichainhelpers/controllers'
 
-export class WalletController extends Controller {
-  constructor(service: Service) {
+export class WalletController extends ControllerProtected {
+  constructor(service: ServiceProtected) {
     super(service)
     this.generate = this.generate.bind(this)
   }

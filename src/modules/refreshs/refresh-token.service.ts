@@ -1,5 +1,5 @@
 import db from '@servichain/helpers/MongooseClient'
-import { Service } from '@servichain/helpers/services'
+import { ServiceProtected } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
 import { BaseError } from '@servichain/helpers/BaseError'
 import {generateRandomToken} from '@servichain/helpers/randomToken'
@@ -10,7 +10,7 @@ import config from 'config'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 
-export class RefreshService extends Service {
+export class RefreshService extends ServiceProtected {
   constructor(model: Model<any> = db.RefreshToken) {
     super(model)
     this.refresh = this.refresh.bind(this)

@@ -1,15 +1,15 @@
-import {Controller} from '@servichain/helpers/controllers'
-import { Service } from '@servichain/helpers/services/Service'
+import { ControllerProtected } from '@servichain/helpers/controllers'
 import {RefreshService} from '@servichain/modules/refreshs'
 import { Request, Response, NextFunction } from 'express'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EUserRole } from '@servichain/enums'
 import config from 'config'
+import { ServiceProtected } from '@servichainhelpers/services'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 
-export class RefreshController extends Controller {
-  constructor(service: Service) {
+export class RefreshController extends ControllerProtected {
+  constructor(service: ServiceProtected) {
     super(service)
     this.refresh = this.refresh.bind(this)
     this.revoke = this.revoke.bind(this)

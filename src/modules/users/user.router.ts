@@ -10,7 +10,7 @@ const service = new UserService()
 const controller = new UserController(service)
 
 router.get('/', JwtHelper.middleware([EUserRole.Admin, EUserRole.Partner]), controller.getAll)
-router.get('/:id', JwtHelper.middleware([EUserRole.User]), controller.getById)
+router.get('/:id', JwtHelper.middleware(), sameUserMiddleware, controller.getById)
 router.post('/', registerSchema, controller.insert)
 router.post('/authenticate', authenticateSchema, controller.authenticate)
 router.put('/:id', JwtHelper.middleware(), sameUserMiddleware, updateSchema, controller.update)

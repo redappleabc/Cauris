@@ -31,7 +31,7 @@ class JwtHelper {
           user['ownsToken'] = token => !!refreshToken.find(x => x.token === token)
           res['locals'].user = user
           if (roles.length && !roles.includes(user['role'])) {
-              throw new BaseError(EHttpStatusCode.Unauthorized, "Unauthorized", true)
+            throw new BaseError(EHttpStatusCode.Unauthorized, "Unauthorized", true)
           }
           next()
         } catch (err) {

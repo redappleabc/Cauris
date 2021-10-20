@@ -37,6 +37,7 @@ const testUser2Auth = {
 
 let token;
 let userId;
+let adminId;
 
 describe('Users', () => {
   before('Clean database before tests', (done) => {
@@ -56,6 +57,8 @@ describe('Users', () => {
         }
         res.should.have.status(EHttpStatusCode.Created)
         res.body.data.should.have.property('role').eql('admin')
+        res.body.data.should.have.property('id')
+        adminId = res.body.data.user.id
         done()
       })
     })
@@ -130,6 +133,18 @@ describe('Users', () => {
         }
         res.should.have.status(EHttpStatusCode.OK)
         res.body.data.should.have.property('id')
+        done()
+      })
+    })
+    it("should not be able to retrieve infos of other users", done => {
+      chai.request(server)
+      .get(`/users/${adminId}`)
+      .set({ Authorization: `Bearer ${token}` })
+      .end((err, res) => {
+        if (err) {
+          done()
+        }
+        res.should.have.status(EHttpStatusCode.Unauthorized)
         done()
       })
     })

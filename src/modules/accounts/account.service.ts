@@ -1,10 +1,10 @@
 import db from '@servichain/helpers/MongooseClient'
-import { Service } from '@servichain/helpers/services'
+import { ServiceProtected } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
 import { HDWallet } from '@servichain/helpers/hdwallets/HDWallet'
 import { EthereumWallet } from '@servichain/helpers/hdwallets/EthereumWallet'
 
-export class AccountService extends Service {
+export class AccountService extends ServiceProtected {
   constructor(model: Model<any> = db.Account) {
     super(model)
     this.generate = this.generate.bind(this)

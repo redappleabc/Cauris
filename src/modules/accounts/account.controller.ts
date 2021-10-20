@@ -1,9 +1,9 @@
-import {Controller} from '@servichain/helpers/controllers'
 import {AccountService} from '@servichain/modules/accounts'
 import { Request, Response, NextFunction } from 'express'
 import { IResponseHandler } from '@servichain/interfaces'
+import { ControllerProtected } from '@servichainhelpers/controllers/ControllerProtected'
 
-export class AccountController extends Controller {
+export class AccountController extends ControllerProtected {
   constructor(service: AccountService) {
     super(service)
     this.generate = this.generate.bind(this)

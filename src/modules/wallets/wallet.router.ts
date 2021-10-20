@@ -9,7 +9,7 @@ const service = new WalletService()
 const controller = new WalletController(service)
 
 router.post('/', JwtHelper.middleware(), generateSchema, controller.generate)
-router.get('/:id', JwtHelper.middleware(), controller.getById)
+router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
 router.delete('/', JwtHelper.middleware([EUserRole.Admin]),controller.delete)
 
 export default router

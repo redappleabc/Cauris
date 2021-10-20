@@ -1,8 +1,8 @@
-import {Controller} from '@servichain/helpers/controllers'
-import { Service } from '@servichain/helpers/services'
+import { ServiceProtected } from '@servichain/helpers/services'
+import { ControllerProtected } from '@servichainhelpers/controllers/ControllerProtected'
 
-export class ValidationController extends Controller {
-  constructor(service: Service) {
+export class ValidationController extends ControllerProtected {
+  constructor(service: ServiceProtected) {
     super(service)
   }
 }
