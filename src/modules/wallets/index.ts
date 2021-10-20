@@ -1,0 +1,5 @@
+export * from './wallet.model'
+export * from './wallet.service'
+export * from './wallet.controller'
+export * from './wallet.validators'
+export * from './wallet.router'

@@ -1,17 +1,18 @@
 import express from 'express'
 
-import JwtHelper from '../../middlewares/JwtHelper'
-import {EUserRole} from '../../enums/EUserRole'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
+import {EUserRole} from '@servichain/enums'
 
-import TransactionController from './transaction.controller'
-import {sendSchema} from './transaction.validators'
+import {TransactionController, TransactionService, sendSchema} from '@servichain/modules/transactions'
 
 const router = express.Router()
+const service = new TransactionService()
+const controller = new TransactionController(service)
 
 /* Refresh Routes */
-router.get('/', JwtHelper.middleware([EUserRole.Admin, EUserRole.Partner]), TransactionController.getAll)
-router.get('/:id', JwtHelper.middleware(), TransactionController.getById)
-router.post('/', JwtHelper.middleware(), sendSchema, TransactionController.send)
-router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), TransactionController.delete)
+router.get('/', JwtHelper.middleware([EUserRole.Admin, EUserRole.Partner]), controller.getAll)
+router.get('/:id', JwtHelper.middleware(), controller.getById)
+router.post('/', JwtHelper.middleware(), sendSchema, controller.send)
+router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
 export default router

@@ -1,12 +1,9 @@
-import db from '../../helpers/MongooseClient'
-import Service from '../../helpers/Service'
+import db from '@servichain/helpers/MongooseClient'
+import { Service } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
-import { EthereumWallet } from '../../helpers/WalletHelpers/EthereumWallet'
-import { HDWallet } from '../../helpers/WalletHelpers/HDWallet'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
-import walletModel from './wallet.model'
+import { HDWallet, EthereumWallet } from '@servichain/helpers/hdwallets'
 
-class WalletService extends Service {
+export class WalletService extends Service {
   constructor(model: Model<any> = db.Wallet) {
     super(model)
     this.generate = this.generate.bind(this)
@@ -22,5 +19,3 @@ class WalletService extends Service {
     })
   }
 }
-
-export default WalletService

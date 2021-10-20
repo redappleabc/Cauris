@@ -1,9 +1,8 @@
-import { IRPC } from '../../interfaces/IRPC'
+import { IAccount, IRPC } from '@servichain/interfaces'
 import * as ethers from 'ethers'
-import { IAccount } from '../../interfaces/IAccount'
-import abi from '../../../erc20.abi.json'
+import abi from '@servichain/files/erc20.abi.json'
 
-export class EthersRPCHelper implements IRPC {
+export class EthersRPC implements IRPC {
   account: IAccount
   provider: ethers.providers.JsonRpcProvider
 

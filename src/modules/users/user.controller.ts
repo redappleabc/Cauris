@@ -1,16 +1,13 @@
-import express, { NextFunction } from 'express'
 import config from 'config'
-import db from '../../helpers/MongooseClient'
-import Controller from '../../helpers/Controller'
-import UserService from './user.service'
-import { Request, Response } from 'express'
-import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
-import { ErrorResponse } from '../../helpers/RequestHelpers/ErrorResponse'
+import {Controller} from '@servichain/helpers/controllers'
+import {UserService} from '@servichain/modules/users'
+import { Request, Response, NextFunction } from 'express'
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 
-class UserController extends Controller {
+export class UserController extends Controller {
   constructor(service: UserService) {
     super(service)
     this.authenticate = this.authenticate.bind(this)
@@ -39,7 +36,3 @@ class UserController extends Controller {
     res.cookie('refreshToken', token, cookieOptions)
   }
 }
-
-const service = new UserService(db.User)
-
-export default new UserController(service)

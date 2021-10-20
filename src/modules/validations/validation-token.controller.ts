@@ -1,11 +1,8 @@
-import Controller from '../../helpers/Controller'
-import Service from '../../helpers/Service'
-import validationService from './validation-token.service'
+import {Controller} from '@servichain/helpers/controllers'
+import { Service } from '@servichain/helpers/services'
 
-class ValidationController extends Controller {
+export class ValidationController extends Controller {
   constructor(service: Service) {
     super(service)
   }
 }
-
-export default new ValidationController(validationService)

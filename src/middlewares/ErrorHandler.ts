@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { ErrorResponse } from "../helpers/RequestHelpers/ErrorResponse";
-import { BaseError } from '../helpers/BaseError'
+import { ErrorResponse } from "@servichain/helpers/responses/ErrorResponse";
+import { BaseError } from '@servichain/helpers/BaseError'
 
-export async function errorMiddleware(err: BaseError, req: Request, res: Response, next: NextFunction) {
+export async function errorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
   const handler = new ErrorResponse(err)
-  handler.handleResponse(res)
+  return handler.handleResponse(res)
 }
 
 export async function isOperationalError(err: Error) {
@@ -13,12 +13,3 @@ export async function isOperationalError(err: Error) {
   else
     return false
 }
-
-process.on('uncaughtException', err => {
-  if (!isOperationalError(err))
-    process.exit(1)
-})
-
-process.on('unhandledRejection', err => {
-  throw err
-})

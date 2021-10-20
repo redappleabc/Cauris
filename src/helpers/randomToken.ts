@@ -1,5 +1,5 @@
 import crypto from 'crypto'
 
-export default function generateRandomToken() {
+export function generateRandomToken() {
   return crypto.randomBytes(40).toString('hex')
 }

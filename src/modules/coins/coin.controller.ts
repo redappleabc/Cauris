@@ -1,11 +1,8 @@
-import Controller from '../../helpers/Controller'
-import Service from '../../helpers/Service'
-import CoinService from './coin.service'
+import {Controller} from '@servichain/helpers/controllers'
+import { Service } from '@servichain/helpers/services'
 
-class CoinController extends Controller {
+export class CoinController extends Controller {
   constructor(service: Service) {
     super(service)
   }
 }
-
-export default new CoinController(CoinService)

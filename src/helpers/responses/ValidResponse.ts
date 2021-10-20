@@ -1,6 +1,6 @@
 import { Response } from 'express'
-import { IResponseHandler } from '../../interfaces/IResponseHandler'
-import { EHttpStatusCode } from '../../enums/EHttpError'
+import { IResponseHandler } from '@servichain/interfaces'
+import { EHttpStatusCode } from '@servichain/enums'
 
 export class ValidResponse implements IResponseHandler {
   statusCode: EHttpStatusCode
@@ -18,7 +18,7 @@ export class ValidResponse implements IResponseHandler {
     res.status(this.statusCode).send({
       status: 'success',
       statusCode: this.statusCode,
-      body: (body != null) ? body : this.message
+      data: (body != null) ? body : this.message
     })
   }
 }

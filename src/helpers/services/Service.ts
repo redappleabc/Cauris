@@ -1,12 +1,11 @@
-import { ValidResponse } from './RequestHelpers/ValidResponse'
-import { IResponseHandler } from '../interfaces/IResponseHandler'
-import { BaseError } from './BaseError'
-import { Model, ObjectId } from 'mongoose'
-import { IService } from "../interfaces/IService";
-import { EHttpStatusCode } from '../enums/EHttpError';
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
+import { BaseError } from '@servichain/helpers/BaseError'
+import { Model } from 'mongoose'
+import { IService, IResponseHandler } from "@servichain/interfaces";
+import { EHttpStatusCode } from '@servichain/enums';
 const mongoose = require("mongoose")
 
-export default class Service implements IService {
+export class Service implements IService {
   model: Model<any>;
 
   constructor(model: Model<any>) {
@@ -15,6 +14,7 @@ export default class Service implements IService {
     this.insert = this.insert.bind(this)
     this.update = this.update.bind(this)
     this.delete = this.delete.bind(this)
+    this.getById = this.getById.bind(this)
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {
@@ -49,7 +49,7 @@ export default class Service implements IService {
 
   public async getById(id: string): Promise<IResponseHandler> {
     try {
-      let item = this.model.findById(id)
+      let item = await this.model.findById(id)
       if (item)
         return new ValidResponse(EHttpStatusCode.OK, item)
     } catch (error) {
@@ -63,7 +63,10 @@ export default class Service implements IService {
       if (item)
         return new ValidResponse(EHttpStatusCode.Created, item)
     } catch (error) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
+      if (error instanceof mongoose.Error) {
+        throw new BaseError(EHttpStatusCode.BadRequest, error, true)
+      } else
+        throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
     }
   }
 

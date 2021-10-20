@@ -1,18 +1,19 @@
 import express from 'express'
-import JwtHelper from '../../middlewares/JwtHelper'
-import {EUserRole} from '../../enums/EUserRole'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
+import {EUserRole} from '@servichain/enums'
 
-import UserController from './user.controller'
-import {authenticateSchema, registerSchema, updateSchema} from './user.validators'
+import {UserService, UserController, authenticateSchema, registerSchema, updateSchema} from '@servichain/modules/users'
+import { sameUserMiddleware } from '@servichain/middlewares/SameUser'
 
 const router = express.Router()
+const service = new UserService()
+const controller = new UserController(service)
 
-/* User Routes */
-router.get('/', JwtHelper.middleware([EUserRole.Admin, EUserRole.Partner]), UserController.getAll)
-router.get('/:id', JwtHelper.middleware([EUserRole.User]), UserController.getById)
-router.post('/', registerSchema, UserController.insert)
-router.post('/authenticate', authenticateSchema, UserController.authenticate)
-router.put('/:id', JwtHelper.middleware(), updateSchema, UserController.update)
-router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), UserController.delete)
+router.get('/', JwtHelper.middleware([EUserRole.Admin, EUserRole.Partner]), controller.getAll)
+router.get('/:id', JwtHelper.middleware([EUserRole.User]), controller.getById)
+router.post('/', registerSchema, controller.insert)
+router.post('/authenticate', authenticateSchema, controller.authenticate)
+router.put('/:id', JwtHelper.middleware(), sameUserMiddleware, updateSchema, controller.update)
+router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
-export default router
+export {router as UserRouter}

@@ -1,18 +1,17 @@
-import { IController } from "../interfaces/IController";
+import { IController, IResponseHandler } from "@servichain/interfaces";
 import { Request, Response, NextFunction } from 'express'
-import Service from "./Service";
-import { IResponseHandler } from "../interfaces/IResponseHandler";
-import { ErrorResponse } from "./RequestHelpers/ErrorResponse";
+import { Service } from '@servichain/helpers/services';
 
-export default class Controller implements IController {
+export class Controller implements IController {
   service: Service
 
   constructor(service: Service) {
     this.service = service
     this.getAll = this.getAll.bind(this)
-    this.getById = this.getById.bind(this)
     this.insert = this.insert.bind(this)
+    this.update = this.update.bind(this)
     this.delete = this.delete.bind(this)
+    this.getById = this.getById.bind(this)
   }
 
   public async getAll(req: Request, res: Response, next: NextFunction) {

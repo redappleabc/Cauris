@@ -4,7 +4,7 @@
  * Module dependencies.
  */
 
-var app = require('./app');
+var app = require('@servichain/app');
 var debug = require('debug')('back-moon:server');
 var http = require('http');
 

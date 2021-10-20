@@ -1,12 +1,12 @@
-import db from '../../helpers/MongooseClient'
-import Service from '../../helpers/Service'
+import db from '@servichain/helpers/MongooseClient'
+import { Service } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
-import { IRPC } from '../../interfaces/IRPC'
-import { EthersRPCHelper } from '../../helpers/RpcHelpers/EthersRPCHelper'
-import { BaseError } from '../../helpers/BaseError'
-import { EHttpStatusCode } from '../../enums/EHttpError'
+import { IRPC } from '@servichain/interfaces'
+import { EthersRPC } from '@servichain/helpers/rpcs/EthersRPC'
+import { BaseError } from '@servichain/helpers/BaseError'
+import { EHttpStatusCode } from '@servichain/enums'
 
-class TransactionService extends Service {
+export class TransactionService extends Service {
   constructor(model: Model<any> = db.Transaction) {
     super(model)
     this.send = this.send.bind(this)
@@ -20,7 +20,7 @@ class TransactionService extends Service {
       throw new BaseError(EHttpStatusCode.NotFound, "Account not found", true)
     else if (account && account.wallet.user != userId)
       throw new BaseError(EHttpStatusCode.Unauthorized, "Invalid access to this account", true)
-    const RPCHelper: IRPC = new EthersRPCHelper(network.url, network.chainId, account)
+    const RPCHelper: IRPC = new EthersRPC(network.url, network.chainId, account)
     const tx = await RPCHelper.sendTransaction(to, value, coin.contractAddress)
     return super.insert({
       owner: userId,
@@ -32,5 +32,3 @@ class TransactionService extends Service {
     })
   }
 }
-
-export default TransactionService

@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import { EUserRole } from '../../enums/EUserRole';
+import { EUserRole } from '@servichain/enums';
 const {Schema} = mongoose;
 
 const schema = new Schema({
-  email: {type: String, required: true, index: true},
+  email: {type: String, required: true, index: true, unique: true},
   password: {type: String, required: true},
   firstName: String,
   lastName: String,
@@ -23,4 +23,4 @@ schema.set('toJSON', {
   }
 })
 
-export default mongoose.model('User', schema)
+export const UserModel = mongoose.model('User', schema)

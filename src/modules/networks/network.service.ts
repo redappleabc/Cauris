@@ -1,11 +1,9 @@
-import db from '../../helpers/MongooseClient'
-import Service from '../../helpers/Service'
+import db from '@servichain/helpers/MongooseClient'
+import { Service } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
 
-class NetworkService extends Service {
+export class NetworkService extends Service {
   constructor(model: Model<any> = db.Network) {
     super(model)
   }
 }
-
-export default NetworkService

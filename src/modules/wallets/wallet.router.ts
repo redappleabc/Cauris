@@ -1,15 +1,15 @@
 import express from 'express'
 
-import JwtHelper from '../../middlewares/JwtHelper'
-import {EUserRole} from '../../enums/EUserRole'
-
-import WalletController from './wallet.controller'
-import {generateSchema} from './wallet.validators'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
+import {EUserRole} from '@servichain/enums/EUserRole'
+import {WalletController, WalletService, generateSchema} from '@servichain/modules/wallets'
 
 const router = express.Router()
+const service = new WalletService()
+const controller = new WalletController(service)
 
-router.post('/', JwtHelper.middleware(), generateSchema, WalletController.generate)
-router.get('/:id', JwtHelper.middleware(), WalletController.getById)
-router.delete('/', JwtHelper.middleware([EUserRole.Admin]),WalletController.delete)
+router.post('/', JwtHelper.middleware(), generateSchema, controller.generate)
+router.get('/:id', JwtHelper.middleware(), controller.getById)
+router.delete('/', JwtHelper.middleware([EUserRole.Admin]),controller.delete)
 
 export default router

@@ -1,15 +1,14 @@
-import Controller from '../../helpers/Controller'
-import Service from '../../helpers/Service'
-import RefreshService from './refresh-token.service'
-import db from '../../helpers/MongooseClient'
-import config from 'config'
+import {Controller} from '@servichain/helpers/controllers'
+import { Service } from '@servichain/helpers/services/Service'
+import {RefreshService} from '@servichain/modules/refreshs'
 import { Request, Response, NextFunction } from 'express'
-import { ValidResponse } from '../../helpers/RequestHelpers/ValidResponse'
-import { EUserRole } from '../../enums/EUserRole'
+import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
+import { EUserRole } from '@servichain/enums'
+import config from 'config'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 
-class RefreshController extends Controller {
+export class RefreshController extends Controller {
   constructor(service: Service) {
     super(service)
     this.refresh = this.refresh.bind(this)
@@ -55,7 +54,3 @@ class RefreshController extends Controller {
     res.cookie('refreshToken', token, cookieOptions)
   }
 }
-
-const service = new RefreshService(db.RefreshToken)
-
-export default new RefreshController(service)

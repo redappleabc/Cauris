@@ -17,4 +17,4 @@ schema.set('toJSON', {
   }
 })
 
-export default mongoose.model('Wallet', schema)
+export const WalletModel = mongoose.model('Wallet', schema)

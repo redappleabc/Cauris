@@ -1,19 +1,19 @@
 import express from 'express'
 
-import JwtHelper from '../../middlewares/JwtHelper'
-import {EUserRole} from '../../enums/EUserRole'
+import JwtHelper from '@servichain/middlewares/JwtHelper'
+import {EUserRole} from '@servichain/enums'
 
-import RefreshController from './refresh-token.controller'
-import {revokeTokenSchema} from './refresh-token.validators'
+import {RefreshService, RefreshController, revokeTokenSchema} from '@servichain/modules/refreshs'
 
 const router = express.Router()
+const service = new RefreshService()
+const controller = new RefreshController(service)
 
 /* Refresh Routes */
-router.get('/', JwtHelper.middleware([EUserRole.Admin]), RefreshController.getAll)
-router.get('/:id', JwtHelper.middleware(), RefreshController.getById)
-router.post('/', RefreshController.refresh)
-router.post('/revoke', revokeTokenSchema, RefreshController.revoke)
-//router.put('/:id', RefreshController.update)
-router.delete('/:id', RefreshController.delete)
+router.get('/', JwtHelper.middleware([EUserRole.Admin]), controller.getAll)
+router.get('/:id', JwtHelper.middleware(), controller.getById)
+router.post('/', controller.refresh)
+router.post('/revoke', revokeTokenSchema, controller.revoke)
+router.delete('/:id', controller.delete)
 
-export default router
+export {router as RefreshTokenRouter}

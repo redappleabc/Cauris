@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { ETokenType } from '../../enums/ETokenType';
+import { ETokenType } from '@servichain/enums/ETokenType';
 const Schema = mongoose.Schema
 
 const schema = new Schema({
@@ -14,4 +14,4 @@ schema.virtual('isExpired').get(function () {
   return Date.now() >= this.expires;
 });
 
-export default mongoose.model('ValidationToken', schema)
+export const ValidationModel = mongoose.model('ValidationToken', schema)

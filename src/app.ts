@@ -9,13 +9,14 @@ var bearerToken = require('express-bearer-token')
 var MongoStore = require('connect-mongo')
 var config = require('config')
 
-import users from './src/modules/users/user.router'
-import wallets from './src/modules/wallets/wallet.router'
-import accounts from './src/modules/accounts/account.router'
-import refreshs from './src/modules/refreshs/refresh-token.router'
-import networks from './src/modules/networks/network.router'
-import coins from './src/modules/coins/coin.router'
-import transactions from './src/modules/transactions/transaction.router'
+import {UserRouter} from '@servichain/modules/users'
+import wallets from '@servichain/modules/wallets/wallet.router'
+import {AccountRouter} from '@servichain/modules/accounts/account.router'
+import {RefreshTokenRouter} from '@servichain/modules/refreshs'
+import {NetworkRouter} from '@servichain/modules/networks/network.router'
+import {CoinRouter} from '@servichain/modules/coins/coin.router'
+import transactions from '@servichain/modules/transactions/transaction.router'
+import * as ErrorHandler from '@servichain/middlewares/ErrorHandler'
 
 const secret = config.get('secret')
 const mongoDB = config.get('mongoDB')
@@ -36,12 +37,14 @@ app.use(passport.initialize())
 app.use(passport.session())
 app.use(bearerToken())
 
-app.use('/users', users)
+app.use('/users', UserRouter)
 app.use('/wallets', wallets)
-app.use('/accounts', accounts)
-app.use('/refresh-tokens', refreshs)
-app.use('/networks', networks)
-app.use('/coins', coins)
+app.use('/accounts', AccountRouter)
+app.use('/refresh-tokens', RefreshTokenRouter)
+app.use('/networks', NetworkRouter)
+app.use('/coins', CoinRouter)
 app.use('/transactions', transactions)
+
+app.use(ErrorHandler.errorMiddleware)
 
 module.exports = app
