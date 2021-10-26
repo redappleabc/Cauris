@@ -9,7 +9,7 @@ export class WalletService extends ServiceProtected {
     this.generate = this.generate.bind(this)
   }
 
-  public async generate(userId: string, network: string, userMnemonic: string = null) {
+  public async generate(userId: string, userMnemonic: string = null) {
     const wallet: HDWallet = new EthereumWallet(userMnemonic)
     const {mnemonic, seed} = wallet.getWallet()
     return super.insert({

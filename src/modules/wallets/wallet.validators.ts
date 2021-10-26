@@ -4,8 +4,7 @@ import { JoiValidator } from '@servichain/middlewares/JoiValidator';
 
 export function generateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
-    mnemonic: Joi.string().empty(''),
-    network: Joi.string().required()
+    mnemonic: Joi.string().empty('')
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)

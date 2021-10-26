@@ -14,6 +14,7 @@ export class ControllerProtected extends Controller {
       const { id } = req.params
       const userId = res.locals.user.id
       let handler: IResponseHandler = await (this.service as ServiceProtected).getByIdProtected(id, userId)
+      return handler.handleResponse(res)
     } catch (err) {
       next(err)
     }
