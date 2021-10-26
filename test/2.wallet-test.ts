@@ -25,6 +25,14 @@ const BIP39Test = {
   seed: "5b60c2acb37fa95a1787d7966eef151a1028415ea2b6f7929788d771d8581a66320b902122855034833847336c86b9dd997b718e582d53d6ae9d80b58f79ffa7",
 }
 
+const invalidLengthMnemonic = {
+  mnemonic: "another jazz"
+}
+
+const invalidWordsMnemonic = {
+  mnemonic: "dsqdqs dsqdqs dqsdqs dsqdqs dqsdqs dsqdqs dqsdqs dqsdq dqsdqs dqsdqs dqsqds dqsdqs"
+}
+
 let userID: string;
 let walletID: string;
 let token: string;
@@ -73,6 +81,26 @@ describe('Wallets', () => {
       .set({ Authorization: `Bearer ${token}` })
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.Created)
+        done()
+      })
+    })
+    it('should not be able to generate a wallet with insufficient words number', done => {
+      chai.request(server)
+      .post('/wallets')
+      .set({ Authorization: `Bearer ${token}` })
+      .send(invalidLengthMnemonic)
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.BadRequest)
+        done()
+      })
+    })
+    it('should not be able to generate a wallet with a bad mnemonic', done => {
+      chai.request(server)
+      .post('/wallets')
+      .set({ Authorization: `Bearer ${token}` })
+      .send(invalidWordsMnemonic)
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.BadRequest)
         done()
       })
     })
