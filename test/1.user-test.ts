@@ -1,9 +1,9 @@
 process.env.NODE_ENV = 'test';
 
-import MongooseClient from '@servichain/helpers/MongooseClient';
+import MongooseClient from '@servichain/helpers/MongooseClient'
+import { EHttpStatusCode } from '@servichain/enums/EHttpError'
 import chai from 'chai'
 import chaiHttp from 'chai-http'
-import { EHttpStatusCode } from '@servichain/enums/EHttpError';
 
 const server = require('../server')
 let should = chai.should()
@@ -35,9 +35,17 @@ const testUser2Auth = {
 }
 
 
-let token;
-let userId;
-let adminId;
+let token: string;
+let userId: string;
+let adminId: string;
+
+after('Drop database after tests', (done) => {
+  MongooseClient.getConnection().db.dropDatabase(function() {
+    MongooseClient.getConnection().close(function() {
+      done()
+    })
+  })
+})
 
 describe('Users', () => {
   before('Clean database before tests', (done) => {
@@ -58,7 +66,7 @@ describe('Users', () => {
         res.should.have.status(EHttpStatusCode.Created)
         res.body.data.should.have.property('role').eql('admin')
         res.body.data.should.have.property('id')
-        adminId = res.body.data.user.id
+        adminId = res.body.data.id
         done()
       })
     })
@@ -165,6 +173,17 @@ describe('Users', () => {
     })
   })
   describe('[DELETE] /users/:id', () => {
-
+    it("should not be able to delete own user", done => {
+      chai.request(server)
+      .delete(`/users/${userId}`)
+      .set({ Authorization: `Bearer ${token}` })
+      .end((err, res) => {
+        if (err) {
+          done()
+        }
+        res.should.have.status(EHttpStatusCode.Unauthorized)
+        done()
+      })
+    })
   })
 })

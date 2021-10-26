@@ -10,7 +10,6 @@ const service = new RefreshService()
 const controller = new RefreshController(service)
 
 /* Refresh Routes */
-router.get('/', JwtHelper.middleware([EUserRole.Admin]), controller.getAll)
 router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
 router.post('/', controller.refresh)
 router.post('/revoke', revokeTokenSchema, controller.revoke)

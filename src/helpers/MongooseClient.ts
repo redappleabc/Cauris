@@ -1,4 +1,4 @@
-import { Model } from 'mongoose'
+import { ConnectOptions, Model, mongo } from 'mongoose'
 /* Not using barrels to avoid circular includes  */
 import {UserModel} from '@servichain/modules/users/user.model'
 import {RefreshModel} from '@servichain/modules/refreshs/refresh-token.model'
@@ -9,8 +9,7 @@ import {TransactionModel} from '@servichain/modules/transactions/transaction.mod
 import {NetworkModel} from '@servichain/modules/networks/network.model'
 import {CoinModel} from '@servichain/modules/coins/coin.model'
 import config from 'config'
-
-const mongoose = require('mongoose')
+import mongoose from 'mongoose'
 const mongoDB: string = config.get('mongoDB')
 
 class MongooseClient {
@@ -25,16 +24,16 @@ class MongooseClient {
 
   constructor() {
     const url = process.env.MONGO_URI || mongoDB
-    const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
     mongoose.Promise = global.Promise
-    mongoose.connect(url, options)
+    mongoose.connect(url)
   }
 
   isValidID(id: any) {
     return mongoose.Types.ObjectId.isValid(id)
+  }
+
+  getConnection() {
+    return mongoose.connection
   }
 }
 

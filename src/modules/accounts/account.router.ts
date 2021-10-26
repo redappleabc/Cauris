@@ -10,6 +10,6 @@ const controller = new AccountController(service)
 
 router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
 router.post('/', JwtHelper.middleware(), generateSchema, controller.generate)
-router.delete('/', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
+router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
 export {router as AccountRouter}
