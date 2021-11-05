@@ -1,4 +1,4 @@
-import Service from "../helpers/Service";
+import {Service} from "@servichain/helpers/services";
 import {Request, Response, NextFunction} from 'express'
 
 export interface IController {

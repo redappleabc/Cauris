@@ -39,7 +39,7 @@ export class Service implements IService {
       let total = await this.model.count()
 
       return new ValidResponse(EHttpStatusCode.OK, {
-        data: items,
+        ...items,
         total
       })
     } catch (error) {

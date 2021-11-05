@@ -27,6 +27,13 @@ const coinTest = {
   "coinIndex": 60
 }
 
+const coinERC20Test = {
+  "name": "SpecialERC20",
+  "symbol": "ERC",
+  "coinIndex": 60,
+  "contractAddress": "0x0D7F9E5589f8A5983a383606faF13bA1CBd8d157"
+}
+
 const newtorkTest = {
   "name": "Local Chain",
   "chainId": 1337,
@@ -80,6 +87,17 @@ describe('Coins', () => {
       .send(coinTest)
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.Unauthorized)
+        done()
+      })
+    })
+    it('should be able to create a coin with an already existing Index', done => {
+      chai.request(server)
+      .post('/coins')
+      .set({ Authorization: `Bearer ${adminToken}` })
+      .send(coinERC20Test)
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.Created)
+        res.body.data.should.have.property('id')
         done()
       })
     })

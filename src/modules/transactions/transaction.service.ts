@@ -14,7 +14,11 @@ export class TransactionService extends Service {
 
   public async send(userId: string, coinId: string, networkId: string, from: string, to: string, value: number) {
     const coin = await db.Coin.findById(coinId)
+    if (!coin)
+      throw new BaseError(EHttpStatusCode.NotFound, "Specified coin id not found")
     const network = await db.Network.findById(networkId)
+    if (!network)
+    throw new BaseError(EHttpStatusCode.NotFound, "Specified network id not found")
     const account = await db.Account.findOne({address: from}).populate('wallet')
     if (!account)
       throw new BaseError(EHttpStatusCode.NotFound, "Account not found", true)

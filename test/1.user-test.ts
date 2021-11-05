@@ -5,6 +5,7 @@ import { EHttpStatusCode } from '@servichain/enums/EHttpError'
 import chai from 'chai'
 import chaiHttp from 'chai-http'
 
+//const ganacheServer = require('@servichain/utils/ganache-server')
 const server = require('../server')
 let should = chai.should()
 

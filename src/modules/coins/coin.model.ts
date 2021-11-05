@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 const Schema = mongoose.Schema
 
 const schema = new Schema({
-  coinIndex: {type: Number, required: true, index: true},
+  coinIndex: {type: Number, required: true},
   name: {type: String, required: true},
   symbol: {type: String, required: true},
   contractAddress: String,

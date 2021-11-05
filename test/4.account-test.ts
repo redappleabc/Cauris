@@ -101,7 +101,17 @@ describe('Accounts', () => {
       .set({Authorization: `Bearer ${token}`})
       .send(accountTestFail)
       .end((err, res) => {
-        res.should.have.status(EHttpStatusCode.BadRequest)
+        res.should.have.status(EHttpStatusCode.NotFound)
+        done()
+      })
+    })
+    it('should not be possible to create an account without possessing a wallet', done => {
+      chai.request(server)
+      .post('/accounts')
+      .set({Authorization: `Bearer ${adminToken}`})
+      .send(accountTest)
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.Forbidden)
         done()
       })
     })
