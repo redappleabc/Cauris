@@ -45,19 +45,26 @@ export class HDWallet implements IHDWallet {
     .derive(address_index)
 
     return {
-      publicKey: this.generateChecksumAddress(childrenNode.publicKey.toString('hex')),
-      privateKey: this.generateChecksumAddress(childrenNode.privateKey.toString('hex')),
-      address: this.getAddress(childrenNode.privateKey)
+      publicKey: this.generatePublicKey(childrenNode),
+      privateKey: this.generatePrivateKey(childrenNode),
+      address: this.getAddress(childrenNode)
     }
   }
 
   //must be override by children
-  generateChecksumAddress(keyString: string): string {
-    return keyString
+  generatePublicKey(childrenNode: bip32.BIP32Interface): string {
+    return childrenNode.privateKey.toString('hex')
+
+  }
+
+  generatePrivateKey(childrenNode: bip32.BIP32Interface): string {
+    return childrenNode.privateKey.toString('hex')
+
   }
 
   //must be override by children
-  getAddress(privKeyBuffer: Buffer): string {
+  getAddress(childrenNode: bip32.BIP32Interface): string {
+    const privKeyBuffer = childrenNode.privateKey
     return "0x" + privKeyBuffer.toString('hex')
   }
 }

@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EUserRole } from '@servichain/enums'
 import config from 'config'
-import { ServiceProtected } from '@servichainhelpers/services'
+import { ServiceProtected } from '@servichain/helpers/services'
 
 const defaultExpiresIn: number = config.get('defaultExpiresIn')
 

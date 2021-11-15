@@ -7,6 +7,7 @@ export interface IHDWallet {
 
   generateMasterNode(coinIndex: number)
   generateKeyPair(coinIndex: number, account_index: number, change: number, address_index: number)
-  generateChecksumAddress(keyString: string): string
-  getAddress(privKeyBuffer: Buffer): string
+  generatePublicKey(childrenNode: BIP32Interface): string
+  generatePrivateKey(childrenNode: BIP32Interface): string
+  getAddress(childrenNode: BIP32Interface): string
 }

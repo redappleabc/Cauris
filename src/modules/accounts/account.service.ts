@@ -3,8 +3,8 @@ import { ServiceProtected } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
 import { HDWallet } from '@servichain/helpers/hdwallets/HDWallet'
 import { EthereumWallet } from '@servichain/helpers/hdwallets/EthereumWallet'
-import { BaseError } from '@servichainhelpers/BaseError'
-import { EHttpStatusCode } from '@servichainenums'
+import { BaseError } from '@servichain/helpers/BaseError'
+import { EHttpStatusCode } from '@servichain/enums'
 
 export class AccountService extends ServiceProtected {
   constructor(model: Model<any> = db.Account) {

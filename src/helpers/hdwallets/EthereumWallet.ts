@@ -1,4 +1,5 @@
 import {HDWallet} from '@servichain/helpers/hdwallets/HDWallet'
+import { BIP32Interface } from 'bip32'
 import * as ethereum from 'ethereumjs-util'
 
 export class EthereumWallet extends HDWallet {
@@ -6,11 +7,18 @@ export class EthereumWallet extends HDWallet {
     super(mnemonic)
   }
 
-  generateChecksumAddress(keyString: string): string {
-    return ethereum.toChecksumAddress("0x" + keyString)
+  generatePublicKey(childrenNode: BIP32Interface): string {
+    const keystring: string = childrenNode.publicKey.toString('hex')
+    return ethereum.toChecksumAddress("0x" + keystring)
   }
 
-  getAddress(privKeyBuffer: Buffer): string {
+  generatePrivateKey(childrenNode: BIP32Interface): string {
+    const keystring: string = childrenNode.privateKey.toString('hex')
+    return ethereum.toChecksumAddress("0x" + keystring)
+  }
+
+  getAddress(childrenNode: BIP32Interface): string {
+    const privKeyBuffer: Buffer = childrenNode.privateKey
     const pubKey = ethereum.privateToPublic(privKeyBuffer)
     const addr = "0x" + ethereum.publicToAddress(pubKey).toString('hex')
     return ethereum.toChecksumAddress(addr)

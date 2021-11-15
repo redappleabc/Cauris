@@ -1,7 +1,7 @@
 import {AccountService} from '@servichain/modules/accounts'
 import { Request, Response, NextFunction } from 'express'
 import { IResponseHandler } from '@servichain/interfaces'
-import { ControllerProtected } from '@servichainhelpers/controllers/ControllerProtected'
+import { ControllerProtected } from '@servichain/helpers/controllers/ControllerProtected'
 
 export class AccountController extends ControllerProtected {
   constructor(service: AccountService) {

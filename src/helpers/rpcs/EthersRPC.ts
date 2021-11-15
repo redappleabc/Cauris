@@ -1,8 +1,8 @@
 import { IAccount, IRPC } from '@servichain/interfaces'
 import * as ethers from 'ethers'
 import {abi} from '@servichain/files/test-token.json'
-import { BaseError } from '@servichainhelpers/BaseError'
-import { EHttpStatusCode } from '@servichainenums'
+import { BaseError } from '@servichain/helpers/BaseError'
+import { EHttpStatusCode } from '@servichain/enums'
 
 export class EthersRPC implements IRPC {
   account: IAccount

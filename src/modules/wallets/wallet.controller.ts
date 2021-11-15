@@ -2,7 +2,7 @@ import { ServiceProtected } from '@servichain/helpers/services'
 import { WalletService } from '@servichain/modules/wallets'
 import { Request, Response, NextFunction } from 'express'
 import { IResponseHandler } from '@servichain/interfaces'
-import { ControllerProtected } from '@servichainhelpers/controllers'
+import { ControllerProtected } from '@servichain/helpers/controllers'
 
 export class WalletController extends ControllerProtected {
   constructor(service: ServiceProtected) {

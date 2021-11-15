@@ -1,5 +1,5 @@
 import { ServiceProtected } from '@servichain/helpers/services'
-import { ControllerProtected } from '@servichainhelpers/controllers/ControllerProtected'
+import { ControllerProtected } from '@servichain/helpers/controllers/ControllerProtected'
 
 export class ValidationController extends ControllerProtected {
   constructor(service: ServiceProtected) {
