@@ -49,7 +49,7 @@ export class UserService extends Service {
     }
   }
 
-  public async verifyAccount(userId: string) {
+  public async verifyUser(userId: string) {
     try {
       const user = await this.model.findById(userId)
       if (!user)

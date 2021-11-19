@@ -6,7 +6,6 @@ import { IResponseHandler } from '@servichain/interfaces'
 import { Model } from 'mongoose'
 import config from 'config'
 import { BaseError } from '@servichain/helpers/BaseError'
-import { ValidResponse } from '@servichain/helpers/responses'
 
 export class ValidationService extends ServiceProtected {
   constructor(model: Model<any> = db.ValidationToken) {
@@ -41,9 +40,8 @@ export class ValidationService extends ServiceProtected {
     }
   }
 
-  public async consumeToken(tokenString: string, user: any) {
+  public async consumeToken(token: any) {
     try {
-      let token = await this.verifyToken(tokenString, user)
       token.used = true
       token.save()
       return true

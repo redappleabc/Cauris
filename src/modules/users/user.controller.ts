@@ -30,16 +30,16 @@ export class UserController extends Controller {
   public async passwordForgotten(req: Request, res: Response, next: NextFunction) {
     try {
       const {newPassword} = req.body
-      const handler: ValidResponse = await (this.service as UserService).changePassword(req.user['id'], newPassword)
+      const handler: ValidResponse = await (this.service as UserService).changePassword(req.params.id, newPassword)
       handler.handleResponse(res)
     } catch (err) {
       next(err)
     }
   }
 
-  public async verifyAccount(req: Request, res: Response, next: NextFunction) {
+  public async verifyUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const handler: ValidResponse = await (this.service as UserService).verifyAccount(req.user['id'])
+      const handler: ValidResponse = await (this.service as UserService).verifyUser(req.params.id)
       handler.handleResponse(res)
     } catch (err) {
       next(err)
