@@ -34,14 +34,24 @@ const coinERC20Test = {
   "contractAddress": "0x0D7F9E5589f8A5983a383606faF13bA1CBd8d157"
 }
 
-const newtorkTest = {
+const networkTest = {
   "name": "Local Chain",
   "chainId": 1337,
   "url": "http://localhost:8545"
 }
 
+const networkTest2 = {
+  "name": "Testnet BSC",
+  "chainId": 97,
+  "url": "https://data-seed-prebsc-1-s1.binance.org:8545",
+  "currencySymbol": "BNB",
+  "blockExplorer": "https://testnet.bscscan.com"
+}
+
 let coinID: string;
+let coinID2: string
 let networkID: string;
+let networkID2: string;
 let token: string;
 let adminToken: string;
 
@@ -73,7 +83,7 @@ describe('Networks', () => {
       chai.request(server)
       .post('/networks')
       .set({ Authorization: `Bearer ${adminToken}` })
-      .send(newtorkTest)
+      .send(networkTest)
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.Created)
         res.body.data.should.have.property('id')
@@ -145,11 +155,23 @@ describe('Coins', () => {
     chai.request(server)
     .post('/networks')
     .set({ Authorization: `Bearer ${adminToken}` })
-    .send(newtorkTest)
+    .send(networkTest)
     .end((err, res) => {
       res.should.have.status(EHttpStatusCode.Created)
       res.body.data.should.have.property('id')
       networkID = res.body.data.id
+      done()
+    })
+  })
+  before('create a second network', done => {
+    chai.request(server)
+    .post('/networks')
+    .set({ Authorization: `Bearer ${adminToken}` })
+    .send(networkTest2)
+    .end((err, res) => {
+      res.should.have.status(EHttpStatusCode.Created)
+      res.body.data.should.have.property('id')
+      networkID2 = res.body.data.id
       done()
     })
   })
@@ -197,7 +219,19 @@ describe('Coins', () => {
         done()
       })
     })
-    it('should be able to create a coin with an already existing Index', done => {
+    it('should be able to create a coin with an already existing Index but different Network', done => {
+      chai.request(server)
+      .post('/coins')
+      .set({ Authorization: `Bearer ${adminToken}` })
+      .send({network: networkID2, ...coinTest})
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.Created)
+        res.body.data.should.have.property('id')
+        coinID2 = res.body.data.id
+        done()
+      })
+    })
+    it('should be able to create a coin with an already existing Index & Network but different Contract', done => {
       chai.request(server)
       .post('/coins')
       .set({ Authorization: `Bearer ${adminToken}` })
@@ -205,6 +239,16 @@ describe('Coins', () => {
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.Created)
         res.body.data.should.have.property('id')
+        done()
+      })
+    })
+    it('should not be able to create a coin with an already existing Index & Network & Contract', done => {
+      chai.request(server)
+      .post('/coins')
+      .set({ Authorization: `Bearer ${adminToken}` })
+      .send({network: networkID, ...coinERC20Test})
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.InternalServerError)
         done()
       })
     })
@@ -252,6 +296,15 @@ describe('Coins', () => {
         res.should.have.status(EHttpStatusCode.Accepted)
         done()
       })
+    })
+  })
+  after('should delete another coin', done => {
+    chai.request(server)
+    .delete(`/coins/${coinID2}`)
+    .set({ Authorization: `Bearer ${adminToken}` })
+    .end((err, res) => {
+      res.should.have.status(EHttpStatusCode.Accepted)
+      done()
     })
   })
 })

@@ -10,6 +10,7 @@ const schema = new Schema({
   createdAt: {type: Date, default: Date.now()},
 })
 
+schema.index({network: 1, coinIndex: 1, contractAddress: 1}, {unique: true})
 
 schema.set('toJSON', {
   virtuals: true,
