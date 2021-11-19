@@ -49,11 +49,6 @@ after('Drop database after tests', (done) => {
 })
 
 describe('Users', () => {
-  before('Clean database before tests', (done) => {
-    MongooseClient.User.deleteMany({}, err => {
-      done()
-    })
-  })
   describe('[POST] /users', () => {
     it("should create a first user as admin", done => {
       chai.request(server)
@@ -95,6 +90,7 @@ describe('Users', () => {
         }
         res.should.have.status(EHttpStatusCode.Created)
         res.body.data.should.have.property('role').eql('user')
+        res.body.data.should.not.have.property('password')
         done()
       })
     })
@@ -142,6 +138,7 @@ describe('Users', () => {
         }
         res.should.have.status(EHttpStatusCode.OK)
         res.body.data.should.have.property('id')
+        res.body.data.should.not.have.property('password')
         done()
       })
     })
@@ -169,6 +166,7 @@ describe('Users', () => {
           done()
         }
         res.should.have.status(EHttpStatusCode.Accepted)
+        res.body.data.should.not.have.property('password')
         done()
       })
     })

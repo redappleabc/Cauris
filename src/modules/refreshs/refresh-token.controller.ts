@@ -6,7 +6,7 @@ import { EUserRole } from '@servichain/enums'
 import config from 'config'
 import { ServiceProtected } from '@servichain/helpers/services'
 
-const defaultExpiresIn: number = config.get('defaultExpiresIn')
+const refreshTokenExpiresIn: number = config.get('refreshTokenExpiresIn')
 
 export class RefreshController extends ControllerProtected {
   constructor(service: ServiceProtected) {
@@ -48,7 +48,7 @@ export class RefreshController extends ControllerProtected {
   protected setTokenCookie(res: Response, token: any) {
     const cookieOptions = {
       httpOnly: true,
-      expires: new Date(Date.now() + defaultExpiresIn)
+      expires: new Date(Date.now() + refreshTokenExpiresIn)
     }
 
     res.cookie('refreshToken', token, cookieOptions)

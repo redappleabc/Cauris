@@ -13,18 +13,15 @@ export class TransactionService extends Service {
   }
 
   public async send(userId: string, coinId: string, networkId: string, from: string, to: string, value: number) {
-    const coin = await db.Coin.findById(coinId)
+    const coin = await db.Coin.findOne({_id: coinId, network: networkId}).populate('network')
     if (!coin)
-      throw new BaseError(EHttpStatusCode.NotFound, "Specified coin id not found")
-    const network = await db.Network.findById(networkId)
-    if (!network)
-    throw new BaseError(EHttpStatusCode.NotFound, "Specified network id not found")
+      throw new BaseError(EHttpStatusCode.NotFound, "Specified coin doesnt exist or wasnt found on the specified network")
     const account = await db.Account.findOne({address: from}).populate('wallet')
     if (!account)
       throw new BaseError(EHttpStatusCode.NotFound, "Account not found", true)
     else if (account && account.wallet.user != userId)
       throw new BaseError(EHttpStatusCode.Unauthorized, "Invalid access to this account", true)
-    const RPCHelper: IRPC = new EthersRPC(network.url, network.chainId, account)
+    const RPCHelper: IRPC = new EthersRPC(coin.network.url, coin.network.chainId, account)
     const tx = await RPCHelper.sendTransaction(to, value, coin.contractAddress)
     return super.insert({
       owner: userId,

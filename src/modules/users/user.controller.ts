@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 
 
-const defaultExpiresIn: number = config.get('defaultExpiresIn')
+const refreshTokenExpiresIn: number = config.get('refreshTokenExpiresIn')
 
 export class UserController extends Controller {
   constructor(service: UserService) {
@@ -27,10 +27,30 @@ export class UserController extends Controller {
     }
   }
 
+  public async passwordForgotten(req: Request, res: Response, next: NextFunction) {
+    try {
+      const {newPassword} = req.body
+      const handler: ValidResponse = await (this.service as UserService).changePassword(req.user['id'], newPassword)
+      handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  public async verifyAccount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const handler: ValidResponse = await (this.service as UserService).verifyAccount(req.user['id'])
+      handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  //internal
   protected setTokenCookie(res: Response, token: any) {
     const cookieOptions = {
       httpOnly: true,
-      expires: new Date(Date.now() + defaultExpiresIn)
+      expires: new Date(Date.now() + refreshTokenExpiresIn)
     }
 
     res.cookie('refreshToken', token, cookieOptions)

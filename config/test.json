@@ -1,5 +1,6 @@
 {
   "mongoDB": "mongodb://localhost/servichain_test",
   "secret": "servichain_test_secret",
-  "defaultExpiresIn": 604800
+  "validationTokenExpiresIn": 86400,
+  "refreshTokenExpiresIn": 604800
 }

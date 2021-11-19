@@ -1,6 +1,6 @@
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { BaseError } from '@servichain/helpers/BaseError'
-import { Model } from 'mongoose'
+import { Document, EnforceDocument, Model } from 'mongoose'
 import { IService, IResponseHandler } from "@servichain/interfaces";
 import { EHttpStatusCode } from '@servichain/enums';
 const mongoose = require("mongoose")
@@ -35,9 +35,11 @@ export class Service implements IService {
     }
 
     try {
-      let items = await this.model.find(query).skip(skip).limit(limit)
-      let total = await this.model.count()
+      let items: Document[] = await this.model.find(query).skip(skip).limit(limit)
+      let total: number = await this.model.count()
 
+      if (!items)
+        throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true)
       return new ValidResponse(EHttpStatusCode.OK, {
         ...items,
         total
@@ -49,9 +51,21 @@ export class Service implements IService {
 
   public async getById(id: string): Promise<IResponseHandler> {
     try {
-      let item = await this.model.findById(id)
-      if (item)
-        return new ValidResponse(EHttpStatusCode.OK, item)
+      let item: Document = await this.model.findById(id)
+      if (!item)
+        throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
+      return new ValidResponse(EHttpStatusCode.OK, item)
+    } catch (error) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
+    }
+  }
+
+  public async getDetailsById(id: string) : Promise<IResponseHandler> {
+    try {
+      let item: Document = await this.model.findById(id)
+      if (!item)
+        throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
+      return new ValidResponse(EHttpStatusCode.OK, item)
     } catch (error) {
       throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
     }
@@ -59,9 +73,10 @@ export class Service implements IService {
 
   public async insert(data: any): Promise<IResponseHandler> {
     try {
-      let item = await this.model.create(data)
-      if (item)
-        return new ValidResponse(EHttpStatusCode.Created, item)
+      let item: Document = await this.model.create(data)
+      if (!item)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Could not create item")
+      return new ValidResponse(EHttpStatusCode.Created, item)
     } catch (error) {
       if (error instanceof mongoose.Error) {
         throw new BaseError(EHttpStatusCode.BadRequest, error, true)
@@ -72,7 +87,8 @@ export class Service implements IService {
 
   public async update(id: string, data: any): Promise<IResponseHandler> {
     try {
-      let item = await this.model.findByIdAndUpdate(id, data, {new: true})
+      let item: Document = await this.model.findByIdAndUpdate(id, data, {new: true})
+
       if (!item) {
         throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
       }
@@ -84,7 +100,8 @@ export class Service implements IService {
 
   public async delete(id: string): Promise<IResponseHandler> {
     try {
-      let item = await this.model.findByIdAndDelete(id)
+      let item: Document = await this.model.findByIdAndDelete(id)
+
       if (!item) {
         throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
       }

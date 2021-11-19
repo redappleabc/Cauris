@@ -1,4 +1,4 @@
 export enum ETokenType {
-  Reset = 'reset',
+  Reset = 'reset-password',
   Verification = 'verification',
 }

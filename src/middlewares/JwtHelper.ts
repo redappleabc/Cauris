@@ -9,12 +9,12 @@ import config from 'config'
 import { EHttpStatusCode } from "@servichain/enums";
 
 const secret: string = config.get('secret')
-const defaultExpiresIn: number = config.get('defaultExpiresIn')
+const refreshTokenExpiresIn: number = config.get('refreshTokenExpiresIn')
 
 class JwtHelper {
   public generate(user: any) {
-    const token = sign(user.toJSON() , secret, {algorithm: 'HS256', expiresIn: defaultExpiresIn})
-    return { jwtToken: token, defaultExpiresIn }
+    const token = sign(user.toJSON() , secret, {algorithm: 'HS256', expiresIn: refreshTokenExpiresIn})
+    return { jwtToken: token, refreshTokenExpiresIn }
   }
 
   public decode(token: string) {

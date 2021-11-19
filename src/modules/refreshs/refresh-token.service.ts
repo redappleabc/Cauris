@@ -8,7 +8,7 @@ import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EHttpStatusCode } from '@servichain/enums'
 import config from 'config'
 
-const defaultExpiresIn: number = config.get('defaultExpiresIn')
+const refreshTokenExpiresIn: number = config.get('refreshTokenExpiresIn')
 
 export class RefreshService extends ServiceProtected {
   constructor(model: Model<any> = db.RefreshToken) {
@@ -34,12 +34,13 @@ export class RefreshService extends ServiceProtected {
     }
   }
 
+  //internal
   public async generate(id: string, ipAddress: string) {
     try {
       const refreshToken: any = {
         user: id,
         token: generateRandomToken(),
-        expires: new Date(Date.now() + defaultExpiresIn),
+        expires: new Date(Date.now() + refreshTokenExpiresIn),
         createdByIp: ipAddress
       }
       return refreshToken

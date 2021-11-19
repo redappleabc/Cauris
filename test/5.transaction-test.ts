@@ -17,12 +17,6 @@ const testAdminAuth = {
   password: "testing_password123",
 }
 
-const newtorkTest = {
-  "name": "Local Chain",
-  "chainId": 1337,
-  "url": "http://localhost:8545"
-}
-
 let token: string
 let adminToken: string
 let networkId: string
@@ -78,15 +72,14 @@ describe('Transactions', () => {
       done()
     })
   })
-  before('Create local network ID', done => {
+  before('Get local network ID', done => {
     chai.request(server)
-    .post('/networks')
+    .get('/networks')
     .set({ Authorization: `Bearer ${adminToken}` })
-    .send(newtorkTest)
     .end((err, res) => {
-      res.should.have.status(EHttpStatusCode.Created)
-      res.body.data.should.have.property('id')
-      networkId = res.body.data.id
+      res.should.have.status(EHttpStatusCode.OK)
+      networkId = res.body.data[0]['id']
+      networkId.should.not.be.undefined
       done()
     })
   })

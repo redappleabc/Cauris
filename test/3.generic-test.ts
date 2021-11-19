@@ -45,109 +45,6 @@ let networkID: string;
 let token: string;
 let adminToken: string;
 
-describe('Coins', () => {
-  before('Authenticate with user', done => {
-    chai.request(server)
-    .post('/users/authenticate')
-    .send(testUserAuth)
-    .end((err, res) => {
-      res.should.have.status(EHttpStatusCode.OK)
-      token = res.body.data.jwtToken
-      done()
-    })
-  })
-  before('Authenticate with admin', done => {
-    chai.request(server)
-    .post('/users/authenticate')
-    .send(testAdminAuth)
-    .end((err, res) => {
-      res.should.have.status(EHttpStatusCode.OK)
-      adminToken = res.body.data.jwtToken
-      done()
-    })
-  })
-
-  describe('[POST] /coins', () => {
-    it('should be able to create a coin with partner/admin rights', done => {
-      chai.request(server)
-      .post('/coins')
-      .set({ Authorization: `Bearer ${adminToken}` })
-      .send(coinTest)
-      .end((err, res) => {
-        res.should.have.status(EHttpStatusCode.Created)
-        res.body.data.should.have.property('id')
-        coinID = res.body.data.id
-        done()
-      })
-    })
-    it('should not be possible to create coin for regular users', done => {
-      chai.request(server)
-      .post('/coins')
-      .set({ Authorization: `Bearer ${token}` })
-      .send(coinTest)
-      .end((err, res) => {
-        res.should.have.status(EHttpStatusCode.Unauthorized)
-        done()
-      })
-    })
-    it('should be able to create a coin with an already existing Index', done => {
-      chai.request(server)
-      .post('/coins')
-      .set({ Authorization: `Bearer ${adminToken}` })
-      .send(coinERC20Test)
-      .end((err, res) => {
-        res.should.have.status(EHttpStatusCode.Created)
-        res.body.data.should.have.property('id')
-        done()
-      })
-    })
-  })
-  describe('[GET] /coins', () => {
-    it('should be able to retrieve the list of coins by anyone', done => {
-      chai.request(server)
-      .get('/coins')
-      .send(coinTest)
-      .end((err, res) => {
-        res.should.have.status(EHttpStatusCode.OK)
-        done()
-      })
-    })
-  })
-  describe('[GET] /coins/:id', () => {
-    it('should be able to retrieve a specific coin by anyone', done => {
-      chai.request(server)
-      .get(`/coins/${coinID}`)
-      .send(coinTest)
-      .end((err, res) => {
-        res.should.have.status(EHttpStatusCode.OK)
-        done()
-      })
-    })
-  })
-  describe('[PUT] /coins/:id', () => {
-    it('should be able to update coin infos with admin rights', done => {
-      chai.request(server)
-      .put(`/coins/${coinID}`)
-      .set({ Authorization: `Bearer ${adminToken}` })
-      .send(coinTest)
-      .end((err, res) => {
-        res.should.have.status(EHttpStatusCode.Accepted)
-        done()
-      })
-    })
-  })
-  describe('[DELETE] /coins/:id', () => {
-    it('should be able to delete coin infos with admin rights', done => {
-      chai.request(server)
-      .delete(`/coins/${coinID}`)
-      .set({ Authorization: `Bearer ${adminToken}` })
-      .end((err, res) => {
-        res.should.have.status(EHttpStatusCode.Accepted)
-        done()
-      })
-    })
-  })
-})
 
 describe('Networks', () => {
   before('Authenticate with user', done => {
@@ -233,6 +130,123 @@ describe('Networks', () => {
     it('should be able to delete coin infos with admin rights', done => {
       chai.request(server)
       .delete(`/networks/${networkID}`)
+      .set({ Authorization: `Bearer ${adminToken}` })
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.Accepted)
+        done()
+      })
+    })
+  })
+})
+
+
+describe('Coins', () => {
+  before('Create local network ID', done => {
+    chai.request(server)
+    .post('/networks')
+    .set({ Authorization: `Bearer ${adminToken}` })
+    .send(newtorkTest)
+    .end((err, res) => {
+      res.should.have.status(EHttpStatusCode.Created)
+      res.body.data.should.have.property('id')
+      networkID = res.body.data.id
+      done()
+    })
+  })
+  before('Authenticate with user', done => {
+    chai.request(server)
+    .post('/users/authenticate')
+    .send(testUserAuth)
+    .end((err, res) => {
+      res.should.have.status(EHttpStatusCode.OK)
+      token = res.body.data.jwtToken
+      done()
+    })
+  })
+  before('Authenticate with admin', done => {
+    chai.request(server)
+    .post('/users/authenticate')
+    .send(testAdminAuth)
+    .end((err, res) => {
+      res.should.have.status(EHttpStatusCode.OK)
+      adminToken = res.body.data.jwtToken
+      done()
+    })
+  })
+
+  describe('[POST] /coins', () => {
+    it('should be able to create a coin with partner/admin rights', done => {
+      chai.request(server)
+      .post('/coins')
+      .set({ Authorization: `Bearer ${adminToken}` })
+      .send({network: networkID, ...coinTest})
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.Created)
+        res.body.data.should.have.property('id')
+        coinID = res.body.data.id
+        done()
+      })
+    })
+    it('should not be possible to create coin for regular users', done => {
+      chai.request(server)
+      .post('/coins')
+      .set({ Authorization: `Bearer ${token}` })
+      .send(coinTest)
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.Unauthorized)
+        done()
+      })
+    })
+    it('should be able to create a coin with an already existing Index', done => {
+      chai.request(server)
+      .post('/coins')
+      .set({ Authorization: `Bearer ${adminToken}` })
+      .send({network: networkID, ...coinERC20Test})
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.Created)
+        res.body.data.should.have.property('id')
+        done()
+      })
+    })
+  })
+  describe('[GET] /coins', () => {
+    it('should be able to retrieve the list of coins by anyone', done => {
+      chai.request(server)
+      .get('/coins')
+      .send(coinTest)
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.OK)
+        done()
+      })
+    })
+  })
+  describe('[GET] /coins/:id', () => {
+    it('should be able to retrieve a specific coin by anyone', done => {
+      chai.request(server)
+      .get(`/coins/${coinID}`)
+      .send(coinTest)
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.OK)
+        done()
+      })
+    })
+  })
+  describe('[PUT] /coins/:id', () => {
+    it('should be able to update coin infos with admin rights', done => {
+      chai.request(server)
+      .put(`/coins/${coinID}`)
+      .set({ Authorization: `Bearer ${adminToken}` })
+      .send(coinTest)
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.Accepted)
+        done()
+      })
+    })
+  })
+  describe('[DELETE] /coins/:id', () => {
+    it('should be able to delete coin infos with admin rights', done => {
+      chai.request(server)
+      .delete(`/coins/${coinID}`)
       .set({ Authorization: `Bearer ${adminToken}` })
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.Accepted)
