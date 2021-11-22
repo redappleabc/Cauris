@@ -34,7 +34,7 @@ export class RefreshService extends ServiceProtected {
     }
   }
 
-  //internal
+    //internal
   public async generate(id: string, ipAddress: string) {
     try {
       const refreshToken: any = {

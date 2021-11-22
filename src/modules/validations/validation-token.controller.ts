@@ -10,26 +10,16 @@ import { ValidResponse } from '@servichain/helpers/responses';
 export class ValidationController extends ControllerProtected {
   constructor(service: ServiceProtected) {
     super(service)
+    this.generateToken = this.generateToken.bind(this)
   }
 
   public async generateToken(req: Request, res: Response, next: NextFunction) {
     try {
-      let {tokenType} = req.body;
-      const handler: IResponseHandler = await (this.service as ValidationService).generateToken(tokenType, req.user)
+      let {tokenType, email} = req.body;
+      const handler: IResponseHandler = await (this.service as ValidationService).generateToken(tokenType, email);
       handler.handleResponse(res)
     } catch (err) {
-      next(err)
-    }
-  }
-
-  public async verifyToken(req: Request, res: Response, next: NextFunction) {
-    try {
-      let {token} = req.query
-      if (!token)
-        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid querystring")
-      await (this.service as ValidationService).verifyToken(token as string, req.user)
-      return new ValidResponse(EHttpStatusCode.OK, "Token is valid")
-    } catch (err) {
+      console.log(err)
       next(err)
     }
   }

@@ -15,4 +15,4 @@ router.get('/:id', JwtHelper.middleware(), controller.getById)
 router.post('/', JwtHelper.middleware(), sendSchema, controller.send)
 router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
-export default router
+export {router as TransactionRouter}

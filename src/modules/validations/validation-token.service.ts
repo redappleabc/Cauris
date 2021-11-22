@@ -12,15 +12,25 @@ export class ValidationService extends ServiceProtected {
     super(model)
   }
 
-  public async generateToken(type: ETokenType, user: any): Promise<IResponseHandler> {
-    var token = generateRandomToken()
-    var data = {
-      user,
-      token,
-      type,
-      expiresIn: config.get('validationTokenExpiresIn')
+  public async generateToken(type: ETokenType, email: string): Promise<IResponseHandler> {
+    try {
+      const user = await db.User.findOne({email})
+      const expiresIn: number = config.get('validationTokenExpiresIn')
+      if (!user)
+        throw new BaseError(EHttpStatusCode.NotFound, "Could not found any user related to this e-mail")
+      var token = generateRandomToken()
+      var data = {
+        user,
+        token,
+        type,
+        expiresIn: new Date(Date.now() + expiresIn)
+      }
+      return super.insert(data)
+    } catch (err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error has occured")
     }
-    return super.insert(data)
   }
 
   public async verifyToken(tokenString: string, user: any) {

@@ -15,7 +15,8 @@ import {AccountRouter} from '@servichain/modules/accounts/account.router'
 import {RefreshTokenRouter} from '@servichain/modules/refreshs'
 import {NetworkRouter} from '@servichain/modules/networks/network.router'
 import {CoinRouter} from '@servichain/modules/coins/coin.router'
-import transactions from '@servichain/modules/transactions/transaction.router'
+import {TransactionRouter} from '@servichain/modules/transactions/transaction.router'
+import { ValidationRouter } from './modules/validations'
 import * as ErrorHandler from '@servichain/middlewares/ErrorHandler'
 
 const secret = config.get('secret')
@@ -41,9 +42,10 @@ app.use('/users', UserRouter)
 app.use('/wallets', wallets)
 app.use('/accounts', AccountRouter)
 app.use('/refresh-tokens', RefreshTokenRouter)
+app.use('/validation-tokens', ValidationRouter)
 app.use('/networks', NetworkRouter)
 app.use('/coins', CoinRouter)
-app.use('/transactions', transactions)
+app.use('/transactions', TransactionRouter)
 
 app.use(ErrorHandler.errorMiddleware)
 
