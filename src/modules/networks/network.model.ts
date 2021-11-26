@@ -4,11 +4,11 @@ const Schema = mongoose.Schema
 const schema = new Schema({
   name: {type: String, required: true},
   url: String,
+  configKey: String,
   chainId: {type: Number, unique: true},
   blockExplorer: String,
   currencySymbol: String
 })
-
 
 schema.set('toJSON', {
   virtuals: true,

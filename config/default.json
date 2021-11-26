@@ -1,7 +1,17 @@
 {
   "mongoDB": "mongodb://localhost/servichain",
-  "secret": "DEV SECRET MUST BE REPLACED IN PROD",
-  "refreshTokenExpiresIn": 604800,
-  "validationTokenExpiresIn": 86400,
-  "host": "smtp.zoho.email"
+  "tokens": {
+    "refreshExpiresIn": 604800,
+    "validationExpiresIn": 86400
+  },
+  "secrets": {
+    "app": "MUST CHANGE IN PROD & NEVER PUSHED",
+    "infura": "MUST BE KEPT OUTSIDE OF PUSHES"
+  },
+  "smtp": {
+    "host": "",
+    "port": "",
+    "user": "",
+    "mail": ""
+  }
 }

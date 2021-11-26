@@ -6,7 +6,7 @@ import { EUserRole } from '@servichain/enums'
 import config from 'config'
 import { ServiceProtected } from '@servichain/helpers/services'
 
-const refreshTokenExpiresIn: number = config.get('refreshTokenExpiresIn')
+const refreshTokenExpiresIn: number = config.get('tokens.refreshExpiresIn')
 
 export class RefreshController extends ControllerProtected {
   constructor(service: ServiceProtected) {

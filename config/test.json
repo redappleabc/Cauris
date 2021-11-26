@@ -1,6 +1,17 @@
 {
-  "mongoDB": "mongodb://localhost/servichain_test",
-  "secret": "servichain_test_secret",
-  "validationTokenExpiresIn": 86400,
-  "refreshTokenExpiresIn": 604800
+  "mongoDB": "mongodb://localhost/servichain",
+  "tokens": {
+    "refreshExpiresIn": 604800,
+    "validationExpiresIn": 86400
+  },
+  "secrets": {
+    "app": "MUST CHANGE IN PROD & NEVER PUSHED",
+    "infura": "MUST BE KEPT OUTSIDE OF PUSHES"
+  },
+  "smtp": {
+    "host": "",
+    "port": "",
+    "user": "",
+    "mail": ""
+  }
 }

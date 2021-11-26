@@ -15,7 +15,7 @@ export class ValidationService extends ServiceProtected {
   public async generateToken(type: ETokenType, email: string): Promise<IResponseHandler> {
     try {
       const user = await db.User.findOne({email})
-      const expiresIn: number = config.get('validationTokenExpiresIn')
+      const expiresIn: number = config.get('tokens.validationExpiresIn')
       if (!user)
         throw new BaseError(EHttpStatusCode.NotFound, "Could not found any user related to this e-mail")
       var token = generateRandomToken()

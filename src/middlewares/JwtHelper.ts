@@ -8,8 +8,8 @@ import db from "@servichain/helpers/MongooseClient";
 import config from 'config'
 import { EHttpStatusCode } from "@servichain/enums";
 
-const secret: string = config.get('secret')
-const refreshTokenExpiresIn: number = config.get('refreshTokenExpiresIn')
+const secret: string = config.get('secrets.app')
+const refreshTokenExpiresIn: number = config.get('tokens.refreshExpiresIn')
 
 class JwtHelper {
   public generate(user: any) {

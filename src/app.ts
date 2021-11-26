@@ -19,7 +19,7 @@ import {TransactionRouter} from '@servichain/modules/transactions/transaction.ro
 import { ValidationRouter } from './modules/validations'
 import * as ErrorHandler from '@servichain/middlewares/ErrorHandler'
 
-const secret = config.get('secret')
+const secret = config.get('secrets.app')
 const mongoDB = config.get('mongoDB')
 
 var app = express()

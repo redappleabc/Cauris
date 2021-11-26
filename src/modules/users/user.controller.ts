@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 
 
-const refreshTokenExpiresIn: number = config.get('refreshTokenExpiresIn')
+const refreshTokenExpiresIn: number = config.get('tokens.refreshExpiresIn')
 
 export class UserController extends Controller {
   constructor(service: UserService) {
