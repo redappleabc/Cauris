@@ -22,7 +22,7 @@ const testAdminAuth = {
 }
 
 const coinTest = {
-  "name": "Ether",
+  "name": "Ethereum",
   "symbol": "ETH",
   "coinIndex": 60
 }
@@ -73,7 +73,7 @@ describe('Accounts', () => {
     .set({ Authorization: `Bearer ${adminToken}` })
     .end((err, res) => {
       res.should.have.status(EHttpStatusCode.OK)
-      networkID = res.body.data[0]['id']
+      networkID = res.body.data.items[0]['id']
       done()
     })
   })

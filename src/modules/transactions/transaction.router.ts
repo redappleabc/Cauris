@@ -10,8 +10,8 @@ const service = new TransactionService()
 const controller = new TransactionController(service)
 
 /* Refresh Routes */
-router.get('/', JwtHelper.middleware([EUserRole.Admin, EUserRole.Partner]), controller.getAll)
-router.get('/:id', JwtHelper.middleware(), controller.getById)
+router.get('/', JwtHelper.middleware(), controller.getAllByUser)
+router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
 router.post('/', JwtHelper.middleware(), sendSchema, controller.send)
 router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 

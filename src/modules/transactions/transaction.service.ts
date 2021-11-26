@@ -1,19 +1,19 @@
 import db from '@servichain/helpers/MongooseClient'
-import { Service } from '@servichain/helpers/services'
+import { ServiceProtected } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
 import { IRPC } from '@servichain/interfaces'
 import { EthersRPC } from '@servichain/helpers/rpcs/EthersRPC'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
 
-export class TransactionService extends Service {
+export class TransactionService extends ServiceProtected {
   constructor(model: Model<any> = db.Transaction) {
     super(model)
     this.send = this.send.bind(this)
   }
 
-  public async send(userId: string, coinId: string, networkId: string, from: string, to: string, value: number) {
-    const coin = await db.Coin.findOne({_id: coinId, network: networkId}).populate('network')
+  public async send(userId: string, coinId: string, from: string, to: string, value: number) {
+    const coin = await db.Coin.findOne({_id: coinId}).populate('network')
     if (!coin)
       throw new BaseError(EHttpStatusCode.NotFound, "Specified coin doesnt exist or wasnt found on the specified network")
     const account = await db.Account.findOne({address: from}).populate('wallet')

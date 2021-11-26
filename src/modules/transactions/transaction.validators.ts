@@ -5,7 +5,6 @@ import { JoiValidator } from '@servichain/middlewares/JoiValidator';
 export function sendSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     coinId: Joi.string().alphanum().required(),
-    networkId: Joi.string().alphanum().required(),
     from: Joi.string().required().alphanum(),
     to: Joi.string().required().alphanum(),
     value: Joi.number().required().min(0)

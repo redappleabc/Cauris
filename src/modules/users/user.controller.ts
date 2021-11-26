@@ -11,6 +11,7 @@ export class UserController extends Controller {
   constructor(service: UserService) {
     super(service)
     this.authenticate = this.authenticate.bind(this)
+    this.getByIdDetailed = this.getByIdDetailed.bind(this)
   }
 
   public async authenticate(req: Request, res: Response, next: NextFunction) {
@@ -40,6 +41,15 @@ export class UserController extends Controller {
   public async verifyUser(req: Request, res: Response, next: NextFunction) {
     try {
       const handler: ValidResponse = await (this.service as UserService).verifyUser(req.params.id)
+      handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  public async getByIdDetailed(req: Request, res: Response, next: NextFunction) {
+    try {
+      const handler: ValidResponse = await (this.service as UserService).getByIdDetailed(req.query)
       handler.handleResponse(res)
     } catch (err) {
       next(err)

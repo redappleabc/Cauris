@@ -9,11 +9,8 @@ export async function deployTestContract(provider: any) {
     const factory = new ethers.ContractFactory(testToken.abi, testToken.bytecode, wallet)
     const contract = await factory.deploy({gasLimit: '0xBA947'})
     const tx = await contract.deployTransaction.wait()
-    console.log("ganache-cli : deployed smart contract at : " + contract.address)
-    console.log(tx)
-    console.log(await contract.decimals())
   } catch(err) {
-    console.log(err)
+    throw err
   }
 }
 
@@ -32,10 +29,8 @@ const PORT = 8545;
 
 server.listen(PORT, async (err, blockchain) => {
   if (err) {
-    console.log("error")
     throw err;
   }
-  console.log(`ganache-cli : listening on port ${PORT}...`);
   const provider = server.provider
   await deployTestContract(provider)
 });

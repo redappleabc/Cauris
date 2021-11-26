@@ -4,7 +4,6 @@ import MongooseClient from '@servichain/helpers/MongooseClient'
 import { EHttpStatusCode } from '@servichain/enums/EHttpError'
 import chai from 'chai'
 import chaiHttp from 'chai-http'
-import { networks } from 'bitcoinjs-lib';
 
 const server = require('../server')
 let should = chai.should()
@@ -22,13 +21,13 @@ const testAdminAuth = {
 }
 
 const coinTest = {
-  "name": "Ether",
+  "name": "Ethereum",
   "symbol": "ETH",
   "coinIndex": 60
 }
 
 const coinERC20Test = {
-  "name": "SpecialERC20",
+  "name": "Litecoin",
   "symbol": "ERC",
   "coinIndex": 60,
   "contractAddress": "0x0D7F9E5589f8A5983a383606faF13bA1CBd8d157"
@@ -54,7 +53,6 @@ let networkID: string;
 let networkID2: string;
 let token: string;
 let adminToken: string;
-
 
 describe('Networks', () => {
   before('Authenticate with user', done => {
@@ -103,10 +101,9 @@ describe('Networks', () => {
     })
   })
   describe('[GET] /networks', () => {
-    it('should be able to retrieve the list of coins by anyone', done => {
+    it('should be able to retrieve the list of networks by anyone', done => {
       chai.request(server)
       .get('/networks')
-      .send(coinTest)
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.OK)
         done()

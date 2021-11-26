@@ -19,7 +19,6 @@ export class ValidationController extends ControllerProtected {
       const handler: IResponseHandler = await (this.service as ValidationService).generateToken(tokenType, email);
       handler.handleResponse(res)
     } catch (err) {
-      console.log(err)
       next(err)
     }
   }

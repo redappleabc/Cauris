@@ -8,11 +8,23 @@ import {RefreshService} from '@servichain/modules/refreshs'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EUserRole, EHttpStatusCode } from '@servichain/enums'
 
+const UserDetailed = {
+  virtuals: true,
+  versionKey: false,
+  transform : function(doc, ret) {
+    ret.id = ret._id
+    delete ret._id
+    delete ret.password
+    return ret
+  }
+}
+
 export class UserService extends Service {
   firstUser: boolean = true
   constructor(model: Model<any> = db.User) {
     super(model)
     this.authenticate = this.authenticate.bind(this)
+    this.getByIdDetailed = this.getByIdDetailed.bind(this)
   }
 
   public async authenticate({email, password, ipAddress}) {
@@ -68,6 +80,12 @@ export class UserService extends Service {
     data.role = await this.checkFirstUser()
     data.password = await hash(data.password, 10)
     return super.insert(data)
+  }
+
+  public async getByIdDetailed(query: any) {
+    let responseHandler: ValidResponse = await super.getById(query) as ValidResponse
+    responseHandler.data.toObject(UserDetailed)
+    return responseHandler
   }
 
   //internal

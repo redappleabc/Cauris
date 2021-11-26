@@ -62,24 +62,13 @@ describe('Transactions', () => {
     .end((err, res) => {
       res.should.have.status(EHttpStatusCode.OK)
       expect(res.body.data.total).eql(2)
-      if (res.body.data[0]['contractAddress'] === "") {
-        coinId = res.body.data[0]['id']
-        coinERC20Id = res.body.data[1]['id']
+      if (res.body.data.items[0]['contractAddress'] === "") {
+        coinId = res.body.data.items[0]['id']
+        coinERC20Id = res.body.data.items[1]['id']
       } else {
-        coinId = res.body.data[1]['id']
-        coinERC20Id = res.body.data[0]['id']
+        coinId = res.body.data.items[1]['id']
+        coinERC20Id = res.body.data.items[0]['id']
       }
-      done()
-    })
-  })
-  before('Get local network ID', done => {
-    chai.request(server)
-    .get('/networks')
-    .set({ Authorization: `Bearer ${adminToken}` })
-    .end((err, res) => {
-      res.should.have.status(EHttpStatusCode.OK)
-      networkId = res.body.data[0]['id']
-      networkId.should.not.be.undefined
       done()
     })
   })
@@ -89,7 +78,6 @@ describe('Transactions', () => {
       .post('/transactions')
       .set({ Authorization: `Bearer ${adminToken}`})
       .send({
-        networkId,
         coinId,
         ...transactionTest
       })
@@ -113,7 +101,6 @@ describe('Transactions', () => {
       .post('/transactions')
       .set({Authorization: `Bearer ${token}`})
       .send({
-        networkId,
         coinId,
         ...transactionTest
       })
@@ -127,7 +114,6 @@ describe('Transactions', () => {
       .post('/transactions')
       .set({Authorization: `Bearer ${token}`})
       .send({
-        networkId,
         coinId,
         ...transactionTestFail
       })
@@ -141,7 +127,6 @@ describe('Transactions', () => {
       .post('/transactions')
       .set({Authorization: `Bearer ${token}`})
       .send({
-        networkId,
         coinId: coinERC20Id,
         ...transactionTest
       })

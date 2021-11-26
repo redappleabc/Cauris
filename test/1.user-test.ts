@@ -55,10 +55,6 @@ describe('Users', () => {
       .post('/users')
       .send(testUser)
       .end((err, res) => {
-        if (err) {
-          console.log(err.message)
-          done()
-        }
         res.should.have.status(EHttpStatusCode.Created)
         res.body.data.should.have.property('role').eql('admin')
         res.body.data.should.have.property('id')
@@ -71,10 +67,6 @@ describe('Users', () => {
       .post('/users')
       .send(testUser)
       .end((err, res) => {
-        if (err) {
-          console.log(err.message)
-          done()
-        }
         res.should.have.status(EHttpStatusCode.InternalServerError)
         done()
       })
@@ -84,10 +76,6 @@ describe('Users', () => {
       .post('/users')
       .send(testUser2)
       .end((err, res) => {
-        if (err) {
-          console.log(err.message)
-          done()
-        }
         res.should.have.status(EHttpStatusCode.Created)
         res.body.data.should.have.property('role').eql('user')
         res.body.data.should.not.have.property('password')
@@ -101,9 +89,6 @@ describe('Users', () => {
       .post('/users/authenticate')
       .send(testUser2Auth)
       .end((err, res) => {
-        if (err) {
-          done()
-        }
         res.should.have.status(EHttpStatusCode.OK)
         res.body.data.should.have.property('jwtToken')
         res.body.data.should.have.property('user')
@@ -119,9 +104,6 @@ describe('Users', () => {
       .get('/users')
       .set({ Authorization: `Bearer ${token}` })
       .end((err, res) => {
-        if (err) {
-          done()
-        }
         res.should.have.status(EHttpStatusCode.Unauthorized)
         done()
       })
@@ -133,9 +115,6 @@ describe('Users', () => {
       .get(`/users/${userId}`)
       .set({ Authorization: `Bearer ${token}` })
       .end((err, res) => {
-        if (err) {
-          done()
-        }
         res.should.have.status(EHttpStatusCode.OK)
         res.body.data.should.have.property('id')
         res.body.data.should.not.have.property('password')
@@ -147,9 +126,6 @@ describe('Users', () => {
       .get(`/users/${adminId}`)
       .set({ Authorization: `Bearer ${token}` })
       .end((err, res) => {
-        if (err) {
-          done()
-        }
         res.should.have.status(EHttpStatusCode.Unauthorized)
         done()
       })
@@ -162,9 +138,6 @@ describe('Users', () => {
       .set({ Authorization: `Bearer ${token}` })
       .send(testUser2Data)
       .end((err, res) => {
-        if (err) {
-          done()
-        }
         res.should.have.status(EHttpStatusCode.Accepted)
         res.body.data.should.not.have.property('password')
         done()
@@ -177,9 +150,6 @@ describe('Users', () => {
       .delete(`/users/${userId}`)
       .set({ Authorization: `Bearer ${token}` })
       .end((err, res) => {
-        if (err) {
-          done()
-        }
         res.should.have.status(EHttpStatusCode.Unauthorized)
         done()
       })

@@ -1,6 +1,6 @@
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { BaseError } from '@servichain/helpers/BaseError'
-import { Document, EnforceDocument, Model } from 'mongoose'
+import { Document, Model } from 'mongoose'
 import { IService, IResponseHandler } from "@servichain/interfaces";
 import { EHttpStatusCode } from '@servichain/enums';
 const mongoose = require("mongoose")
@@ -41,7 +41,7 @@ export class Service implements IService {
       if (!items)
         throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true)
       return new ValidResponse(EHttpStatusCode.OK, {
-        ...items,
+        items,
         total
       })
     } catch (error) {
@@ -50,17 +50,6 @@ export class Service implements IService {
   }
 
   public async getById(id: string): Promise<IResponseHandler> {
-    try {
-      let item: Document = await this.model.findById(id)
-      if (!item)
-        throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
-      return new ValidResponse(EHttpStatusCode.OK, item)
-    } catch (error) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
-    }
-  }
-
-  public async getDetailsById(id: string) : Promise<IResponseHandler> {
     try {
       let item: Document = await this.model.findById(id)
       if (!item)
