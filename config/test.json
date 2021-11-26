@@ -5,8 +5,12 @@
     "validationExpiresIn": 86400
   },
   "secrets": {
-    "app": "MUST CHANGE IN PROD & NEVER PUSHED",
-    "infura": "MUST BE KEPT OUTSIDE OF PUSHES"
+    "app": "MUST CHANGE IN PROD & NEVER PUSHED"
+  },
+  "rpc": {
+    "infura": {
+      "password": "MUST CHANGE IN PROD & NEVER PUSHED"
+    }
   },
   "smtp": {
     "host": "",

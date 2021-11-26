@@ -6,7 +6,7 @@ export function insertSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     name: Joi.string().required(),
     url: Joi.string().uri(),
-    config: Joi.string().alphanum(),
+    configKey: Joi.string().alphanum(),
     chainId: Joi.number().min(1).required(),
     blockExplorer: Joi.string().uri(),
     currencySymbol: Joi.string()

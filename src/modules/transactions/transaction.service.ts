@@ -21,7 +21,7 @@ export class TransactionService extends ServiceProtected {
       throw new BaseError(EHttpStatusCode.NotFound, "Account not found", true)
     else if (account && account.wallet.user != userId)
       throw new BaseError(EHttpStatusCode.Unauthorized, "Invalid access to this account", true)
-    const RPCHelper: IRPC = new EthersRPC(coin.network.url, coin.network.chainId, account)
+    const RPCHelper: IRPC = new EthersRPC(coin.network.url, coin.network.chainId, account, coin.network.configKey)
     const tx = await RPCHelper.sendTransaction(to, value, coin.contractAddress)
     return super.insert({
       owner: userId,

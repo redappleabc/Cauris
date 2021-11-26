@@ -3,15 +3,20 @@ import * as ethers from 'ethers'
 import {abi} from '@servichain/files/test-token.json'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
+import config from 'config'
 
 export class EthersRPC implements IRPC {
   account: IAccount
   provider: ethers.providers.JsonRpcProvider
   wallet: ethers.Wallet
 
-  constructor(url: string, chainId: number, account: any) {
+  constructor(url: string, chainId: number, account: any, configKey: string = undefined) {
     this.account = account
-    this.provider = new ethers.providers.JsonRpcProvider(url, chainId)
+    if (configKey) {
+      const options: any = config.get(`rpc.${configKey}`)
+      this.provider = new ethers.providers.JsonRpcProvider({url, ...options}, chainId)
+    } else
+      this.provider = new ethers.providers.JsonRpcProvider(url, chainId)
     this.wallet = new ethers.Wallet(account.privateKey, this.provider)
   }
 
