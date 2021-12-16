@@ -25,8 +25,8 @@ export function registerSchema(req: Request, res: Response, next: NextFunction) 
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
     confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
-    firstName: Joi.string(),
-    lastName: Joi.string(),
+    firstName: Joi.string().max(30),
+    lastName: Joi.string().max(30),
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)

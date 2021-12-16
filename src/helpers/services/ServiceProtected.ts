@@ -26,34 +26,7 @@ export class ServiceProtected extends Service {
   }
 
   public async getAllByUser(query: any, userId: string) {
-    let {skip, limit} = query
-
-    skip = skip ? Number(skip) : 0
-    limit = limit ? Number(limit): 25
-
-    delete query.skip
-    delete query.limit
-
-    if (query._id) {
-      try {
-        query._id = new mongoose.mongo.ObjectId(query._id)
-      } catch (error) {
-        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid query ID", true)
-      }
-    }
-
-    try {
-      let items: Document[] = await this.model.find({user: userId, ...query}).skip(skip).limit(limit)
-      let total: number = items.length
-
-      if (!items)
-        throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true)
-      return new ValidResponse(EHttpStatusCode.OK, {
-        items,
-        total
-      })
-    } catch (error) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
-    }
+    query.user = userId
+    return super.getAll(query)
   }
 }

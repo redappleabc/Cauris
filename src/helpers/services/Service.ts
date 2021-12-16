@@ -35,8 +35,8 @@ export class Service implements IService {
     }
 
     try {
-      let items: Document[] = await this.model.find(query).skip(skip).limit(limit)
-      let total: number = await this.model.count()
+      let items: Document[] = await this.model.find({query}).skip(skip).limit(limit)
+      let total: number = await this.model.count({query})
 
       if (!items)
         throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true)

@@ -15,6 +15,12 @@ export class AccountService extends ServiceProtected {
     super(model)
     this.generate = this.generate.bind(this)
     this.generateOne = this.generateOne.bind(this)
+    this.getAllByUser = this.getAllByUser.bind(this)
+  }
+
+  public async getAllByUser(query: any, userId: string) {
+    query['wallet.user'] = userId
+    return super.getAll(query)
   }
 
   public async generate(userId: string, walletId: string, accountsArray: [IAccount] | IAccount) {
