@@ -20,6 +20,7 @@ const testAdminAuth = {
 let token: string
 let adminToken: string
 let networkId: string
+let walletID: string
 let coinId: string
 let coinERC20Id: string
 
@@ -86,11 +87,21 @@ describe('Transactions', () => {
         done()
       })
     })
+    before('Get User Wallet', done => {
+      chai.request(server)
+      .get('/wallets')
+      .set({Authorization: `Bearer ${token}`})
+      .end((err, res) => {
+        res.should.have.status(EHttpStatusCode.OK)
+        walletID = res.body.data.items[0]['id']
+        done()
+      })
+    })
     before('should be able to create the account used for transactions', done => {
       chai.request(server)
       .post('/accounts')
       .set({Authorization: `Bearer ${token}`})
-      .send({coinIndex: '60'})
+      .send({accounts: {coinIndex: '60'}})
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.Created)
         done()

@@ -44,7 +44,7 @@ export class ServiceProtected extends Service {
 
     try {
       let items: Document[] = await this.model.find({user: userId, ...query}).skip(skip).limit(limit)
-      let total: number = await this.model.count()
+      let total: number = items.length
 
       if (!items)
         throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true)

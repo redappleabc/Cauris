@@ -14,6 +14,7 @@ function checkMnemonicWords(mnemonicArray: Array<string>, lang: string) {
 
 export function generateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
+    name: Joi.string().empty('').alphanum(),
     mnemonic: Joi.string().empty('').custom((value: string, helper) => {
       let lang: string = (req.query.lang) ? req.query['lang'].toString() : "english"
       let mnemonicArray: Array<string> = value.trim().split(/\s+/g)

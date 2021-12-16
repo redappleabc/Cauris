@@ -1,12 +1,13 @@
-import { Schema } from "mongoose";
+import { IUser } from "./IUser";
 
 export default interface IRefresh {
-  user: Schema.Types.ObjectId,
-  token: String,
-  expires: Date,
-  created: Date,
-  createdByIp: String,
-  revoked: Date,
-  revokedByIp: String,
-  replacedByToken: String
+  id?: string
+  user: string | IUser
+  token: string
+  expires: Date
+  created?: Date
+  createdByIp?: String
+  revoked?: Date
+  revokedByIp?: String
+  replacedByToken?: String
 }

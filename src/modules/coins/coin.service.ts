@@ -3,7 +3,7 @@ import { EHttpStatusCode } from '@servichain/enums'
 import { BaseError } from '@servichain/helpers/BaseError'
 import db from '@servichain/helpers/MongooseClient'
 import { Service } from '@servichain/helpers/services'
-import { IResponseHandler } from '@servichain/interfaces'
+import { ICoin, IResponseHandler } from '@servichain/interfaces'
 import { Model , Document} from 'mongoose'
 import { response } from 'express'
 const CoinGecko = require('coingecko-api')
@@ -22,6 +22,23 @@ const CoinDetailed = {
 export class CoinService extends Service {
   constructor(model: Model<any> = db.Coin) {
     super(model)
+    this.insert = this.insert.bind(this)
+    this.getAll = this.getAll.bind(this)
+    this.getById = this.getById.bind(this)
+  }
+
+  public async insert(data: ICoin): Promise<IResponseHandler> {
+    try {
+      let {network} = data
+      let netDoc = await db.Network.findOne({_id: network})
+      if (!netDoc)
+        throw new BaseError(EHttpStatusCode.NotFound, "Could not find the specified network ID")
+      return super.insert(data)
+    } catch (err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, err)
+    }
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {
@@ -29,17 +46,19 @@ export class CoinService extends Service {
       this.pingGecko()
       let {currency} = query ? query : 'eur'
       let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
-      const coinArray = responseHandler.data.items.map(item => item.name.toLowerCase())
-      const coinData = await this.retrieveCoins(coinArray, currency)
-      responseHandler.data.items.forEach((element: any, index: number, items: Array<any>) => {
-        items[index] = items[index].toObject(CoinDetailed)
-        items[index]['price'] = coinData.data[element.name.toLowerCase()]
-      });
+      if (responseHandler.data.items.length) {
+        const coinArray = responseHandler.data.items.map(item => item.name.toLowerCase())
+        const coinData = await this.retrieveCoins(coinArray, currency)
+        responseHandler.data.items.forEach((element: ICoin, index: number, items: Array<any>) => {
+          items[index] = items[index].toObject(CoinDetailed)
+          items[index]['price'] = coinData.data[element.name.toLowerCase()]
+        });
+      }
       return responseHandler
     } catch (err) {
       if (err instanceof BaseError)
         throw err
-      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error as occured")
+      throw new BaseError(EHttpStatusCode.InternalServerError, err)
     }
   }
 
@@ -56,7 +75,7 @@ export class CoinService extends Service {
     } catch(err) {
       if (err instanceof BaseError)
         throw err
-      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error as occured")
+      throw new BaseError(EHttpStatusCode.InternalServerError, err)
     }
   }
 
@@ -76,7 +95,7 @@ export class CoinService extends Service {
     } catch (err) {
       if (err instanceof BaseError)
         throw err
-      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error as occured")
+      throw new BaseError(EHttpStatusCode.InternalServerError, err)
       }
   }
 }

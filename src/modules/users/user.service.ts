@@ -7,6 +7,7 @@ import JwtHelper from '@servichain/middlewares/JwtHelper'
 import {RefreshService} from '@servichain/modules/refreshs'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EUserRole, EHttpStatusCode } from '@servichain/enums'
+import { IUser } from '@servichain/interfaces'
 
 const UserDetailed = {
   virtuals: true,
@@ -29,14 +30,14 @@ export class UserService extends Service {
 
   public async authenticate({email, password, ipAddress}) {
     try {
-      const user = await this.model.findOne({email})
+      const user: IUser = await this.model.findOne({email})
       if (!user || !bcrypt.compareSync(password, user.password)) {
         throw new BaseError(EHttpStatusCode.NotFound, "Could not found User", true)
       }
 
       const {jwtToken} = JwtHelper.generate(user)
       const refreshService = new RefreshService()
-      const refreshToken = await refreshService.generate(user.id, ipAddress)
+      const refreshToken = await refreshService.generate((user.id as string), ipAddress)
       await refreshService.insert(refreshToken)
       return new ValidResponse(EHttpStatusCode.OK, { user, jwtToken, refreshToken})
     } catch (err) {
