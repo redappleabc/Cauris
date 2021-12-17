@@ -1,4 +1,4 @@
-import { ConnectOptions, Model, mongo } from 'mongoose'
+import { Model } from 'mongoose'
 /* Not using barrels to avoid circular includes  */
 import {UserModel} from '@servichain/modules/users/user.model'
 import {RefreshModel} from '@servichain/modules/refreshs/refresh-token.model'

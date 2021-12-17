@@ -35,7 +35,10 @@ class JwtHelper {
           }
           next()
         } catch (err) {
-          next(err)
+          if (err instanceof BaseError)
+           next(err)
+          else
+            next(new BaseError(EHttpStatusCode.InternalServerError, "JwtHelper : Error"))
         }
       },
       errorMiddleware

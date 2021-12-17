@@ -9,7 +9,8 @@ const schema = new Schema({
   addressIndex: {type: Number, required: true},
   publicKey: {type: String, required: true},
   privateKey: {type: String, required: true},
-  address: {type: String, required: true}
+  address: {type: String, required: true},
+  subscribedTo: {type: [Schema.Types.ObjectId], ref: 'Coin'}
 })
 
 schema.index({wallet: 1, coinIndex: 1, accountIndex: 1, addressIndex: 1}, {unique: true})

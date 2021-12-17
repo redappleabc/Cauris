@@ -48,7 +48,7 @@ export class CoinService extends Service {
       let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
       if (responseHandler.data.items.length) {
         const coinArray = responseHandler.data.items.map(item => item.name.toLowerCase())
-        const coinData = await this.retrieveCoins(coinArray, currency)
+        const coinData = await this.retrieveCoinGecko(coinArray, currency)
         responseHandler.data.items.forEach((element: ICoin, index: number, items: Array<any>) => {
           items[index] = items[index].toObject(CoinDetailed)
           items[index]['price'] = coinData.data[element.name.toLowerCase()]
@@ -68,7 +68,7 @@ export class CoinService extends Service {
       let {currency} = query ? query: 'eur'
       let responseHandler : ValidResponse = (await super.getById(query) as ValidResponse);
       let name: string = responseHandler.data.name.toLowerCase()
-      const coinData = await this.retrieveCoins(name, currency)
+      const coinData = await this.retrieveCoinGecko(name, currency)
       responseHandler.data = responseHandler.data.toObject(CoinDetailed)
       responseHandler.data.price = coinData.data[name]
       return responseHandler
@@ -85,7 +85,7 @@ export class CoinService extends Service {
       throw new BaseError(EHttpStatusCode.InternalServerError, "Coins information could not be retrieved")
   }
 
-  private async retrieveCoins(coinID: Array<string> | String, currency: string) {
+  private async retrieveCoinGecko(coinID: Array<string> | String, currency: string) {
     try {
       let coinsData = await CoinGeckoClient.simple.price({ids: coinID, vs_currency: currency, include_24hr_change: true})
       if (!coinsData.success) {

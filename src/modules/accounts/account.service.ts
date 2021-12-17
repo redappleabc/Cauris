@@ -23,6 +23,21 @@ export class AccountService extends ServiceProtected {
     return super.getAll(query)
   }
 
+  public async updateProtected(id: string, userId: string, data: IAccount) {
+    try {
+      let itemCheck = await this.model.find({_id: id, 'wallet.user': userId})
+      if (!itemCheck)
+        throw new BaseError(EHttpStatusCode.Unauthorized, "You do not have access to this resource")
+      if (!await this.checkCoinIds(data.subscribedTo))
+        throw new BaseError(EHttpStatusCode.NotFound, "Specified coin index not found")
+      return super.update(id, data)
+    } catch(err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, err)
+    }
+  }
+
   public async generate(userId: string, walletId: string, accountsArray: [IAccount] | IAccount) {
     try {
       const userWallet: IWallet = await db.Wallet.findOne({user: userId, _id: walletId})
@@ -54,18 +69,24 @@ export class AccountService extends ServiceProtected {
     }
   }
 
-  public async generateOne(wallet: string, hdWallet: HDWallet, {coinIndex, accountIndex = 0, change = 0, addressIndex = 0}: IAccount): Promise<IAccount> {
+  public async generateOne(wallet: string, hdWallet: HDWallet, {coinIndex, accountIndex = 0, change = 0, addressIndex = 0, subscribedTo}: IAccount): Promise<IAccount> {
     try {
       const coinItem: ICoin = await db.Coin.findOne({coinIndex: coinIndex})
       if (!coinItem)
         return null
       const keyPair = hdWallet.generateKeyPair(coinIndex, accountIndex, change, addressIndex)
+      console.log(subscribedTo)
+      if (subscribedTo && await this.checkCoinIds(subscribedTo) === false) {
+        throw new BaseError(EHttpStatusCode.NotFound, "Could not find corresponding coin ID")
+      } else if (!subscribedTo)
+        subscribedTo = await this.defaultSubscription(coinIndex)
       const newAccount: IAccount = {
         wallet,
         coinIndex,
         accountIndex,
         change,
         addressIndex,
+        subscribedTo,
         ...keyPair
       }
       return this.model.create(newAccount)
@@ -74,6 +95,21 @@ export class AccountService extends ServiceProtected {
         throw err
       throw new BaseError(EHttpStatusCode.InternalServerError, err)
     }
+  }
+
+  private async checkCoinIds(coinArray: string[]) {
+    for (let i = 0; i < coinArray.length; i++) {
+      let count = await db.Coin.countDocuments({_id: coinArray[i]})
+      console.log(count)
+      if (count === 0)
+        return false
+    }
+    return true
+  }
+
+  private async defaultSubscription(coinIndex) {
+    const defaultCryptos = await db.Coin.find({contractAddress: {$exists: false}, coinIndex})
+    return defaultCryptos.map(item => item._id)
   }
 
   //getBalance
