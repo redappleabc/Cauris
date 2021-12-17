@@ -19,6 +19,7 @@ export class AccountService extends ServiceProtected {
   }
 
   public async getAllByUser(query: any, userId: string) {
+    query['populate'] = 'subscribedTo'
     query['wallet.user'] = userId
     return super.getAll(query)
   }
@@ -75,7 +76,6 @@ export class AccountService extends ServiceProtected {
       if (!coinItem)
         return null
       const keyPair = hdWallet.generateKeyPair(coinIndex, accountIndex, change, addressIndex)
-      console.log(subscribedTo)
       if (subscribedTo && await this.checkCoinIds(subscribedTo) === false) {
         throw new BaseError(EHttpStatusCode.NotFound, "Could not find corresponding coin ID")
       } else if (!subscribedTo)
@@ -100,7 +100,6 @@ export class AccountService extends ServiceProtected {
   private async checkCoinIds(coinArray: string[]) {
     for (let i = 0; i < coinArray.length; i++) {
       let count = await db.Coin.countDocuments({_id: coinArray[i]})
-      console.log(count)
       if (count === 0)
         return false
     }
@@ -112,5 +111,7 @@ export class AccountService extends ServiceProtected {
     return defaultCryptos.map(item => item._id)
   }
 
-  //getBalance
+  public async getBalances(account: IAccount) {
+
+  }
 }
