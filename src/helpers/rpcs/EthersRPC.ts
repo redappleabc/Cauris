@@ -24,11 +24,14 @@ export class EthersRPC implements IRPC {
     try {
       if (contractAddress) {
         const contract = new ethers.Contract(contractAddress, abi, this.wallet)
+        console.log(contract)
         const balance = await contract.balanceOf(this.account.address)
         return balance
       } else
         return await this.wallet.getBalance()
     } catch (err) {
+      if (!err.reason)
+        return ethers.BigNumber.from('0x00')
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }
   }

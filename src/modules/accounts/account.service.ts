@@ -5,10 +5,21 @@ import { HDWallet } from '@servichain/helpers/hdwallets/HDWallet'
 import { EthereumWallet } from '@servichain/helpers/hdwallets/EthereumWallet'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
-import { IAccount } from '@servichain/interfaces'
+import { IAccount, INetwork, IRPC } from '@servichain/interfaces'
 import { ICoin } from '@servichain/interfaces/ICoin'
 import { IWallet } from '@servichain/interfaces/IWallet'
 import { ValidResponse } from '@servichain/helpers/responses'
+import { EthersRPC } from '@servichain/helpers/rpcs'
+
+const CoinDetailed = {
+  vituals: true,
+  versionKey: false,
+  transform: function(doc, ret) {
+    ret.id = ret._id
+    delete ret._id
+    return ret
+  }
+}
 
 export class AccountService extends ServiceProtected {
   constructor(model: Model<any> = db.Account) {
@@ -19,9 +30,21 @@ export class AccountService extends ServiceProtected {
   }
 
   public async getAllByUser(query: any, userId: string) {
-    query['populate'] = 'subscribedTo'
-    query['wallet.user'] = userId
-    return super.getAll(query)
+    try {
+      query['wallet.user'] = userId
+      query['populate'] = 'subscribedTo'
+      let responseHandler = await super.getAll(query)
+      let accounts: any = responseHandler.getBody()['items']
+      for (let i = 0; i < accounts.length; i++) {
+        accounts[i] = accounts[i].toObject(CoinDetailed)
+        accounts[i] = await this.fetchCoins(accounts[i])
+      }
+      return responseHandler
+    } catch (err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, err)
+    }
   }
 
   public async updateProtected(id: string, userId: string, data: IAccount) {
@@ -29,7 +52,7 @@ export class AccountService extends ServiceProtected {
       let itemCheck = await this.model.find({_id: id, 'wallet.user': userId})
       if (!itemCheck)
         throw new BaseError(EHttpStatusCode.Unauthorized, "You do not have access to this resource")
-      if (!await this.checkCoinIds(data.subscribedTo))
+      if (!await this.checkCoinIds((data.subscribedTo as string[])))
         throw new BaseError(EHttpStatusCode.NotFound, "Specified coin index not found")
       return super.update(id, data)
     } catch(err) {
@@ -76,7 +99,7 @@ export class AccountService extends ServiceProtected {
       if (!coinItem)
         return null
       const keyPair = hdWallet.generateKeyPair(coinIndex, accountIndex, change, addressIndex)
-      if (subscribedTo && await this.checkCoinIds(subscribedTo) === false) {
+      if (subscribedTo && await this.checkCoinIds((subscribedTo as string[])) === false) {
         throw new BaseError(EHttpStatusCode.NotFound, "Could not find corresponding coin ID")
       } else if (!subscribedTo)
         subscribedTo = await this.defaultSubscription(coinIndex)
@@ -111,7 +134,40 @@ export class AccountService extends ServiceProtected {
     return defaultCryptos.map(item => item._id)
   }
 
-  public async getBalances(account: IAccount) {
+  public async fetchCoins(account: any) {
+    try {
+      for (let i = 0; i < account.subscribedTo.length; i++) {
+        let coinID: string = (account.subscribedTo[i]['id'] as string)
+        account.subscribedTo[i] = account.subscribedTo[i]
+        account.subscribedTo[i]['balance'] = await this.getBalance(coinID, account)
+        console.log(account.subscribedTo[i]['balance'])
+      }
+      return account
+    } catch (err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, err)
+    }
+  }
 
+  private async getBalance(coinID: string, account: IAccount) {
+    const coin: ICoin = await db.Coin.findOne({_id: coinID}).populate('network')
+    const network: INetwork = coin.network as INetwork
+    const RPCHelper: IRPC = new EthersRPC(network.url, network.chainId, account, network.configKey)
+    const balance = (await RPCHelper.getBalance(coin.contractAddress)).toString()
+    return balance
+  }
+
+  private linkReverser(array: ICoin[]) {
+    let reversedObj = {}
+    for (let i = 0; i < array.length; i++) {
+      const key: string = (array[i].network as string)
+      delete array[i].network
+      if ((`${key}` in reversedObj))
+        reversedObj[`${key}`].push(array[i])
+      else
+        reversedObj[`${key}`] = [array[i]]
+    }
+    return reversedObj
   }
 }
