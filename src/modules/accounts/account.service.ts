@@ -11,12 +11,13 @@ import { IWallet } from '@servichain/interfaces/IWallet'
 import { ValidResponse } from '@servichain/helpers/responses'
 import { EthersRPC } from '@servichain/helpers/rpcs'
 
-const CoinDetailed = {
+const AccountDetailed = {
   vituals: true,
   versionKey: false,
   transform: function(doc, ret) {
     ret.id = ret._id
     delete ret._id
+    delete ret.privateKey
     return ret
   }
 }
@@ -36,7 +37,7 @@ export class AccountService extends ServiceProtected {
       let responseHandler = await super.getAll(query)
       let accounts: any = responseHandler.getBody()['items']
       for (let i = 0; i < accounts.length; i++) {
-        accounts[i] = accounts[i].toObject(CoinDetailed)
+        accounts[i] = accounts[i].toObject(AccountDetailed)
         accounts[i] = await this.fetchCoins(accounts[i])
       }
       return responseHandler
