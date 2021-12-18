@@ -141,7 +141,6 @@ export class AccountService extends ServiceProtected {
         let coinID: string = (account.subscribedTo[i]['id'] as string)
         account.subscribedTo[i] = account.subscribedTo[i]
         account.subscribedTo[i]['balance'] = await this.getBalance(coinID, account)
-        console.log(account.subscribedTo[i]['balance'])
       }
       return account
     } catch (err) {
