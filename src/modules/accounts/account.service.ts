@@ -17,7 +17,6 @@ const AccountDetailed = {
   transform: function(doc, ret) {
     ret.id = ret._id
     delete ret._id
-    delete ret.privateKey
     return ret
   }
 }
@@ -39,6 +38,7 @@ export class AccountService extends ServiceProtected {
       for (let i = 0; i < accounts.length; i++) {
         accounts[i] = accounts[i].toObject(AccountDetailed)
         accounts[i] = await this.fetchCoins(accounts[i])
+        delete accounts[i].privateKey
       }
       return responseHandler
     } catch (err) {
