@@ -1,6 +1,6 @@
 import db from '@servichain/helpers/MongooseClient'
 import { ServiceProtected } from '@servichain/helpers/services'
-import { Model } from 'mongoose'
+import { Model, Types } from 'mongoose'
 import { HDWallet } from '@servichain/helpers/hdwallets/HDWallet'
 import { EthereumWallet } from '@servichain/helpers/hdwallets/EthereumWallet'
 import { BaseError } from '@servichain/helpers/BaseError'
@@ -10,6 +10,7 @@ import { ICoin } from '@servichain/interfaces/ICoin'
 import { IWallet } from '@servichain/interfaces/IWallet'
 import { ValidResponse } from '@servichain/helpers/responses'
 import { EthersRPC } from '@servichain/helpers/rpcs'
+import mongoose from 'mongoose'
 
 const AccountDetailed = {
   vituals: true,
@@ -31,15 +32,18 @@ export class AccountService extends ServiceProtected {
 
   public async getAllByUser(query: any, userId: string) {
     try {
-      query['wallet.user'] = userId
-      query['populate'] = 'subscribedTo'
+      query['populate'] = 'subscribedTo wallet'
       let responseHandler = await super.getAll(query)
       let accounts: any = responseHandler.getBody()['items']
+      accounts = accounts.filter(item => item.wallet.user == userId)
       for (let i = 0; i < accounts.length; i++) {
         accounts[i] = accounts[i].toObject(AccountDetailed)
         accounts[i] = await this.fetchCoins(accounts[i])
         delete accounts[i].privateKey
+        accounts[i].wallet = accounts[i].wallet.id
       }
+      responseHandler.message.items = accounts
+      responseHandler.message.total = accounts.length
       return responseHandler
     } catch (err) {
       if (err instanceof BaseError)

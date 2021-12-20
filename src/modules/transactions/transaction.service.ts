@@ -26,7 +26,7 @@ export class TransactionService extends ServiceProtected {
     const RPCHelper: IRPC = new EthersRPC(network.url, network.chainId, account, network.configKey)
     const tx = await RPCHelper.sendTransaction(to, value, coin.contractAddress)
     return super.insert({
-      owner: userId,
+      user: userId,
       coin,
       fromAddress: from,
       toAddress: to,

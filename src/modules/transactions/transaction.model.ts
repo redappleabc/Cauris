@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 const Schema = mongoose.Schema
 
 const schema = new Schema({
-  owner: {type: Schema.Types.ObjectId, ref: 'User', required: true},
+  user: {type: Schema.Types.ObjectId, ref: 'User', required: true},
   coin: {type: Schema.Types.ObjectId, ref: 'Coin', required: true},
   fromAddress: {type: String, required: true},
   toAddress: {type: String, required: true},
@@ -17,7 +17,7 @@ schema.set('toJSON', {
   versionKey: false,
   transform: function(doc, ret) {
     delete ret._id
-    delete ret.owner
+    delete ret.user
   }
 })
 
