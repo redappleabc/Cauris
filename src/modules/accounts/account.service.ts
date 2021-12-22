@@ -10,7 +10,7 @@ import { ICoin } from '@servichain/interfaces/ICoin'
 import { IWallet } from '@servichain/interfaces/IWallet'
 import { ValidResponse } from '@servichain/helpers/responses'
 import { EthersRPC } from '@servichain/helpers/rpcs'
-import mongoose from 'mongoose'
+import { utils } from 'ethers'
 
 const AccountDetailed = {
   vituals: true,
@@ -143,7 +143,6 @@ export class AccountService extends ServiceProtected {
     try {
       for (let i = 0; i < account.subscribedTo.length; i++) {
         let coinID: string = (account.subscribedTo[i]['id'] as string)
-        account.subscribedTo[i] = account.subscribedTo[i]
         account.subscribedTo[i]['balance'] = await this.getBalance(coinID, account)
       }
       return account
@@ -159,7 +158,7 @@ export class AccountService extends ServiceProtected {
     const network: INetwork = coin.network as INetwork
     const RPCHelper: IRPC = new EthersRPC(network.url, network.chainId, account, network.configKey)
     const balance = (await RPCHelper.getBalance(coin.contractAddress)).toString()
-    return balance
+    return utils.formatUnits(balance, coin.decimals)
   }
 
   private linkReverser(array: ICoin[]) {

@@ -6,6 +6,7 @@ const schema = new Schema({
   coinIndex: {type: Number, required: true},
   name: {type: String, required: true},
   symbol: {type: String, required: true},
+  decimals: {type: String, required: true},
   contractAddress: String,
   createdAt: {type: Date, default: Date.now()},
 })

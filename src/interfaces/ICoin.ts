@@ -6,6 +6,7 @@ export interface ICoin {
   coinIndex: number
   name: string
   symbol: string
+  decimals: number
   contractAddress?: string
   createdAt?: Date
   price?: Object

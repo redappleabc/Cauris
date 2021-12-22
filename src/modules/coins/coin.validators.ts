@@ -8,6 +8,7 @@ export function insertSchema(req: Request, res: Response, next: NextFunction) {
     coinIndex: Joi.number().positive().required(),
     name: Joi.string().alphanum().empty('').required(),
     symbol: Joi.string().alphanum().empty('').required(),
+    decimals: Joi.number().required().min(0).max(30),
     contractAddress: Joi.string().alphanum()
   })
   const validator = new JoiValidator(schema)

@@ -6,7 +6,7 @@ const schema = new Schema({
   coin: {type: Schema.Types.ObjectId, ref: 'Coin', required: true},
   fromAddress: {type: String, required: true},
   toAddress: {type: String, required: true},
-  value: {type: Number, required: true},
+  value: {type: String, required: true},
   transactionHash: {type: String, required: true},
   createdAt: {type: Date, default: Date.now()},
 })

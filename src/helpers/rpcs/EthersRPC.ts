@@ -37,11 +37,11 @@ export class EthersRPC implements IRPC {
     }
   }
 
-  public async sendTransaction(to: string, value: number, contractAddress = null) {
+  public async sendTransaction(to: string, value: ethers.BigNumber, contractAddress = null) {
     const signer = this.provider.getSigner(this.account.address)
     var tx: any
 
-    if (await this.getBalance(contractAddress) < (value as any))
+    if ((await this.getBalance(contractAddress)).lt(value))
       throw new BaseError(EHttpStatusCode.BadRequest, "Your balance is insufficient to perform this transaction")
     try {
       if (contractAddress) {
