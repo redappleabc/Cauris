@@ -33,7 +33,7 @@ export class TransactionService extends ServiceProtected {
         coin,
         fromAddress: from,
         toAddress: to,
-        value: parsedValue,
+        value: value,
         transactionHash: tx
       })
     } catch (err) {
