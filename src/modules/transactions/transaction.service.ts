@@ -26,7 +26,8 @@ export class TransactionService extends ServiceProtected {
       else if (account && (account.wallet as IWallet).user != userId)
         throw new BaseError(EHttpStatusCode.Unauthorized, "Invalid access to this account", true)
       const parsedValue = utils.parseUnits(value, coin.decimals || "ethers")
-      const RPCHelper: IRPC = new EthersRPC(network.url, network.chainId, account, network.configKey)
+      const RPCHelper = new EthersRPC(network.url, network.chainId, network.configKey)
+      RPCHelper.setWallet(account)
       const tx = await RPCHelper.sendTransaction(to, parsedValue, coin.contractAddress)
       return super.insert({
         user: userId,
