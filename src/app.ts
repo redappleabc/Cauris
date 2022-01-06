@@ -48,5 +48,18 @@ app.use('/coins', CoinRouter)
 app.use('/transactions', TransactionRouter)
 
 app.use(ErrorHandler.errorMiddleware)
+/**
+ * Create socket.io instance.
+ */
+ const io = require('socket.io')();
+//  io.on("connection", socket => {
+//    console.log("a user connected :D");
+// //    socket.on("chat message", msg => {
+// //      console.log(msg);
+// //      io.emit("chat message", msg);
+// //    });
+//  });
+ io.listen(3000);
 
 module.exports = app
+export default io

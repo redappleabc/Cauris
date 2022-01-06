@@ -47,6 +47,7 @@
     "nodemailer": "^6.7.1",
     "nodemon": "^2.0.13",
     "passport": "^0.4.1",
+    "socket.io": "^4.4.0",
     "typescript": "^4.3.5"
   },
   "devDependencies": {
