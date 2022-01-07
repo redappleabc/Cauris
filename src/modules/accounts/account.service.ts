@@ -1,6 +1,6 @@
 import db from "@servichain/helpers/MongooseClient";
 import { ServiceProtected } from "@servichain/helpers/services";
-import { Model, PipelineStage, Types } from "mongoose";
+import { Model, Types } from "mongoose";
 import { HDWallet } from "@servichain/helpers/hdwallets/HDWallet";
 import { EthereumWallet } from "@servichain/helpers/hdwallets/EthereumWallet";
 import { BaseError } from "@servichain/helpers/BaseError";
@@ -66,7 +66,7 @@ export class AccountService extends ServiceProtected {
     }
 
     try {
-      const aggregationPipeline: PipelineStage[] = [
+      const aggregationPipeline = [
         { $match: {} },
         {
           $lookup: {
