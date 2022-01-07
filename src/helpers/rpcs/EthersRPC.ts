@@ -44,7 +44,7 @@ export class EthersRPC implements IRPC {
     }
   }
 
-  public async sendTransaction(to: string, value: ethers.BigNumber, contractAddress = null) {
+  public async sendTransaction(to: string, value: ethers.BigNumber, contractAddress = null, handleInsert, insertBody) {
     const signer = this.provider.getSigner(this.account.address)
     var tx: any
     if ((await this.getBalance(contractAddress)).lt(value))
@@ -62,7 +62,7 @@ export class EthersRPC implements IRPC {
       this.provider.on("pending", (tx) => {
         this.provider.getTransaction(tx).then(function (transaction) {
           console.log("transaction is pending",transaction);
-          io.emit("trx-pending", {transaction})
+          // io.emit("trx-pending", {transaction})
         });
       });
 
@@ -77,8 +77,8 @@ export class EthersRPC implements IRPC {
       //   console.log(`Unable to connect to .. retrying in 3s...`);
       //   io.emit("trx-error")
       // });
-      
-      return tx.transactionHash
+      return handleInsert({...insertBody, transactionHash: tx.transactionHash})
+    
     } catch (err) {
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }

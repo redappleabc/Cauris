@@ -2,6 +2,8 @@ import { IResponseHandler } from "@servichain/interfaces";
 import { Request, Response, NextFunction } from 'express'
 import { Service, ServiceProtected } from '@servichain/helpers/services';
 import { Controller } from "./Controller";
+import { TransactionService} from '@servichain/modules/transactions'
+
 
 export class ControllerProtected extends Controller {
   constructor(service: ServiceProtected) {
@@ -36,7 +38,7 @@ export class ControllerProtected extends Controller {
     try {
       const { id } = req.params
       const { userId } = res.locals.user.id
-      let handler: IResponseHandler = await (this.service as ServiceProtected).updateProtected(id, userId, req.body)
+      let handler: IResponseHandler = await (this.service as TransactionService ).updateProtected(id, userId, req.body)
       return handler.handleResponse(res)
     } catch (err) {
       next(err)

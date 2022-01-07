@@ -12,3 +12,11 @@ export function sendSchema(req: Request, res: Response, next: NextFunction) {
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
 }
+
+export function updateSchema(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    status: Joi.string().required()
+  })
+  const validator = new JoiValidator(schema)
+  validator.middleware(req, next)
+}
