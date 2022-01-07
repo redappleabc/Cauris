@@ -36,7 +36,7 @@ export class Service implements IService {
     }
 
     try {
-      let items: Document[] = await this.model.find(query).skip(skip).limit(limit).populate(populate).sort({createdAt:-1})
+      let items: Document[] = await this.model.find(query).skip(skip).limit(limit).populate(populate)
       let total: number = await this.model.count(query)
 
       if (!items)
