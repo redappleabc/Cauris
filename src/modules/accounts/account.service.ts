@@ -91,7 +91,12 @@ export class AccountService extends ServiceProtected {
             as: "subscribedTo",
           },
         },
-        { $unwind: "$subscribedTo" },
+        {
+          $unwind: {
+            path: "$subscribedTo",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
         {
           $lookup: {
             from: "networks",
@@ -100,7 +105,12 @@ export class AccountService extends ServiceProtected {
             as: "network_infos",
           },
         },
-        { $unwind: "$network_infos" },
+         {
+          $unwind: {
+            path: "$network_infos",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
         // {
         //   $group: { accounts: { $push: "$$ROOT" },_id: { network_info : "$network_infos"} },
         // },
@@ -116,8 +126,9 @@ export class AccountService extends ServiceProtected {
       ];
       let accountsByNetwork: Document[] = await this.model
         .aggregate(aggregationPipeline)
+        .match(query)
         // @ts-ignore: Unreachable code error
-        .group({ _id: "$network_infos", accounts: { $push: "$$ROOT" } });
+        .group({ _id: "$network_infos", accounts: { $push: "$$ROOT" } })
       let total: number = await this.model.count(query);
       if (!accountsByNetwork)
         throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true);
@@ -132,7 +143,7 @@ export class AccountService extends ServiceProtected {
 
   public async getAllByUser(query: any, userId: string) {
     try {
-      query["populate"] = "subscribedTo wallet";
+      // query["populate"] = "subscribedTo wallet";
       let responseHandler = await this.getAllAggregated(query);
       let accountsnetworks: any = responseHandler.getBody()["items"];
       let account_list = [];
