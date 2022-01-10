@@ -1,6 +1,6 @@
 import db from "@servichain/helpers/MongooseClient";
 import { ServiceProtected } from "@servichain/helpers/services";
-import { Model, PipelineStage, Types } from "mongoose";
+import { Model, Types } from "mongoose";
 import { HDWallet } from "@servichain/helpers/hdwallets/HDWallet";
 import { EthereumWallet } from "@servichain/helpers/hdwallets/EthereumWallet";
 import { BaseError } from "@servichain/helpers/BaseError";
@@ -66,7 +66,7 @@ export class AccountService extends ServiceProtected {
     }
 
     try {
-      const aggregationPipeline: PipelineStage[] = [
+      const aggregationPipeline = [
         { $match: {} },
         {
           $lookup: {
@@ -304,14 +304,12 @@ export class AccountService extends ServiceProtected {
 
   public async fetchCoins(account: any, RPCHelper) {
     try {
-      for (let i = 0; i < account.subscribedTo.length; i++) {
-        let coinID: string = account.subscribedTo[i]["id"] as string;
-        account.subscribedTo[i]["balance"] = await this.getBalance(
-          coinID,
-          account,
-          RPCHelper
-        );
-      }
+      let coinID: string = account.subscribedTo["_id"] as string;
+      account.subscribedTo["balance"] = await this.getBalance(
+            coinID,
+            account,
+            RPCHelper
+          );
       return account;
     } catch (err) {
       if (err instanceof BaseError) throw err;

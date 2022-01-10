@@ -48,6 +48,7 @@
     "nodemon": "^2.0.13",
     "nomics": "^0.5.7",
     "passport": "^0.4.1",
+    "socket.io": "^4.4.0",
     "typescript": "^4.3.5"
   },
   "devDependencies": {
