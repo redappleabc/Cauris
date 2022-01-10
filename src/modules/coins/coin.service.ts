@@ -6,8 +6,12 @@ import { Service } from '@servichain/helpers/services'
 import { ICoin, IResponseHandler } from '@servichain/interfaces'
 import { Model , Document} from 'mongoose'
 import { response } from 'express'
-const CoinGecko = require('coingecko-api')
-const CoinGeckoClient = new CoinGecko();
+import config from 'config'
+import Nomics, { IRawCurrencyTicker } from 'nomics'
+
+const nomics = new Nomics({
+  apiKey: config.get('secrets.nomics')
+})
 
 const CoinDetailed = {
   vituals: true,
@@ -43,15 +47,17 @@ export class CoinService extends Service {
 
   public async getAll(query: any): Promise<IResponseHandler> {
     try {
-      this.pingGecko()
-      let {currency} = query ? query : 'eur'
+      let currency = (query && query.currency) ? query.currency : 'USD'
       let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
       if (responseHandler.data.items.length) {
-        const coinArray = responseHandler.data.items.map(item => item.name.toLowerCase())
-        const coinData = await this.retrieveCoinGecko(coinArray, currency)
+        const coinArray: string[] = responseHandler.data.items.map(item => item.symbol.toUpperCase())
+        const coinData: IRawCurrencyTicker[] = await this.retrieveCoinsNomics(coinArray, currency)
         responseHandler.data.items.forEach((element: ICoin, index: number, items: Array<any>) => {
           items[index] = items[index].toObject(CoinDetailed)
-          items[index]['price'] = coinData.data[element.name.toLowerCase()]
+          let match = coinData.filter((item: IRawCurrencyTicker) => item.symbol === element.symbol)
+          items[index]['price'] = match[0].price
+          items[index]['logo'] = match[0].logo_url
+          items[index]['price_currency'] = currency
         });
       }
       return responseHandler
@@ -64,13 +70,16 @@ export class CoinService extends Service {
 
   public async getById(query: any): Promise<IResponseHandler> {
     try {
-      this.pingGecko()
-      let {currency} = query ? query: 'eur'
+      let currency = (query && query.currency) ? query.currency : 'USD'
       let responseHandler : ValidResponse = (await super.getById(query) as ValidResponse);
-      let name: string = responseHandler.data.name.toLowerCase()
-      const coinData = await this.retrieveCoinGecko(name, currency)
-      responseHandler.data = responseHandler.data.toObject(CoinDetailed)
-      responseHandler.data.price = coinData.data[name]
+      let symbol: string[] = [responseHandler.data.symbol.toUpperCase()]
+      const coinData: IRawCurrencyTicker[] = await this.retrieveCoinsNomics(symbol, currency)
+      responseHandler.message = responseHandler.message.toObject(CoinDetailed)
+      console.log(coinData[0])
+      responseHandler.message['price'] = coinData[0].price
+      responseHandler.message['logo'] = coinData[0].logo_url
+      responseHandler.message['price_currency'] = currency
+      console.log(responseHandler)
       return responseHandler
     } catch(err) {
       if (err instanceof BaseError)
@@ -79,16 +88,15 @@ export class CoinService extends Service {
     }
   }
 
-  private async pingGecko() {
-    const ping = await CoinGeckoClient.ping()
-    if (!ping || !ping.success)
-      throw new BaseError(EHttpStatusCode.InternalServerError, "Coins information could not be retrieved")
-  }
-
-  private async retrieveCoinGecko(coinID: Array<string> | String, currency: string) {
+  private async retrieveCoinsNomics(coinID: Array<string>, currency: string) {
     try {
-      let coinsData = await CoinGeckoClient.simple.price({ids: coinID, vs_currency: currency, include_24hr_change: true})
-      if (!coinsData.success) {
+      let coinsData = await nomics.currenciesTicker({
+        interval: ['1d'],
+        ids: coinID,
+        convert: currency
+      })
+      console.log(coinsData)
+      if (!coinsData) {
         throw new BaseError(EHttpStatusCode.InternalServerError, "Could not retrieve coins infos")
       }
       return coinsData
