@@ -77,7 +77,12 @@ export class AccountService extends ServiceProtected {
           },
         },
         { $unwind: "$wallet" },
-        { $unwind: "$subscribedTo" },
+        {
+          $unwind: {
+            path: "$subscribedTo",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
         {
           $lookup: {
             from: "coins",
@@ -131,8 +136,7 @@ export class AccountService extends ServiceProtected {
       let responseHandler = await this.getAllAggregated(query);
       let accountsnetworks: any = responseHandler.getBody()["items"];
       let account_list = [];
-      
-        
+
       for (let i = 0; i < accountsnetworks.length; i++) {
         const netAccount = accountsnetworks[i];
         let network = netAccount._id; //network object
@@ -143,21 +147,19 @@ export class AccountService extends ServiceProtected {
         );
         let accounts = netAccount.accounts;
 
-        accounts = accounts.filter((item) => item.wallet.user == userId)
+        accounts = accounts.filter((item) => item.wallet.user == userId);
         for (let i = 0; i < accounts.length; i++) {
-          let account= accounts[i]
+          let account = accounts[i];
           let N_account = { ...account, id: account._id };
-            delete N_account._id;
-            N_account = await this.fetchCoins(N_account, RPCHelper);
-            delete N_account.privateKey;
-            N_account.wallet = N_account.wallet.id;
-            accounts[i] = N_account;
+          delete N_account._id;
+          N_account = await this.fetchCoins(N_account, RPCHelper);
+          delete N_account.privateKey;
+          N_account.wallet = N_account.wallet.id;
+          accounts[i] = N_account;
         }
-          
-            
-          
+
         account_list = [...account_list, ...accounts];
-      };
+      }
       responseHandler.message.items = account_list;
       responseHandler.message.total = account_list.length;
       return responseHandler;
@@ -306,10 +308,10 @@ export class AccountService extends ServiceProtected {
     try {
       let coinID: string = account.subscribedTo["_id"] as string;
       account.subscribedTo["balance"] = await this.getBalance(
-            coinID,
-            account,
-            RPCHelper
-          );
+        coinID,
+        account,
+        RPCHelper
+      );
       return account;
     } catch (err) {
       if (err instanceof BaseError) throw err;
