@@ -46,6 +46,7 @@
     "mongoose": "^6.0.1",
     "nodemailer": "^6.7.1",
     "nodemon": "^2.0.13",
+    "nomics": "^0.5.7",
     "passport": "^0.4.1",
     "typescript": "^4.3.5"
   },
