@@ -114,19 +114,19 @@ export class AccountService extends ServiceProtected {
         // {
         //   $group: { accounts: { $push: "$$ROOT" },_id: { network_info : "$network_infos"} },
         // },
-        {
-          $addFields: {
-            networkName: "$network_infos.name",
-            networkId: "$_id._id",
-            networkConfig: "$_id.configKey",
-            networkChainId: "$_id.ChainId",
-            networkUrl: "$_id.url",
-          },
-        },
+        // {
+        //   $addFields: {
+        //     networkName: "$network_infos.name",
+        //     networkId: "$_id._id",
+        //     networkConfig: "$_id.configKey",
+        //     networkChainId: "$_id.ChainId",
+        //     networkUrl: "$_id.url",
+        //   },
+        // },
       ];
       let accountsByNetwork: Document[] = await this.model
         .aggregate(aggregationPipeline)
-        .match(query)
+        // .match(query)
         // @ts-ignore: Unreachable code error
         .group({ _id: "$network_infos", accounts: { $push: "$$ROOT" } })
       let total: number = await this.model.count(query);
