@@ -151,6 +151,7 @@ export class AccountService extends ServiceProtected {
       for (let i = 0; i < accountsnetworks.length; i++) {
         const netAccount = accountsnetworks[i];
         let network = netAccount._id; //network object
+        if(!network) continue
         const RPCHelper: IRPC = new EthersRPC(
           network.url,
           network.chainId,
