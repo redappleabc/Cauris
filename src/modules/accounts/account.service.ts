@@ -67,7 +67,11 @@ export class AccountService extends ServiceProtected {
 
     try {
       const aggregationPipeline = [
-        { $match: {} },
+        {
+          $match: query.wallet
+            ? { wallet: mongoose.Types.ObjectId(query.wallet) }
+            : {},
+        },
         {
           $lookup: {
             from: "wallets",
@@ -105,10 +109,15 @@ export class AccountService extends ServiceProtected {
             as: "network_infos",
           },
         },
-         {
+        {
           $unwind: {
             path: "$network_infos",
             preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $addFields: {
+            network_infos: { $ifNull: ["$network_infos", "hidden"] },
           },
         },
         // {
@@ -128,7 +137,7 @@ export class AccountService extends ServiceProtected {
         .aggregate(aggregationPipeline)
         // .match(query)
         // @ts-ignore: Unreachable code error
-        .group({ _id: "$network_infos", accounts: { $push: "$$ROOT" } })
+        .group({ _id: "$network_infos", accounts: { $push: "$$ROOT" } });
       let total: number = await this.model.count(query);
       if (!accountsByNetwork)
         throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true);
@@ -151,27 +160,47 @@ export class AccountService extends ServiceProtected {
       for (let i = 0; i < accountsnetworks.length; i++) {
         const netAccount = accountsnetworks[i];
         let network = netAccount._id; //network object
-        if(!network) continue
-        const RPCHelper: IRPC = new EthersRPC(
-          network.url,
-          network.chainId,
-          network.configKey
-        );
         let accounts = netAccount.accounts;
+        console.log("network === >>", network);
 
-        accounts = accounts.filter((item) => item.wallet.user == userId);
-        for (let i = 0; i < accounts.length; i++) {
-          let account = accounts[i];
-          let N_account = { ...account, id: account._id };
-          delete N_account._id;
-          N_account = await this.fetchCoins(N_account, RPCHelper);
-          delete N_account.privateKey;
-          N_account.wallet = N_account.wallet.id;
-          accounts[i] = N_account;
+        if (network && network !== "hidden") {
+          console.log("++++account",accounts.length)
+          const RPCHelper: IRPC = new EthersRPC(
+            network.url,
+            network.chainId,
+            network.configKey
+          );
+          accounts = accounts.filter((item) => item.wallet.user == userId);
+          for (let i = 0; i < accounts.length; i++) {
+            let account = accounts[i];
+            let N_account = { ...account, id: account._id };
+            delete N_account._id;
+            // console.log("N_account --", N_account)
+            if (N_account.subscribedTo) {
+              N_account = await this.fetchCoins(N_account, RPCHelper);
+            }
+            delete N_account.privateKey;
+            N_account.wallet = N_account.wallet._id;
+            accounts[i] = N_account;
+          }
+        }else{
+          // the hidden accounts : without network infos and subscribedTo
+          console.log("------account",accounts.length)
+          for (let i = 0; i < accounts.length; i++) {
+            let account = accounts[i];
+            let N_account = { ...account, id: account._id };
+            delete N_account._id;
+            delete N_account.privateKey;
+            N_account.wallet = N_account.wallet._id;
+            N_account.subscribedTo= null
+            N_account.network_infos= null
+            accounts[i] = N_account;
+          }
+          
         }
-
         account_list = [...account_list, ...accounts];
       }
+      console.log(account_list)
       responseHandler.message.items = account_list;
       responseHandler.message.total = account_list.length;
       return responseHandler;
