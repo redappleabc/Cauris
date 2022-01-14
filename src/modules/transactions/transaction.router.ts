@@ -10,7 +10,7 @@ const service = new TransactionService()
 const controller = new TransactionController(service)
 
 /* Refresh Routes */
-router.get('/', JwtHelper.middleware(), controller.getAllByUser)
+router.get('/', JwtHelper.middleware(), controller.getAllByCoin)
 router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
 router.post('/', JwtHelper.middleware(), sendSchema, controller.send)
 router.put('/:id', JwtHelper.middleware(),updateSchema, controller.updateProtected)
