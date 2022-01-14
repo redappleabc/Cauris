@@ -161,10 +161,8 @@ export class AccountService extends ServiceProtected {
         const netAccount = accountsnetworks[i];
         let network = netAccount._id; //network object
         let accounts = netAccount.accounts;
-        console.log("network === >>", network);
 
         if (network && network !== "hidden") {
-          console.log("++++account",accounts.length)
           const RPCHelper: IRPC = new EthersRPC(
             network.url,
             network.chainId,
@@ -185,7 +183,6 @@ export class AccountService extends ServiceProtected {
           }
         }else{
           // the hidden accounts : without network infos and subscribedTo
-          console.log("------account",accounts.length)
           for (let i = 0; i < accounts.length; i++) {
             let account = accounts[i];
             let N_account = { ...account, id: account._id };
