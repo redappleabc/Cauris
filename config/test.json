@@ -9,7 +9,7 @@
   },
   "rpc": {
     "infura": {
-      "password": "MUST CHANGE IN PROD & NEVER PUSHED"
+      "password": "fc339bf6cfbd485bb7ad02bf49eccda5"
     }
   },
   "smtp": {

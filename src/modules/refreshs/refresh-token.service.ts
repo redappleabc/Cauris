@@ -7,6 +7,8 @@ import JwtHelper from '@servichain/middlewares/JwtHelper'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EHttpStatusCode } from '@servichain/enums'
 import config from 'config'
+import IRefresh from '@servichain/interfaces/IRefresh'
+import { IUser } from '@servichain/interfaces'
 
 const refreshTokenExpiresIn: number = config.get('tokens.refreshExpiresIn')
 
@@ -19,13 +21,13 @@ export class RefreshService extends ServiceProtected {
 
   public async refresh(token: any, ipAddress: string) {
     try {
-      const refreshToken = await this.model.findOne(token.id)
-      const { user } = refreshToken
+      const refreshToken: IRefresh = await this.model.findOne(token.id)
+      const { user }: IRefresh = refreshToken
 
-      const newToken = await this.generate(user.id, ipAddress)
+      const newToken = await this.generate(((user as IUser).id as string), ipAddress)
       refreshToken.replacedByToken = newToken.token
       this.revoke(refreshToken, ipAddress)
-      this.model.create(newToken)
+      await this.model.create(newToken)
       const {jwtToken} = JwtHelper.generate(user)
 
       return new ValidResponse(200, {user, jwtToken, refreshToken: newToken})

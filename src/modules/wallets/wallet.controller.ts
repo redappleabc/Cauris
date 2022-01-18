@@ -12,8 +12,8 @@ export class WalletController extends ControllerProtected {
 
   public async generate(req: Request, res: Response, next: NextFunction) {
     try {
-      let {mnemonic} = req.body;
-      const handler: IResponseHandler = await (this.service as WalletService).generate(req.user['id'], mnemonic)
+      let {mnemonic, name} = req.body;
+      const handler: IResponseHandler = await (this.service as WalletService).generate(req.user['id'], mnemonic, name)
       handler.handleResponse(res)
     } catch (err) {
       next(err)

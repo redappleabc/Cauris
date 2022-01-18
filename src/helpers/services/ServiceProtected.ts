@@ -10,6 +10,7 @@ export class ServiceProtected extends Service {
     super(model)
     this.getByIdProtected = this.getByIdProtected.bind(this)
     this.getAllByUser = this.getAllByUser.bind(this)
+    this.updateProtected = this.updateProtected.bind(this)
   }
 
   public async getByIdProtected(id: string, userId: string) {
@@ -26,34 +27,20 @@ export class ServiceProtected extends Service {
   }
 
   public async getAllByUser(query: any, userId: string) {
-    let {skip, limit} = query
+    query.user = userId
+    return super.getAll(query)
+  }
 
-    skip = skip ? Number(skip) : 0
-    limit = limit ? Number(limit): 25
-
-    delete query.skip
-    delete query.limit
-
-    if (query._id) {
-      try {
-        query._id = new mongoose.mongo.ObjectId(query._id)
-      } catch (error) {
-        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid query ID", true)
-      }
-    }
-
+  public async updateProtected(id: string, userId: string, data: any) {
     try {
-      let items: Document[] = await this.model.find({user: userId, ...query}).skip(skip).limit(limit)
-      let total: number = await this.model.count()
-
-      if (!items)
-        throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true)
-      return new ValidResponse(EHttpStatusCode.OK, {
-        items,
-        total
-      })
-    } catch (error) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
+      let itemCheck = await this.model.find({_id: id, user: userId})
+      if (!itemCheck)
+        throw new BaseError(EHttpStatusCode.Unauthorized, "You do not have access to this resource")
+      return super.update(id, data)
+    } catch(err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, err)
     }
   }
 }

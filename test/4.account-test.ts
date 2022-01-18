@@ -37,12 +37,13 @@ const accountCompare = {
 }
 
 const accountTestFail = {
-  "coinIndex": 610,
+  "coinIndex": 200,
   "change": 1
 }
 
 let token: string
 let adminToken: string;
+let walletID: string
 let accountID: string
 let networkID: string
 
@@ -88,12 +89,25 @@ describe('Accounts', () => {
       done()
     })
   })
+  before('Get User Wallet', done => {
+    chai.request(server)
+    .get('/wallets')
+    .set({Authorization: `Bearer ${token}`})
+    .end((err, res) => {
+      res.should.have.status(EHttpStatusCode.OK)
+      walletID = res.body.data.items[0]['id']
+      done()
+    })
+  })
   describe('[POST] /accounts', () => {
     it('should be able to create an account linked to an existing coin index', done => {
       chai.request(server)
       .post('/accounts')
       .set({Authorization: `Bearer ${token}`})
-      .send(accountTest)
+      .send({
+        wallet: walletID,
+        accounts: accountTest
+      })
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.Created)
         res.body.data.should.have.property('address')
@@ -106,11 +120,14 @@ describe('Accounts', () => {
         done()
       })
     })
-    it('should not be able to create an account with a false coinIndex', done => {
+    it('should not be able to create an account with a false coin ID', done => {
       chai.request(server)
       .post('/accounts')
       .set({Authorization: `Bearer ${token}`})
-      .send(accountTestFail)
+      .send({
+        wallet: walletID,
+        accounts: accountTestFail
+      })
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.NotFound)
         done()
@@ -120,7 +137,10 @@ describe('Accounts', () => {
       chai.request(server)
       .post('/accounts')
       .set({Authorization: `Bearer ${adminToken}`})
-      .send(accountTest)
+      .send({
+          wallet: walletID,
+          accounts: accountTest
+      })
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.Forbidden)
         done()

@@ -4,7 +4,8 @@ const Schema = mongoose.Schema
 const schema = new Schema({
   user: {type: Schema.Types.ObjectId, ref: 'User', required: true},
   seed: {type: String, unique: true, required: true},
-  mnemonic: {type: String, unique: true, required: true}
+  mnemonic: {type: String, unique: true, required: true},
+  name: String
 })
 
 
@@ -14,6 +15,7 @@ schema.set('toJSON', {
   transform: function(doc, ret) {
     delete ret._id
     delete ret.seed
+    delete ret.mnemonic
   }
 })
 

@@ -21,6 +21,7 @@ const testAdminAuth = {
 }
 
 const BIP39Test = {
+  name: "My super wallet !",
   mnemonic: "another jazz nest aerobic hurry embody knife park chapter fresh cabin remember",
   seed: "5b60c2acb37fa95a1787d7966eef151a1028415ea2b6f7929788d771d8581a66320b902122855034833847336c86b9dd997b718e582d53d6ae9d80b58f79ffa7",
 }
@@ -112,7 +113,7 @@ describe('Wallets', () => {
       .set({ Authorization: `Bearer ${token}` })
       .end((err, res) => {
         res.should.have.status(EHttpStatusCode.OK)
-        res.body.data.should.have.property('mnemonic')
+        res.body.data.should.have.property('id')
         done()
       })
     })

@@ -4,9 +4,9 @@ const Schema = mongoose.Schema
 
 const schema = new Schema({
   user: {type: Schema.Types.ObjectId, ref: 'User'},
-  token: String,
+  token: {type: String, required: true},
   expires: Date,
-  type: {type: String, enum: ETokenType},
+  type: {type: String, enum: ETokenType, required: true},
   used: {type: Boolean, default: false}
 })
 
