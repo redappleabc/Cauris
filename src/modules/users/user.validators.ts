@@ -22,7 +22,7 @@ export function verifySchema(req: Request, res: Response, next: NextFunction) {
 export function passwordSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     newPassword: Joi.string().min(6).required(),
-    confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
+    confirmPassword: Joi.string().valid(Joi.ref('newPassword')).required(),
     token: Joi.string().empty('').required()
   })
   const validator = new JoiValidator(schema)
