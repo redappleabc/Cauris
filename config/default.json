@@ -5,7 +5,8 @@
     "validationExpiresIn": 86400
   },
   "secrets": {
-    "app": "MUST CHANGE IN PROD & NEVER PUSHED"
+    "app": "MUST CHANGE IN PROD & NEVER PUSHED",
+    "nomics": "m_24fa316efbb14ebdc0e13c0d76e70371b7238594"
   },
   "rpc": {
     "infura": {

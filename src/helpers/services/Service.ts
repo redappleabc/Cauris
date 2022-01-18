@@ -18,10 +18,11 @@ export class Service implements IService {
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {
-    let {skip, limit} = query
+    let {skip, limit, populate} = query
 
     skip = skip ? Number(skip) : 0
     limit = limit ? Number(limit): 25
+    populate = populate ? populate : ''
 
     delete query.skip
     delete query.limit
@@ -35,8 +36,8 @@ export class Service implements IService {
     }
 
     try {
-      let items: Document[] = await this.model.find(query).skip(skip).limit(limit)
-      let total: number = await this.model.count()
+      let items: Document[] = await this.model.find(query).skip(skip).limit(limit).populate(populate)
+      let total: number = await this.model.count(query)
 
       if (!items)
         throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true)

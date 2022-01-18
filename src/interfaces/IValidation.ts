@@ -1,10 +1,10 @@
-import { Schema } from "mongoose";
-import { ETokenType } from "../enums/ETokenType";
+import { ETokenType } from "@servichain/enums";
+import { IUser } from "./IUser";
 
 export default interface IValidation {
-  user: Schema.Types.ObjectId,
-  token: String,
-  expires: Date,
-  type: ETokenType,
+  user: string | IUser
+  token?: String
+  expires?: Date
+  type?: ETokenType
   used: Boolean
 }

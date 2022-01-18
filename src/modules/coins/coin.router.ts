@@ -10,7 +10,7 @@ const controller = new CoinController(service)
 
 router.get('/', controller.getAll)
 router.get('/:id', controller.getById)
-router.post('/', JwtHelper.middleware([EUserRole.Partner, EUserRole.Admin]), insertSchema, controller.insert)
+router.post('/', JwtHelper.middleware(), insertSchema, controller.insert)
 router.put('/:id', JwtHelper.middleware([EUserRole.Admin]), updateSchema, controller.update)
 router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
