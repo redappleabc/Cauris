@@ -6,6 +6,9 @@ import { IResponseHandler } from '@servichain/interfaces'
 import { Model } from 'mongoose'
 import config from 'config'
 import { BaseError } from '@servichain/helpers/BaseError'
+import bcrypt, { hash } from 'bcryptjs'
+import MailerHelper from '@servichain/helpers/MailerHelper'
+import { verificationTemplate } from '@servichain/mails/verificationTemplate'
 
 export class ValidationService extends ServiceProtected {
   constructor(model: Model<any> = db.ValidationToken) {
@@ -19,6 +22,8 @@ export class ValidationService extends ServiceProtected {
       if (!user)
         throw new BaseError(EHttpStatusCode.NotFound, "Could not found any user related to this e-mail")
       var token = generateRandomToken()
+      var mail  = verificationTemplate(token, type)
+      MailerHelper.send(email, `${type} Validation`, mail)
       var data = {
         user,
         token,

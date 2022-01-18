@@ -4,9 +4,11 @@ import { Service } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
 import { BaseError } from '@servichain/helpers/BaseError'
 import JwtHelper from '@servichain/middlewares/JwtHelper'
+import MailerHelper from '@servichain/helpers/MailerHelper'
 import {RefreshService} from '@servichain/modules/refreshs'
+import {ValidationService} from '@servichain/modules/validations'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
-import { EUserRole, EHttpStatusCode } from '@servichain/enums'
+import { EUserRole, EHttpStatusCode, ETokenType } from '@servichain/enums'
 
 const UserDetailed = {
   virtuals: true,
@@ -25,6 +27,8 @@ export class UserService extends Service {
     super(model)
     this.authenticate = this.authenticate.bind(this)
     this.getByIdDetailed = this.getByIdDetailed.bind(this)
+    this.verifyUser = this.verifyUser.bind(this)
+    this.changePassword = this.changePassword.bind(this)
   }
 
   public async authenticate({email, password, ipAddress}) {
@@ -33,7 +37,6 @@ export class UserService extends Service {
       if (!user || !bcrypt.compareSync(password, user.password)) {
         throw new BaseError(EHttpStatusCode.NotFound, "Could not found User", true)
       }
-
       const {jwtToken} = JwtHelper.generate(user)
       const refreshService = new RefreshService()
       const refreshToken = await refreshService.generate(user.id, ipAddress)
@@ -79,7 +82,10 @@ export class UserService extends Service {
   public async insert(data: any)  {
     data.role = await this.checkFirstUser()
     data.password = await hash(data.password, 10)
-    return super.insert(data)
+    const validationService = new ValidationService()
+    const result = await super.insert(data)
+    await validationService.generateToken(ETokenType.Verification, data.email)
+    return result
   }
 
   public async getByIdDetailed(query: any) {

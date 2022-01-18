@@ -27,6 +27,8 @@ class JwtHelper {
       async (req: Request, res: Response, next: NextFunction) => {
         try {
           const user = await db.User.findById(req.user['id'])
+          if (!user.verified)
+            throw new BaseError(EHttpStatusCode.Unauthorized, "Please verify your email to access the app", true)
           const refreshToken = await db.RefreshToken.find({user: req.user['id']})
           user['ownsToken'] = token => !!refreshToken.find(x => x.token === token)
           res['locals'].user = user

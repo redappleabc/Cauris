@@ -11,10 +11,19 @@ export function authenticateSchema(req: Request, res: Response, next: NextFuncti
   validator.middleware(req, next)
 }
 
-export function passwordSchema(req, Request, res: Response, next: NextFunction) {
+export function verifySchema(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    token: Joi.string().empty('').required()
+  })
+  const validator = new JoiValidator(schema)
+  validator.middleware(req, next)
+}
+
+export function passwordSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     newPassword: Joi.string().min(6).required(),
-    confirmPassword: Joi.string().valid(Joi.ref('password')).required()
+    confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
+    token: Joi.string().empty('').required()
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)

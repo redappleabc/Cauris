@@ -12,6 +12,8 @@ export class UserController extends Controller {
     super(service)
     this.authenticate = this.authenticate.bind(this)
     this.getByIdDetailed = this.getByIdDetailed.bind(this)
+    this.verifyUser = this.verifyUser.bind(this)
+    this.passwordForgotten = this.passwordForgotten.bind(this)
   }
 
   public async authenticate(req: Request, res: Response, next: NextFunction) {
