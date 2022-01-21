@@ -4,6 +4,7 @@ import {UserModel} from '@servichain/modules/users/user.model'
 import {RefreshModel} from '@servichain/modules/refreshs/refresh-token.model'
 import {ValidationModel} from '@servichain/modules/validations/validation-token.model'
 import {WalletModel} from '@servichain/modules/wallets/wallet.model'
+import {ContactModel} from '@servichain/modules/contacts/contacts.model'
 import {AccountModel} from '@servichain/modules/accounts/account.model'
 import {TransactionModel} from '@servichain/modules/transactions/transaction.model'
 import {NetworkModel} from '@servichain/modules/networks/network.model'
@@ -17,6 +18,7 @@ class MongooseClient {
   RefreshToken: Model<any> = RefreshModel
   ValidationToken: Model<any> = ValidationModel
   Wallet: Model<any> = WalletModel
+  Contact: Model<any> = ContactModel
   Account: Model<any> = AccountModel
   Transaction: Model<any> = TransactionModel
   Network: Model<any> = NetworkModel
