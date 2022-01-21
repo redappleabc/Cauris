@@ -4,7 +4,7 @@ import { JoiValidator } from '@servichain/middlewares/JoiValidator';
 
 export function generateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
-    name: Joi.string().empty('').max(50),
+    name: Joi.string().empty('').max(50).required(),
     email:Joi.string().email().empty('').required(),
     address:Joi.string().alphanum().empty('').required(),
   })
@@ -15,8 +15,8 @@ export function generateSchema(req: Request, res: Response, next: NextFunction) 
 export function updateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     name: Joi.string().empty('').max(50),
-    email:Joi.string().email().empty('').required(),
-    address:Joi.string().alphanum().empty('').required(),
+    email:Joi.string().email().empty(''),
+    address:Joi.string().alphanum().empty(''),
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
