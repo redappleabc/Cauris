@@ -378,4 +378,17 @@ export class AccountService extends ServiceProtected {
     }
     return reversedObj;
   }
+
+  public async getByAddressProtected(address: string, userId: string) {
+    try {
+      let item = await this.model.findOne({address})
+      if (!item)
+        throw new BaseError(EHttpStatusCode.NotFound, "the address is not found on our database.", true)
+      return new ValidResponse(EHttpStatusCode.OK, item)
+    } catch (err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, err, true)
+    }
+  }
 }
