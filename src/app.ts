@@ -12,6 +12,7 @@ var config = require('config')
 import {UserRouter} from '@servichain/modules/users'
 import wallets from '@servichain/modules/wallets/wallet.router'
 import contacts from '@servichain/modules/contacts/contacts.router'
+import notifications from '@servichain/modules/notifications/notifications.router'
 import {AccountRouter} from '@servichain/modules/accounts/account.router'
 import {RefreshTokenRouter} from '@servichain/modules/refreshs'
 import {NetworkRouter} from '@servichain/modules/networks/network.router'
@@ -42,6 +43,7 @@ app.use(bearerToken())
 app.use('/users', UserRouter)
 app.use('/wallets', wallets)
 app.use('/contacts', contacts)
+app.use('/notifications', notifications)
 app.use('/accounts', AccountRouter)
 app.use('/refresh-tokens', RefreshTokenRouter)
 app.use('/validation-tokens', ValidationRouter)
