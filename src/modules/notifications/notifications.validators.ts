@@ -7,6 +7,7 @@ export function generateSchema(req: Request, res: Response, next: NextFunction) 
     title: Joi.string().empty('').required(),
     content:Joi.string().empty(''),
     user:Joi.string().empty('').required(),
+    data:Joi.object()
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
@@ -17,6 +18,7 @@ export function updateSchema(req: Request, res: Response, next: NextFunction) {
     title: Joi.string().empty('').required(),
     content:Joi.string().empty(''),
     user:Joi.string().empty('').required(),
+    data:Joi.object()
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
