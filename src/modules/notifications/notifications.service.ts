@@ -8,9 +8,9 @@ export class NotificationsService extends ServiceProtected {
     this.generate = this.generate.bind(this)
   }
 
-  public async generate(deviceID: string, title: string = null, content: string= null) {
+  public async generate(user: string, title: string = null, content: string= null) {
     return super.insert({
-      deviceID,
+      user,
       title,
       content
     })

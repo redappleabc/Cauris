@@ -12,8 +12,8 @@ export class NotificationsController extends ControllerProtected {
 
   public async generate(req: Request, res: Response, next: NextFunction) {
     try {
-      let {title, content, deviceID} = req.body;
-      const handler: IResponseHandler = await (this.service as NotificationsService).generate(deviceID, title, content)
+      let {title, content, user} = req.body;
+      const handler: IResponseHandler = await (this.service as NotificationsService).generate(user, title, content)
       handler.handleResponse(res)
     } catch (err) {
       next(err)

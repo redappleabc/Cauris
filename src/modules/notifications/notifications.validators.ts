@@ -6,7 +6,7 @@ export function generateSchema(req: Request, res: Response, next: NextFunction) 
   const schema = Joi.object({
     title: Joi.string().empty('').required(),
     content:Joi.string().email().empty(''),
-    deviceID:Joi.string().empty('').required(),
+    user:Joi.string().empty('').required(),
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
@@ -16,7 +16,7 @@ export function updateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     title: Joi.string().empty('').required(),
     content:Joi.string().email().empty(''),
-    deviceID:Joi.string().empty('').required(),
+    user:Joi.string().empty('').required(),
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
