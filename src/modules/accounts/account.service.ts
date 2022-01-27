@@ -381,7 +381,7 @@ export class AccountService extends ServiceProtected {
 
   public async getByAddressProtected(address: string, userId: string) {
     try {
-      let item = await this.model.findOne({address})
+      let item = await this.model.findOne({address}).populate('wallet')
       if (!item)
         throw new BaseError(EHttpStatusCode.NotFound, "the address is not found on our database.", true)
       return new ValidResponse(EHttpStatusCode.OK, item)
