@@ -9,7 +9,7 @@ const schema = new Schema({
   lastName: String,
   role: {type: String, enum: EUserRole, default: EUserRole.User},
   created: {type: Date, default: Date.now()},
-  verified: {type: Boolean, default: false},
+  verified: {type: Boolean, default: true},
   updated: Date,
   passwordReset: Date
 })
