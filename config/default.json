@@ -1,5 +1,5 @@
 {
-  "mongoDB": "mongodb://localhost/servichain",
+  "mongoDB": "mongodb://SW:swapi2021!@localhost/servichain",
   "tokens": {
     "refreshExpiresIn": 604800,
     "validationExpiresIn": 86400
