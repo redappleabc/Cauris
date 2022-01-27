@@ -21,6 +21,7 @@ export class TransactionService extends ServiceProtected {
     super(model);
     this.send = this.send.bind(this);
     this.getAllByCoin = this.getAllByCoin.bind(this);
+    this.getGasFees = this.getGasFees.bind(this)
   }
 
   public async getAllbyQuery(query: any) {
@@ -64,14 +65,12 @@ export class TransactionService extends ServiceProtected {
     return coin
   }
 
-  public async getGasPrice(coinId: string, value: string) {
+  public async getGasFees(coinId: string) {
     const coin: ICoin = await this.getCoinById(coinId)
     const network: INetwork = coin.network as INetwork;
     const RPCHelper: IRPC = rpcs.getInstance(network.name)
-
-    const parsedValue = utils.parseUnits(value, coin.decimals || "ethers");
-    const gasPrice = await RPCHelper.getGasPrice(parsedValue)
-    return new ValidResponse(EHttpStatusCode.OK, utils.formatUnits(gasPrice, coin.decimals))
+    const gasFees = await RPCHelper.getGasFees()
+    return new ValidResponse(EHttpStatusCode.OK, utils.formatUnits(gasFees, "gwei"))
   }
 
   public async send(
@@ -125,7 +124,6 @@ export class TransactionService extends ServiceProtected {
 
   public async updateProtected(id: string, userId: string, data: any) {
     try {
-      console.log("trax update ", id);
       let itemCheck = await db.Transaction.find({ transactionHash: id });
       if (!itemCheck)
         throw new BaseError(

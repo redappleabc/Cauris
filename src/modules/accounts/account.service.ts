@@ -168,7 +168,6 @@ export class AccountService extends ServiceProtected {
             let account = accounts[i];
             let N_account = { ...account, id: account._id };
             delete N_account._id;
-            // console.log("N_account --", N_account)
             if (N_account.subscribedTo) {
               N_account = await this.fetchCoins(N_account, RPCHelper);
             }
@@ -192,7 +191,6 @@ export class AccountService extends ServiceProtected {
         }
         account_list = [...account_list, ...accounts];
       }
-      console.log(account_list)
       responseHandler.message.items = account_list;
       responseHandler.message.total = account_list.length;
       return responseHandler;

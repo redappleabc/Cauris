@@ -33,7 +33,6 @@ class RPCArray {
       default:
         rpc = new EthersRPC(network)
     }
-    console.log("network " + network.name + " is instanciated")
     return rpc
   }
 }

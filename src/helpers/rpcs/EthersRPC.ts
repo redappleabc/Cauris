@@ -18,7 +18,7 @@ export class EthersRPC implements IRPC {
     const {rpcUrl, apiUrl, chainId, configKey = null} = network
     if (config.has(`rpc.${configKey}`)) {
       const options: any = config.get(`rpc.${configKey}`)
-      this.provider = new ethers.providers.JsonRpcProvider({rpcUrl, ...options}, chainId)
+      this.provider = new ethers.providers.JsonRpcProvider({url: rpcUrl, ...options}, chainId)
     } else
       this.provider = new ethers.providers.JsonRpcProvider(rpcUrl, chainId)
       this.scan =  new ScanHelper(apiUrl, config.get(`api.${configKey}`))
@@ -53,8 +53,12 @@ export class EthersRPC implements IRPC {
       return await this.scan.retrieveHistory(this.account.address, page)
   }
 
-  public async getGasPrice(value: ethers.BigNumber) {
-    return await this.provider.estimateGas({value})
+  public async getGasFees() {
+    try {
+      const gasData = await this.provider.getFeeData()
+      return gasData.gasPrice
+    } catch (err) {
+    }
   }
 
   public async sendTransaction(to: string, value: ethers.BigNumber, contractAddress = null, handleInsert, insertBody) {

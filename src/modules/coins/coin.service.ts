@@ -74,11 +74,9 @@ export class CoinService extends Service {
       let symbol: string[] = [responseHandler.data.symbol.toUpperCase()]
       const coinData: IRawCurrencyTicker[] = await this.retrieveCoinsNomics(symbol, currency)
       responseHandler.message = responseHandler.message.toObject(CoinDetailed)
-      console.log(coinData[0])
       responseHandler.message['price'] = coinData[0].price
       responseHandler.message['logo'] = coinData[0].logo_url
       responseHandler.message['price_currency'] = currency
-      console.log(responseHandler)
       return responseHandler
     } catch(err) {
       if (err instanceof BaseError)
@@ -94,7 +92,6 @@ export class CoinService extends Service {
         ids: coinID,
         convert: currency
       })
-      console.log(coinsData)
       if (!coinsData) {
         throw new BaseError(EHttpStatusCode.InternalServerError, "Could not retrieve coins infos")
       }
