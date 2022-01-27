@@ -20,6 +20,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@types/nodemailer": "^6.4.4",
+    "axios": "^0.25.0",
     "bcryptjs": "^2.4.3",
     "bip32": "^2.0.6",
     "bip39": "^3.0.4",

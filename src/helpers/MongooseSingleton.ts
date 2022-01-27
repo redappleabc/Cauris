@@ -12,7 +12,7 @@ import config from 'config'
 import mongoose from 'mongoose'
 const mongoDB: string = config.get('mongoDB')
 
-class MongooseClient {
+export class MongooseClient {
   User: Model<any> = UserModel
   RefreshToken: Model<any> = RefreshModel
   ValidationToken: Model<any> = ValidationModel
@@ -37,4 +37,4 @@ class MongooseClient {
   }
 }
 
-export default new MongooseClient()
+export const db = new MongooseClient()

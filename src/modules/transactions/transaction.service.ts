@@ -1,4 +1,5 @@
-import db from "@servichain/helpers/MongooseClient";
+import {db} from "@servichain/helpers/MongooseSingleton";
+import {rpcs} from '@servichain/helpers/RPCSingleton';
 import { ServiceProtected } from "@servichain/helpers/services";
 import { Model } from "mongoose";
 import {
@@ -8,11 +9,10 @@ import {
   IResponseHandler,
   IRPC,
 } from "@servichain/interfaces";
-import { EthersRPC } from "@servichain/helpers/rpcs/EthersRPC";
 import { BaseError } from "@servichain/helpers/BaseError";
 import { EHttpStatusCode } from "@servichain/enums";
 import { IWallet } from "@servichain/interfaces/IWallet";
-import { utils } from "ethers";
+import { ethers, utils } from "ethers";
 import { ValidResponse } from "@servichain/helpers/responses";
 const mongoose = require("mongoose");
 
@@ -23,7 +23,7 @@ export class TransactionService extends ServiceProtected {
     this.getAllByCoin = this.getAllByCoin.bind(this);
   }
 
-  public async getAllByCoin(query: any) {
+  public async getAllbyQuery(query: any) {
     let query_;
     const { coin = null, address = null } = query;
     let and = [];
@@ -40,6 +40,40 @@ export class TransactionService extends ServiceProtected {
     return super.getAll(query_);
   }
 
+  public async getAllByCoin(query: any) {
+    const { coinId = null, address = null, page = 1} = query
+    if (!!coinId && !!address) {
+      const coin: ICoin = await this.getCoinById(coinId)
+      const network: INetwork = coin.network as INetwork;
+      const RPCHelper: IRPC = rpcs.getInstance(network.name)
+
+      const history = await RPCHelper.getHistory(coin.contractAddress, page)
+      return new ValidResponse(EHttpStatusCode.OK, history)
+    } else {
+      return await this.getAllbyQuery(query)
+    }
+  }
+
+  private async getCoinById(coinId: string) {
+    const coin: ICoin = await db.Coin.findOne({ _id: coinId }).populate("network")
+    if (!coin)
+      throw new BaseError(
+        EHttpStatusCode.NotFound,
+        "Specified coin doesnt exist or wasnt found on the specified network"
+      );
+    return coin
+  }
+
+  public async getGasPrice(coinId: string, value: string) {
+    const coin: ICoin = await this.getCoinById(coinId)
+    const network: INetwork = coin.network as INetwork;
+    const RPCHelper: IRPC = rpcs.getInstance(network.name)
+
+    const parsedValue = utils.parseUnits(value, coin.decimals || "ethers");
+    const gasPrice = await RPCHelper.getGasPrice(parsedValue)
+    return new ValidResponse(EHttpStatusCode.OK, utils.formatUnits(gasPrice, coin.decimals))
+  }
+
   public async send(
     userId: string,
     coinId: string,
@@ -48,14 +82,7 @@ export class TransactionService extends ServiceProtected {
     value: string
   ) {
     try {
-      const coin: ICoin = await db.Coin.findOne({ _id: coinId }).populate(
-        "network"
-      );
-      if (!coin)
-        throw new BaseError(
-          EHttpStatusCode.NotFound,
-          "Specified coin doesnt exist or wasnt found on the specified network"
-        );
+      const coin: ICoin = await this.getCoinById(coinId)
       const network: INetwork = coin.network as INetwork;
       const account: IAccount = await db.Account.findOne({
         address: from,
@@ -73,11 +100,7 @@ export class TransactionService extends ServiceProtected {
           true
         );
       const parsedValue = utils.parseUnits(value, coin.decimals || "ethers");
-      const RPCHelper = new EthersRPC(
-        network.url,
-        network.chainId,
-        network.configKey
-      );
+      const RPCHelper: IRPC = rpcs.getInstance(network.name)
       RPCHelper.setWallet(account);
       const handleInsert = (d) => super.insert(d);
       const tx = await RPCHelper.sendTransaction(
@@ -88,12 +111,11 @@ export class TransactionService extends ServiceProtected {
         {
           user: userId,
           coin,
-          fromAddress: from,
-          toAddress: to,
-          value: value,
+          from,
+          to,
+          value,
         }
       );
-
       return tx;
     } catch (err) {
       if (err instanceof BaseError) throw err;

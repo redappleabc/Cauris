@@ -1,13 +1,16 @@
+import { ENetworkType } from '@servichain/enums'
 import mongoose from 'mongoose'
 const Schema = mongoose.Schema
 
 const schema = new Schema({
   name: {type: String, required: true},
-  url: String,
-  configKey: String,
   chainId: {type: Number, unique: true},
-  blockExplorer: String,
-  currencySymbol: String
+  rpcUrl: {type: String, required: true, unique: true},
+  apiUrl: String,
+  explorerUrl: String,
+  configKey: String,
+  currencySymbol: {type: String, required: true},
+  type: {type: Number, enum: ENetworkType, default: ENetworkType.evm}
 })
 
 schema.set('toJSON', {
@@ -15,6 +18,9 @@ schema.set('toJSON', {
   versionKey: false,
   transform: function(doc, ret) {
     delete ret._id
+    delete ret.configKey
+    delete ret.apiUrl
+    delete ret.rpcUrl
   }
 })
 

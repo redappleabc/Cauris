@@ -1,11 +1,10 @@
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EHttpStatusCode } from '@servichain/enums'
 import { BaseError } from '@servichain/helpers/BaseError'
-import db from '@servichain/helpers/MongooseClient'
+import {db} from '@servichain/helpers/MongooseSingleton'
 import { Service } from '@servichain/helpers/services'
 import { ICoin, IResponseHandler } from '@servichain/interfaces'
-import { Model , Document} from 'mongoose'
-import { response } from 'express'
+import { Model } from 'mongoose'
 import config from 'config'
 import Nomics, { IRawCurrencyTicker } from 'nomics'
 

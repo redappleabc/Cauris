@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { sign, verify } from 'jsonwebtoken'
 import jwt from 'express-jwt';
-import db from "@servichain/helpers/MongooseClient";
+import {db} from "@servichain/helpers/MongooseSingleton";
 import config from 'config'
 import { EHttpStatusCode } from "@servichain/enums";
 

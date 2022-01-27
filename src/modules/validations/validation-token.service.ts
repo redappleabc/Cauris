@@ -1,5 +1,5 @@
 import { EHttpStatusCode, ETokenType } from '@servichain/enums'
-import db from '@servichain/helpers/MongooseClient'
+import {db} from '@servichain/helpers/MongooseSingleton'
 import { generateRandomToken } from '@servichain/helpers/randomToken'
 import { ServiceProtected } from '@servichain/helpers/services'
 import { IResponseHandler } from '@servichain/interfaces'

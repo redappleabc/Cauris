@@ -25,7 +25,7 @@ export class TransactionController extends ControllerProtected {
 
    public async getAllByCoin(req: Request, res: Response, next: NextFunction) {
     try {
-      let handler: IResponseHandler = await (this.service as TransactionService).getAllByCoin(req.query)
+      const handler: IResponseHandler = await (this.service as TransactionService).getAllByCoin(req.query)
       return handler.handleResponse(res)
     } catch (err) {
       next(err)

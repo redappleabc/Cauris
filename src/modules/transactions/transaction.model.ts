@@ -4,10 +4,10 @@ const Schema = mongoose.Schema;
 const schema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   coin: { type: Schema.Types.ObjectId, ref: "Coin", required: true },
-  fromAddress: { type: String, required: true },
-  toAddress: { type: String, required: true },
+  from: { type: String, required: true },
+  to: { type: String, required: true },
   value: { type: String, required: true },
-  transactionHash: { type: String, required: true },
+  hash: { type: String, required: true },
   createdAt: { type: Date, default: Date.now() },
   status: { type: String, default: "pending" },
 });

@@ -1,9 +1,13 @@
+import { ENetworkType } from "@servichain/enums"
+
 export interface INetwork {
   id?: string
   name: string
-  url?: string
-  configKey?: string
   chainId?: number
-  blockExplorer?: string
-  currencySymbol?: string
+  rpcUrl: string
+  apiUrl?: string
+  explorerUrl?: string
+  configKey?: string
+  currencySymbol: string
+  type: ENetworkType
 }

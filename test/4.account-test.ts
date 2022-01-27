@@ -1,6 +1,6 @@
 process.env.NODE_ENV = 'test';
 
-import MongooseClient from '@servichain/helpers/MongooseClient'
+import {db} from '@servichain/helpers/MongooseSingleton'
 import { EHttpStatusCode } from '@servichain/enums/EHttpError'
 import chai from 'chai'
 import chaiHttp from 'chai-http'

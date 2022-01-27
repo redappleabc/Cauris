@@ -1,20 +1,19 @@
-import db from "@servichain/helpers/MongooseClient";
+import {db} from "@servichain/helpers/MongooseSingleton";
 import { ServiceProtected } from "@servichain/helpers/services";
-import { Model, Types } from "mongoose";
+import { Model } from "mongoose";
 import { HDWallet } from "@servichain/helpers/hdwallets/HDWallet";
 import { EthereumWallet } from "@servichain/helpers/hdwallets/EthereumWallet";
 import { BaseError } from "@servichain/helpers/BaseError";
 import { EHttpStatusCode } from "@servichain/enums";
 import {
   IAccount,
-  INetwork,
   IResponseHandler,
   IRPC,
 } from "@servichain/interfaces";
 import { ICoin } from "@servichain/interfaces/ICoin";
 import { IWallet } from "@servichain/interfaces/IWallet";
 import { ValidResponse } from "@servichain/helpers/responses";
-import { EthersRPC } from "@servichain/helpers/rpcs";
+import { rpcs } from "@servichain/helpers/RPCSingleton";
 import { utils } from "ethers";
 const mongoose = require("mongoose");
 
@@ -163,11 +162,7 @@ export class AccountService extends ServiceProtected {
         let accounts = netAccount.accounts;
 
         if (network && network !== "hidden") {
-          const RPCHelper: IRPC = new EthersRPC(
-            network.url,
-            network.chainId,
-            network.configKey
-          );
+          const RPCHelper: IRPC = rpcs.getInstance(network.name)
           accounts = accounts.filter((item) => item.wallet.user == userId);
           for (let i = 0; i < accounts.length; i++) {
             let account = accounts[i];
@@ -366,16 +361,5 @@ export class AccountService extends ServiceProtected {
       await RPCHelper.getBalance(coin.contractAddress)
     ).toString();
     return utils.formatUnits(balance, coin.decimals);
-  }
-
-  private linkReverser(array: ICoin[]) {
-    let reversedObj = {};
-    for (let i = 0; i < array.length; i++) {
-      const key: string = array[i].network as string;
-      delete array[i].network;
-      if (`${key}` in reversedObj) reversedObj[`${key}`].push(array[i]);
-      else reversedObj[`${key}`] = [array[i]];
-    }
-    return reversedObj;
   }
 }
