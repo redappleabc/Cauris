@@ -36,6 +36,7 @@ export function registerSchema(req: Request, res: Response, next: NextFunction) 
     confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
     firstName: Joi.string().max(30),
     lastName: Joi.string().max(30),
+    devices:Joi.array().items(Joi.string())
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
@@ -45,7 +46,8 @@ export function updateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     email: Joi.string().email().empty(''),
     firstName: Joi.string().empty(''),
-    lastName: Joi.string().empty('')
+    lastName: Joi.string().empty(''),
+    devices:Joi.array().items(Joi.string())
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)

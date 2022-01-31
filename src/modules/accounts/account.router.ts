@@ -10,6 +10,7 @@ const controller = new AccountController(service)
 
 router.get('/', JwtHelper.middleware(), controller.getAllByUser)
 router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
+router.get('/address/:address', JwtHelper.middleware(), controller.getByAddressProtected)
 router.put('/:id', JwtHelper.middleware(), updateSchema, controller.updateProtected)
 router.post('/', JwtHelper.middleware(), generateSchema, controller.generate)
 router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
