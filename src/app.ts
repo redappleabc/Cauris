@@ -8,6 +8,8 @@ var session = require('express-session')
 var bearerToken = require('express-bearer-token')
 var MongoStore = require('connect-mongo')
 var config = require('config')
+var winston = require('winston')
+var expressWinston = require('express-winston');
 
 import {UserRouter} from '@servichain/modules/users'
 import wallets from '@servichain/modules/wallets/wallet.router'
@@ -50,6 +52,28 @@ app.use('/validation-tokens', ValidationRouter)
 app.use('/networks', NetworkRouter)
 app.use('/coins', CoinRouter)
 app.use('/transactions', TransactionRouter)
+
+app.use(expressWinston.logger({
+    transports: [
+      new winston.transports.Console()
+    ],
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.json()
+    ),
+    expressFormat: true, // Use the default Express/morgan request formatting. Enabling this will override any msg if true. Will only output colors with colorize set to true
+    colorize: true, // Color the text and status code, using the Express/morgan color palette (text: gray, status: default green, 3XX cyan, 4XX yellow, 5XX red).
+}));
+
+app.use(expressWinston.errorLogger({
+    transports: [
+      new winston.transports.Console()
+    ],
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.json()
+    )
+  }));
 
 app.use(ErrorHandler.errorMiddleware)
 /**

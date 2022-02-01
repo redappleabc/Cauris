@@ -1,4 +1,4 @@
-import db from '@servichain/helpers/MongooseClient'
+import {db} from '@servichain/helpers/MongooseSingleton'
 import { ServiceProtected } from '@servichain/helpers/services'
 import { Model } from 'mongoose'
 
