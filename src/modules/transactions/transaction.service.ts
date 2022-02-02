@@ -48,7 +48,7 @@ export class TransactionService extends ServiceProtected {
       const network: INetwork = coin.network as INetwork;
       const RPCHelper: IRPC = rpcs.getInstance(network.name)
 
-      const history = await RPCHelper.getHistory(coin.contractAddress, page)
+      const history = await RPCHelper.getHistory(address, coin.contractAddress, page)
       return new ValidResponse(EHttpStatusCode.OK, history)
     } else {
       return await this.getAllbyQuery(query)
@@ -70,7 +70,7 @@ export class TransactionService extends ServiceProtected {
     const network: INetwork = coin.network as INetwork;
     const RPCHelper: IRPC = rpcs.getInstance(network.name)
     const gasFees = await RPCHelper.getGasFees()
-    return new ValidResponse(EHttpStatusCode.OK, utils.formatUnits(gasFees, "gwei"))
+    return new ValidResponse(EHttpStatusCode.OK, utils.formatUnits(gasFees, coin.decimals))
   }
 
   public async send(

@@ -46,11 +46,15 @@ export class EthersRPC implements IRPC {
     }
   }
 
-  public async getHistory(contractAddress: string = null, page: number = 1) {
-    if (contractAddress)
-      return await this.scan.retrieveContractHistory(this.account.address, page, contractAddress)
-    else
-      return await this.scan.retrieveHistory(this.account.address, page)
+  public async getHistory(address: string, contractAddress: string = null, page: number = 1) {
+    try {
+      if (!!contractAddress)
+        return await this.scan.retrieveContractHistory(address, page, contractAddress)
+      else
+        return await this.scan.retrieveHistory(address, page)
+    } catch (err) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
+    }
   }
 
   public async getGasFees() {
@@ -58,6 +62,7 @@ export class EthersRPC implements IRPC {
       const gasData = await this.provider.getFeeData()
       return gasData.gasPrice
     } catch (err) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err)
     }
   }
 

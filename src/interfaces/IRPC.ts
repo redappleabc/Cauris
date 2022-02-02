@@ -6,6 +6,6 @@ export interface IRPC {
   setWallet(account:any)
   getBalance(contractAddress: string)
   sendTransaction(to: string, value: any, contractAddress: string, handleInsert: (d)=>{}, insertBody: any)
-  getHistory(contractAddress: string, page: number)
+  getHistory(address: string, contractAddress: string, page: number)
   getGasFees()
 }
