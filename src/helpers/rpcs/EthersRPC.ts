@@ -56,7 +56,6 @@ export class EthersRPC implements IRPC {
     let history = []
     let unparsedArray: [] = (!!rawHistory.result) ? rawHistory.result : []
     unparsedArray.forEach(item => {
-      console.log(item)
       let {timeStamp, hash, to, from, value, confirmations, gas, gasPrice, gasUsed} = item
       let fees = (!!gas && !!gasPrice && !!gasUsed) ? this.calculateFees(gas, gasPrice, gasUsed) : '0'
       history.push({
@@ -76,7 +75,6 @@ export class EthersRPC implements IRPC {
         hash
       })
     })
-    console.log(history)
     return history
   }
 
