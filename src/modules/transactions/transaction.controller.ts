@@ -11,7 +11,7 @@ export class TransactionController extends ControllerProtected {
     super(service);
     this.send = this.send.bind(this);
     this.getAllByCoin = this.getAllByCoin.bind(this);
-    this.getGasFees = this.getGasFees.bind(this);
+    this.estimate = this.estimate.bind(this);
   }
 
   public async send(req: Request, res: Response, next: NextFunction) {
@@ -26,12 +26,13 @@ export class TransactionController extends ControllerProtected {
     }
   }
 
-  public async getGasFees(req: Request, res: Response, next: NextFunction) {
+  public async estimate(req: Request, res: Response, next: NextFunction) {
     try {
-      let { coinId } = req.query
+      let { coinId, from, to, value } = req.body
       if (!coinId)
         throw new BaseError(EHttpStatusCode.BadRequest, "Coin ID not specified for gas Estimation")
-      const handler: IResponseHandler = await (this.service as TransactionService).getGasFees(coinId as string);
+      const handler: IResponseHandler = await (this.service as TransactionService
+        ).estimate(req.user["id"], coinId, from, to, value);
       handler.handleResponse(res)
     } catch (err) {
       next(err)
@@ -40,7 +41,7 @@ export class TransactionController extends ControllerProtected {
 
    public async getAllByCoin(req: Request, res: Response, next: NextFunction) {
     try {
-      const handler: IResponseHandler = await (this.service as TransactionService).getAllByCoin(req.query)
+      const handler: IResponseHandler = await (this.service as TransactionService).getAllByCoin(req.user["id"], req.query)
       return handler.handleResponse(res)
     } catch (err) {
       next(err)

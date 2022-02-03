@@ -6,7 +6,7 @@ export interface IRPC {
   account: IAccount
   setWallet(account:any)
   getBalance(contractAddress: string)
-  sendTransaction(to: string, valueStr: any, coin: ICoin)
+  sendTransaction(to: string, rawValue: any, coin: ICoin)
   getHistory(address: string, coin: ICoin, page: number)
-  getGasFees()
+  estimate(to: string, rawValue: any, coin: ICoin)
 }

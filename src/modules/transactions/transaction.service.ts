@@ -8,9 +8,10 @@ import {
   INetwork,
   IResponseHandler,
   IRPC,
+  IUser,
 } from "@servichain/interfaces";
 import { BaseError } from "@servichain/helpers/BaseError";
-import { EHttpStatusCode } from "@servichain/enums";
+import { EHttpStatusCode, EUserRole } from "@servichain/enums";
 import { IWallet } from "@servichain/interfaces/IWallet";
 import { ethers, utils } from "ethers";
 import { ValidResponse } from "@servichain/helpers/responses";
@@ -21,38 +22,7 @@ export class TransactionService extends ServiceProtected {
     super(model);
     this.send = this.send.bind(this);
     this.getAllByCoin = this.getAllByCoin.bind(this);
-    this.getGasFees = this.getGasFees.bind(this)
-  }
-
-  public async getAllbyQuery(query: any) {
-    let query_;
-    const { coin = null, address = null } = query;
-    let and = [];
-    if (!!address) {
-      query_ = {
-        $or: [{ toAddress: address}, {fromAddress: address }],
-      };
-      and.push(query_);
-    }
-    if (!!coin) {
-      and.push({ coin: mongoose.Types.ObjectId(coin) });
-    }
-    query_= (and.length) ? {$and:and} : query
-    return super.getAll(query_);
-  }
-
-  public async getAllByCoin(query: any) {
-    const { coinId = null, address = null, page = 1} = query
-    if (!!coinId && !!address) {
-      const coin: ICoin = await this.getCoinById(coinId)
-      const network: INetwork = coin.network as INetwork;
-      const RPCHelper: IRPC = rpcs.getInstance(network.name)
-
-      const history = await RPCHelper.getHistory(address, coin, page)
-      return new ValidResponse(EHttpStatusCode.OK, history)
-    } else {
-      return await this.getAllbyQuery(query)
-    }
+    this.estimate = this.estimate.bind(this)
   }
 
   private async getCoinById(coinId: string) {
@@ -65,34 +35,90 @@ export class TransactionService extends ServiceProtected {
     return coin
   }
 
-  public async getGasFees(coinId: string) {
+  private async retrieveRpcByCoin(coinId: string) {
     const coin: ICoin = await this.getCoinById(coinId)
+    if (!coin)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Could not find Coin")
     const network: INetwork = coin.network as INetwork;
     const RPCHelper: IRPC = rpcs.getInstance(network.name)
-    const gasFees = await RPCHelper.getGasFees()
+    if (!RPCHelper)
+      throw new BaseError(EHttpStatusCode.InternalServerError, "Could not find RPC instance")
+    return {coin, network, RPCHelper}
+  }
+
+  private async retrieveAccountByAddress(userId: string, address: string) {
+    const account: IAccount = await db.Account.findOne({
+      address,
+    }).populate("wallet");
+    
+    console.log(account)
+    if (!account)
+      throw new BaseError(
+        EHttpStatusCode.NotFound,
+        "Account not found",
+        true
+      );
+    else if (account && (account.wallet as IWallet).user != userId)
+      throw new BaseError(
+        EHttpStatusCode.Unauthorized,
+        "Invalid access to this account",
+        true
+      );
+    return account
+  }
+
+  private async getAllbyQuery(userId: string, query: any) {
+    const user: IUser = await db.User.findOne({
+      id: userId
+    })
+    if (!user || user.role != EUserRole.Admin)
+      throw new BaseError(
+        EHttpStatusCode.BadRequest,
+        "Please enter query param 'address' & 'coinId'",
+        true
+      )
+    let query_;
+    const { coin = null, address = null } = query;
+    let and = [];
+    if (!!address) {
+      await this.retrieveAccountByAddress(userId, address)
+      query_ = {
+        $or: [{ toAddress: address}, {fromAddress: address }],
+      };
+      and.push(query_);
+    }
+    if (!!coin) {
+      and.push({ coin: mongoose.Types.ObjectId(coin) });
+    }
+    query_= (and.length) ? {$and:and} : query
+    return super.getAll(query_);
+  }
+
+  public async getAllByCoin(userId: string, query: any) {
+    const { coinId = null, address = null, page = 1} = query
+    if (!!coinId && !!address) {
+      const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
+      const account = await this.retrieveAccountByAddress(userId, address)
+      RPCHelper.setWallet(account)
+      const history = await RPCHelper.getHistory(address, coin, page)
+      return new ValidResponse(EHttpStatusCode.OK, history)
+    } else {
+      return await this.getAllbyQuery(userId, query)
+    }
+  }
+
+  public async estimate(userId: string, coinId: string, from: string, to: string, value: string) {
+    const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
+    const account = await this.retrieveAccountByAddress(userId, from)
+    RPCHelper.setWallet(account)
+    const gasFees = await RPCHelper.estimate(to, value, coin)
     return new ValidResponse(EHttpStatusCode.OK, utils.formatUnits(gasFees, "18"))
   }
 
   public async send(userId: string, coinId: string, from: string, to: string, value: string) {
     try {
-      const coin: ICoin = await this.getCoinById(coinId)
-      const network: INetwork = coin.network as INetwork;
-      const account: IAccount = await db.Account.findOne({
-        address: from,
-      }).populate("wallet");
-      if (!account)
-        throw new BaseError(
-          EHttpStatusCode.NotFound,
-          "Account not found",
-          true
-        );
-      else if (account && (account.wallet as IWallet).user != userId)
-        throw new BaseError(
-          EHttpStatusCode.Unauthorized,
-          "Invalid access to this account",
-          true
-        );
-      const RPCHelper: IRPC = rpcs.getInstance(network.name)
+      const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
+      const account = await this.retrieveAccountByAddress(userId, from)
       RPCHelper.setWallet(account);
       const hash = await RPCHelper.sendTransaction(to, value, coin);
       return super.insert({
@@ -106,38 +132,6 @@ export class TransactionService extends ServiceProtected {
     } catch (err) {
       if (err instanceof BaseError) throw err;
       throw new BaseError(EHttpStatusCode.InternalServerError, err);
-    }
-  }
-
-  public async updateProtected(id: string, userId: string, data: any) {
-    try {
-      let itemCheck = await db.Transaction.find({ transactionHash: id });
-      if (!itemCheck)
-        throw new BaseError(
-          EHttpStatusCode.Unauthorized,
-          "You do not have access to this resource"
-        );
-      return this.update(id, data);
-    } catch (err) {
-      if (err instanceof BaseError) throw err;
-      throw new BaseError(EHttpStatusCode.InternalServerError, err);
-    }
-  }
-
-  public async update(id: string, data: any): Promise<IResponseHandler> {
-    try {
-      let item: Document = await db.Transaction.findOneAndUpdate(
-        { transactionHash: id },
-        data,
-        { new: true }
-      );
-
-      if (!item) {
-        throw new BaseError(EHttpStatusCode.NotFound, "Trx not found.", true);
-      }
-      return new ValidResponse(EHttpStatusCode.Accepted, item);
-    } catch (error) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, error, true);
     }
   }
 }

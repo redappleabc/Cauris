@@ -44,12 +44,21 @@ export class EthersRPC implements IRPC {
     }
   }
 
-  private calculateFees(gas: string, gasPrice: string, gasUsed: string) {
+  private calculateFeesFromString(gas: string, gasPrice: string, gasUsed: string) {
     return (
       ethers.BigNumber.from(gasPrice)
       .add(ethers.BigNumber.from(gas))
       .mul(ethers.BigNumber.from(gasUsed))
-      )
+    )
+  }
+
+  private async calculateFeesFromBigNum(estimateGas: ethers.BigNumber) {
+    try {
+      const {gasPrice, maxPriorityFeePerGas} = await this.provider.getFeeData()
+      return (gasPrice.add(maxPriorityFeePerGas)).mul(estimateGas)
+    } catch (err) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err)
+    }
   }
 
   private parseHistory(rawHistory: any, decimals: number) {
@@ -57,7 +66,7 @@ export class EthersRPC implements IRPC {
     let unparsedArray: [] = (!!rawHistory.result) ? rawHistory.result : []
     unparsedArray.forEach(item => {
       let {timeStamp, hash, to, from, value, confirmations, gas, gasPrice, gasUsed} = item
-      let fees = (!!gas && !!gasPrice && !!gasUsed) ? this.calculateFees(gas, gasPrice, gasUsed) : '0'
+      let fees = (!!gas && !!gasPrice && !!gasUsed) ? this.calculateFeesFromString(gas, gasPrice, gasUsed) : '0'
       history.push({
         to,
         from,
@@ -91,24 +100,29 @@ export class EthersRPC implements IRPC {
     }
   }
 
-  public async getGasFees() {
-    try {
-      const {gasPrice, maxPriorityFeePerGas} = await this.provider.getFeeData()
-      return (gasPrice.add(maxPriorityFeePerGas)).mul("21000")
-    } catch (err) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err)
-    }
-  }
-
-  public async sendTransaction(to: string, valueStr: string, coin: ICoin) {
+  public async estimate(to: string, rawValue: string, coin: ICoin) {
     const signer = this.provider.getSigner(this.account.address)
     const {contractAddress = null} = coin
-    const value = ethers.utils.parseUnits(valueStr, coin.decimals)
+    const value = ethers.utils.parseUnits(rawValue, coin.decimals)
+    let estimateGas: ethers.BigNumber
+    if (!!contractAddress) {
+      var contract = new ethers.Contract(contractAddress, abi, signer)
+      estimateGas = await contract.estimateGas.transfer({to, value})
+    } else {
+      estimateGas = await this.provider.estimateGas({to, value})
+    }
+    return this.calculateFeesFromBigNum(estimateGas)
+  }
+
+  public async sendTransaction(to: string, rawValue: string, coin: ICoin) {
+    const signer = this.provider.getSigner(this.account.address)
+    const {contractAddress = null} = coin
+    const value = ethers.utils.parseUnits(rawValue, coin.decimals)
     var tx: any
     if ((await this.getBalance(contractAddress)).lt(value))
       throw new BaseError(EHttpStatusCode.BadRequest, "Your balance is insufficient to perform this transaction")
     try {
-      if (contractAddress) {
+      if (!!contractAddress) {
         var contract = new ethers.Contract(contractAddress, abi, signer)
         tx = await (await contract.transfer(to, value)).wait()
       } else {

@@ -10,10 +10,10 @@ const controller = new TransactionController(service)
 
 /* Refresh Routes */
 router.get('/', JwtHelper.middleware(), controller.getAllByCoin)
-router.get('/estimate', JwtHelper.middleware(), controller.getGasFees)
 router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
 router.post('/', JwtHelper.middleware(), sendSchema, controller.send)
-router.put('/:id', JwtHelper.middleware(),updateSchema, controller.updateProtected)
+router.post('/estimate', JwtHelper.middleware(), sendSchema, controller.estimate)
+router.put('/:id', JwtHelper.middleware([EUserRole.Admin]),updateSchema, controller.updateProtected)
 router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
 
 export {router as TransactionRouter}
