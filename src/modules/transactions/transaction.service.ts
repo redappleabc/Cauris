@@ -110,7 +110,7 @@ export class TransactionService extends ServiceProtected {
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
     const gasFees = await RPCHelper.estimate(to, value, coin)
-    return new ValidResponse(EHttpStatusCode.OK, {fees: utils.formatUnits(gasFees, "18"}))
+    return new ValidResponse(EHttpStatusCode.OK, {fees: utils.formatUnits(gasFees, "18")})
   }
 
   public async send(userId: string, coinId: string, from: string, to: string, value: string) {
