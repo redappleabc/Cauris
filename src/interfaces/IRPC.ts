@@ -1,11 +1,12 @@
 import ethers from 'ethers'
+import { ICoin } from '.';
 import { IAccount } from './IAccount';
 
 export interface IRPC {
   account: IAccount
   setWallet(account:any)
   getBalance(contractAddress: string)
-  sendTransaction(to: string, value: any, contractAddress: string, handleInsert: (d)=>{}, insertBody: any)
-  getHistory(address: string, contractAddress: string, page: number)
+  sendTransaction(to: string, valueStr: any, coin: ICoin)
+  getHistory(address: string, coin: ICoin, page: number)
   getGasFees()
 }

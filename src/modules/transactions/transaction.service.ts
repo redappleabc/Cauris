@@ -48,7 +48,7 @@ export class TransactionService extends ServiceProtected {
       const network: INetwork = coin.network as INetwork;
       const RPCHelper: IRPC = rpcs.getInstance(network.name)
 
-      const history = await RPCHelper.getHistory(address, coin.contractAddress, page)
+      const history = await RPCHelper.getHistory(address, coin, page)
       return new ValidResponse(EHttpStatusCode.OK, history)
     } else {
       return await this.getAllbyQuery(query)
@@ -70,16 +70,10 @@ export class TransactionService extends ServiceProtected {
     const network: INetwork = coin.network as INetwork;
     const RPCHelper: IRPC = rpcs.getInstance(network.name)
     const gasFees = await RPCHelper.getGasFees()
-    return new ValidResponse(EHttpStatusCode.OK, utils.formatUnits(gasFees, coin.decimals))
+    return new ValidResponse(EHttpStatusCode.OK, utils.formatUnits(gasFees, "18"))
   }
 
-  public async send(
-    userId: string,
-    coinId: string,
-    from: string,
-    to: string,
-    value: string
-  ) {
+  public async send(userId: string, coinId: string, from: string, to: string, value: string) {
     try {
       const coin: ICoin = await this.getCoinById(coinId)
       const network: INetwork = coin.network as INetwork;
@@ -98,24 +92,17 @@ export class TransactionService extends ServiceProtected {
           "Invalid access to this account",
           true
         );
-      const parsedValue = utils.parseUnits(value, coin.decimals || "ethers");
       const RPCHelper: IRPC = rpcs.getInstance(network.name)
       RPCHelper.setWallet(account);
-      const handleInsert = (d) => super.insert(d);
-      const tx = await RPCHelper.sendTransaction(
+      const hash = await RPCHelper.sendTransaction(to, value, coin);
+      return super.insert({
+        user: userId,
+        coin,
+        from,
         to,
-        parsedValue,
-        coin.contractAddress,
-        handleInsert,
-        {
-          user: userId,
-          coin,
-          from,
-          to,
-          value,
-        }
-      );
-      return tx;
+        value,
+        hash
+      })
     } catch (err) {
       if (err instanceof BaseError) throw err;
       throw new BaseError(EHttpStatusCode.InternalServerError, err);

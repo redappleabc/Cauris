@@ -9,7 +9,6 @@ const schema = new Schema({
   value: { type: String, required: true },
   hash: { type: String, required: true },
   createdAt: { type: Date, default: Date.now() },
-  status: { type: String, default: "pending" },
 });
 
 schema.set("toJSON", {

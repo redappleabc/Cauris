@@ -1,12 +1,10 @@
-import { IAccount, INetwork, IRPC } from '@servichain/interfaces'
+import { IAccount, ICoin, INetwork, IRPC } from '@servichain/interfaces'
 import * as ethers from 'ethers'
 import {abi} from '@servichain/files/test-token.json'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
 import config from 'config'
-import io from "@servichain/app";
 import { ScanHelper } from '../ScanHelper'
-
 
 export class EthersRPC implements IRPC {
   account: IAccount
@@ -46,12 +44,50 @@ export class EthersRPC implements IRPC {
     }
   }
 
-  public async getHistory(address: string, contractAddress: string = null, page: number = 1) {
+  private calculateFees(gas: string, gasPrice: string, gasUsed: string) {
+    return (
+      ethers.BigNumber.from(gasPrice)
+      .add(ethers.BigNumber.from(gas))
+      .mul(ethers.BigNumber.from(gasUsed))
+      )
+  }
+
+  private parseHistory(rawHistory: any, decimals: number) {
+    let history = []
+    let unparsedArray: [] = (!!rawHistory.result) ? rawHistory.result : []
+    unparsedArray.forEach(item => {
+      console.log(item)
+      let {timeStamp, hash, to, from, value, confirmations, gas, gasPrice, gasUsed} = item
+      let fees = (!!gas && !!gasPrice && !!gasUsed) ? this.calculateFees(gas, gasPrice, gasUsed) : '0'
+      history.push({
+        to,
+        from,
+        value: ethers.utils.formatUnits(
+          ethers.BigNumber.from(value), 
+          decimals
+        ),
+        status: confirmations == 0 ? 'pending' : 'success',
+        timeStamp,
+        confirmations,
+        gasPrice,
+        gasUsed,
+        gas,
+        fees: ethers.utils.formatUnits(fees, '18'),
+        hash
+      })
+    })
+    console.log(history)
+    return history
+  }
+
+  public async getHistory(address: string, coin: ICoin, page: number = 1) {
     try {
-      if (!!contractAddress)
-        return await this.scan.retrieveContractHistory(address, page, contractAddress)
+      let history;
+      if (!!coin.contractAddress)
+        history = await this.scan.retrieveContractHistory(address, page, coin.contractAddress)
       else
-        return await this.scan.retrieveHistory(address, page)
+        history = await this.scan.retrieveHistory(address, page)
+      return this.parseHistory(history, coin.decimals)
     } catch (err) {
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }
@@ -59,15 +95,17 @@ export class EthersRPC implements IRPC {
 
   public async getGasFees() {
     try {
-      const gasData = await this.provider.getFeeData()
-      return gasData.gasPrice
+      const {gasPrice, maxPriorityFeePerGas} = await this.provider.getFeeData()
+      return (gasPrice.add(maxPriorityFeePerGas)).mul("21000")
     } catch (err) {
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err)
     }
   }
 
-  public async sendTransaction(to: string, value: ethers.BigNumber, contractAddress = null, handleInsert, insertBody) {
+  public async sendTransaction(to: string, valueStr: string, coin: ICoin) {
     const signer = this.provider.getSigner(this.account.address)
+    const {contractAddress = null} = coin
+    const value = ethers.utils.parseUnits(valueStr, coin.decimals)
     var tx: any
     if ((await this.getBalance(contractAddress)).lt(value))
       throw new BaseError(EHttpStatusCode.BadRequest, "Your balance is insufficient to perform this transaction")
@@ -78,20 +116,7 @@ export class EthersRPC implements IRPC {
       } else {
         tx = await (await this.wallet.sendTransaction({to, value})).wait()
       }
-      this.provider.on("pending", (tx) => {
-        this.provider.getTransaction(tx).then(function (transaction) {
-          console.log("transaction is pending",transaction);
-          // io.emit("trx-pending", {transaction})
-        });
-      });
-
-      this.provider.once(tx.transactionHash, (transaction) => {
-        // Emitted when the transaction has been mined
-        console.log("transaction has been mined success", transaction)
-        io.emit("trx-mined", {transaction})
-        console.log("event emitted")
-    })
-      return handleInsert({...insertBody, hash: tx.transactionHash})
+      return tx.transactionHash
     } catch (err) {
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }
