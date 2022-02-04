@@ -124,11 +124,11 @@ export class EthersRPC implements IRPC {
     try {
       if (!!contractAddress) {
         var contract = new ethers.Contract(contractAddress, abi, signer)
-        tx = await (await contract.transfer(to, value)).wait()
+        tx = await contract.transfer(to, value)
       } else {
-        tx = await (await this.wallet.sendTransaction({to, value})).wait()
+        tx = await this.wallet.sendTransaction({to, value})
       }
-      return tx.transactionHash
+      return tx.hash
     } catch (err) {
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }
