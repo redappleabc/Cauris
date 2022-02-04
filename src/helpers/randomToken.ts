@@ -1,5 +1,5 @@
 import crypto from 'crypto'
 
-export function generateRandomToken() {
-  return crypto.randomBytes(4).toString('hex').toUpperCase()
+export function generateRandomToken(bytes: number) {
+  return crypto.randomBytes(bytes).toString('hex').toUpperCase()
 }

@@ -41,7 +41,7 @@ export class RefreshService extends ServiceProtected {
     try {
       const refreshToken: any = {
         user: id,
-        token: generateRandomToken(),
+        token: generateRandomToken(40),
         expires: new Date(Date.now() + refreshTokenExpiresIn),
         createdByIp: ipAddress
       }

@@ -21,7 +21,7 @@ export class ValidationService extends ServiceProtected {
       const expiresIn: number = config.get('tokens.validationExpiresIn')
       if (!user)
         throw new BaseError(EHttpStatusCode.NotFound, "Could not found any user related to this e-mail")
-      var token = generateRandomToken()
+      var token = generateRandomToken(4)
       var mail  = verificationTemplate(token, type)
       MailerHelper.send(email, `${type} Validation`, mail)
       var data = {
