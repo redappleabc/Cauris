@@ -94,6 +94,17 @@ export class UserService extends Service {
     return responseHandler
   }
 
+  public async getByUsername(query: any) {
+    const {username} = query
+    if (!username) {
+      throw new BaseError(EHttpStatusCode.BadRequest, "Please specify an username")
+    }
+    const result = await db.User.findOne({username})
+    if (!result)
+      throw new BaseError(EHttpStatusCode.BadRequest, "The username does not belong to any user")
+    return new ValidResponse(EHttpStatusCode.OK, result.id)
+  }
+
   //internal
   private async checkFirstUser(): Promise<EUserRole> {
     if (this.firstUser) {

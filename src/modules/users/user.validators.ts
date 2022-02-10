@@ -32,6 +32,7 @@ export function passwordSchema(req: Request, res: Response, next: NextFunction) 
 export function registerSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     email: Joi.string().email().required(),
+    username: Joi.string().empty('').required(),
     password: Joi.string().min(6).required(),
     confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
     firstName: Joi.string().max(30),
@@ -45,6 +46,7 @@ export function registerSchema(req: Request, res: Response, next: NextFunction) 
 export function updateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     email: Joi.string().email().empty(''),
+    username: Joi.string().empty(''),
     firstName: Joi.string().empty(''),
     lastName: Joi.string().empty(''),
     devices:Joi.array().items(Joi.string())

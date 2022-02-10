@@ -15,6 +15,7 @@ import { IWallet } from "@servichain/interfaces/IWallet";
 import { ValidResponse } from "@servichain/helpers/responses";
 import { rpcs } from "@servichain/helpers/RPCSingleton";
 import { utils } from "ethers";
+import { accountsAggregation, contactAggregation } from "./account.aggregation";
 const mongoose = require("mongoose");
 
 const AccountDetailed = {
@@ -40,10 +41,11 @@ export class AccountService extends ServiceProtected {
     this.generate = this.generate.bind(this);
     this.generateOne = this.generateOne.bind(this);
     this.getAllByUser = this.getAllByUser.bind(this);
+    this.getByCoinId = this.getByCoinId.bind(this)
   }
 
-  public async getAllAggregated(query: any): Promise<IResponseHandler> {
-    let { skip, limit, populate } = query;
+  private async getAllAggregated(query: any, userId: string): Promise<IResponseHandler> {
+    let { skip, limit, populate, wallet=null } = query;
 
     skip = skip ? Number(skip) : 0;
     limit = limit ? Number(limit) : 25;
@@ -52,90 +54,13 @@ export class AccountService extends ServiceProtected {
     delete query.skip;
     delete query.limit;
 
-    if (query._id) {
-      try {
-        query._id = new mongoose.mongo.ObjectId(query._id);
-      } catch (error) {
-        throw new BaseError(
-          EHttpStatusCode.BadRequest,
-          "Invalid query ID",
-          true
-        );
-      }
-    }
-
     try {
-      const aggregationPipeline = [
-        {
-          $match: query.wallet
-            ? { wallet: mongoose.Types.ObjectId(query.wallet) }
-            : {},
-        },
-        {
-          $lookup: {
-            from: "wallets",
-            localField: "wallet",
-            foreignField: "_id",
-            as: "wallet",
-          },
-        },
-        { $unwind: "$wallet" },
-        {
-          $unwind: {
-            path: "$subscribedTo",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "coins",
-            localField: "subscribedTo",
-            foreignField: "_id",
-            as: "subscribedTo",
-          },
-        },
-        {
-          $unwind: {
-            path: "$subscribedTo",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "networks",
-            localField: "subscribedTo.network",
-            foreignField: "_id",
-            as: "network_infos",
-          },
-        },
-        {
-          $unwind: {
-            path: "$network_infos",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $addFields: {
-            network_infos: { $ifNull: ["$network_infos", "hidden"] },
-          },
-        },
-        // {
-        //   $group: { accounts: { $push: "$$ROOT" },_id: { network_info : "$network_infos"} },
-        // },
-        // {
-        //   $addFields: {
-        //     networkName: "$network_infos.name",
-        //     networkId: "$_id._id",
-        //     networkConfig: "$_id.configKey",
-        //     networkChainId: "$_id.ChainId",
-        //     networkUrl: "$_id.url",
-        //   },
-        // },
-      ];
+      let walletExist = db.Wallet.findOne({_id: wallet, user: userId})
+      if (!walletExist)
+        throw new BaseError(EHttpStatusCode.BadRequest, "This wallet does not exist or does not belong to you")
+      const aggregationPipeline = accountsAggregation(wallet)
       let accountsByNetwork: Document[] = await this.model
         .aggregate(aggregationPipeline)
-        // .match(query)
-        // @ts-ignore: Unreachable code error
         .group({ _id: "$network_infos", accounts: { $push: "$$ROOT" } });
       let total: number = await this.model.count(query);
       if (!accountsByNetwork)
@@ -149,10 +74,30 @@ export class AccountService extends ServiceProtected {
     }
   }
 
+  public async getByCoinId(query: any): Promise<IResponseHandler> {
+    let {username = null, coinId = null} = query
+
+    try {
+    console.log(username, coinId)
+      if (!username || !coinId)
+        throw new BaseError(EHttpStatusCode.BadRequest, "You must specify an username and coinId in the query")
+
+      const aggregationPipeline = contactAggregation(username, coinId)
+      let user: Document[] = await db.User.aggregate(aggregationPipeline)
+      if (!user || !user.length)
+        throw new BaseError(EHttpStatusCode.BadRequest, "The username or the coin specified may be invalid")
+      return new ValidResponse(EHttpStatusCode.OK, {
+        address: user[0]['address']
+      })
+    } catch (error) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, error, true)
+    }
+  }
+
   public async getAllByUser(query: any, userId: string) {
     try {
       // query["populate"] = "subscribedTo wallet";
-      let responseHandler = await this.getAllAggregated(query);
+      let responseHandler = await this.getAllAggregated(query, userId);
       let accountsnetworks: any = responseHandler.getBody()["items"];
       let account_list = [];
 
