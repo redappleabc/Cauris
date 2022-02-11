@@ -10,7 +10,7 @@ const schema = new Schema({
     unique: true, 
     default: function() {
       const instance = this as any
-      this.username = this.email.match(/^.+(?=@)/)[0];
+      instance.username = instance.email.match(/[^(@.)]+/)[0];
     }},
   password: { type: String, required: true },
   firstName: String,
