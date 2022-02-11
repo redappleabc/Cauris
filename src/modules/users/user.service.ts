@@ -1,7 +1,7 @@
-import bcrypt, { hash } from 'bcryptjs'
+import bcrypt from 'bcryptjs'
 import {db} from '@servichain/helpers/MongooseSingleton'
 import { Service } from '@servichain/helpers/services'
-import { Model } from 'mongoose'
+import { Document, Model } from 'mongoose'
 import { BaseError } from '@servichain/helpers/BaseError'
 import JwtHelper from '@servichain/middlewares/JwtHelper'
 import {RefreshService} from '@servichain/modules/refreshs'
@@ -31,6 +31,16 @@ export class UserService extends Service {
     this.changePassword = this.changePassword.bind(this)
   }
 
+  private async genHash(password: string) {
+    try {
+      let salt = await bcrypt.genSalt(10)
+      let hash = await bcrypt.hash(password, salt)
+      return hash
+    } catch(err) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error as occured")
+    }
+  }
+
   public async authenticate({email, password, ipAddress}) {
     try {
       const user: IUser = await this.model.findOne({email})
@@ -54,7 +64,7 @@ export class UserService extends Service {
       const user = await this.model.findById(userId)
       if (!user)
         throw new BaseError(EHttpStatusCode.NotFound, "Could not found User", true)
-      user.password = await hash(password, 10)
+      user.password = await this.genHash(password)
       user.save()
       return new ValidResponse(EHttpStatusCode.Accepted, "Password was changed")
     } catch (err) {
@@ -81,7 +91,7 @@ export class UserService extends Service {
 
   public async insert(data: any)  {
     data.role = await this.checkFirstUser()
-    data.password = await hash(data.password, 10)
+    data.password = await this.genHash(data.password)
     const validationService = new ValidationService()
     const result = await super.insert(data)
     await validationService.generateToken(ETokenType.Verification, data.email)

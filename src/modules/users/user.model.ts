@@ -19,6 +19,7 @@ const schema = new Schema({
   created: { type: Date, default: Date.now() },
   verified: { type: Boolean, default: false },
   devices: [{ type: String, default: [] }],
+  pin: {type: String, default: null},
   updated: Date,
   passwordReset: Date,
 });
