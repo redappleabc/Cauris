@@ -17,7 +17,7 @@ router.get('/:id/details', JwtHelper.middleware(), sameUserMiddleware, controlle
 router.post('/', registerSchema, controller.insert)
 router.post('/authenticate', authenticateSchema, controller.authenticate)
 router.put('/:id', JwtHelper.middleware(), sameUserMiddleware, updateSchema, controller.update)
-router.put('/update-password', JwtHelper.middleware(), sameUserMiddleware, updatePasswordSchema, controller.updatePassword)
+router.put('/update-password', JwtHelper.middleware(), updatePasswordSchema, controller.updatePassword)
 router.put('/:id/verify', verifySchema, validationMiddleware(ETokenType.Verification), controller.verifyUser)
 router.put('/:id/password-reset', passwordSchema, validationMiddleware(ETokenType.Reset), controller.passwordForgotten)
 router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
