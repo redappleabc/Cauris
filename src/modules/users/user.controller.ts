@@ -14,6 +14,7 @@ export class UserController extends Controller {
     this.getByIdDetailed = this.getByIdDetailed.bind(this)
     this.verifyUser = this.verifyUser.bind(this)
     this.passwordForgotten = this.passwordForgotten.bind(this)
+    this.updatePassword = this.updatePassword.bind(this)
   }
 
   public async authenticate(req: Request, res: Response, next: NextFunction) {
@@ -34,6 +35,15 @@ export class UserController extends Controller {
     try {
       const {newPassword} = req.body
       const handler: ValidResponse = await (this.service as UserService).changePassword(req.params.id, newPassword)
+      handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+  public async updatePassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const {oldPassword, newPassword, newPasswordRepeat} = req.body
+      const handler: ValidResponse = await (this.service as UserService).updatePassword(req.user["id"], oldPassword, newPassword, newPasswordRepeat)
       handler.handleResponse(res)
     } catch (err) {
       next(err)

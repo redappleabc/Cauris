@@ -29,6 +29,7 @@ export class UserService extends Service {
     this.getByIdDetailed = this.getByIdDetailed.bind(this)
     this.verifyUser = this.verifyUser.bind(this)
     this.changePassword = this.changePassword.bind(this)
+    this.updatePassword = this.updatePassword.bind(this)
   }
 
   private async genHash(password: string) {
@@ -67,6 +68,22 @@ export class UserService extends Service {
       user.password = await this.genHash(password)
       user.save()
       return new ValidResponse(EHttpStatusCode.Accepted, "Password was changed")
+    } catch (err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error as occured")
+    }
+  }
+  public async updatePassword(userId: string, oldPassword:string, newPassword:string, newPasswordRepeat:string) {
+    try {
+      const user = await this.model.findById(userId)
+      if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
+        throw new BaseError(EHttpStatusCode.NotFound, "Invalid password", true)
+      }
+      if(newPassword !== newPasswordRepeat) throw new BaseError(EHttpStatusCode.BadRequest, "Password confirmation must be the same", true)
+      user.password = await this.genHash(newPassword)
+      user.save()
+      return new ValidResponse(EHttpStatusCode.Accepted, "Password was updated")
     } catch (err) {
       if (err instanceof BaseError)
         throw err

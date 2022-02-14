@@ -56,3 +56,12 @@ export function updateSchema(req: Request, res: Response, next: NextFunction) {
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
 }
+export function updatePasswordSchema(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    oldPassword: Joi.string().empty('').required(),
+    newPassword: Joi.string().empty('').required(),
+    newPasswordRepeat: Joi.string().empty('').required()
+  })
+  const validator = new JoiValidator(schema)
+  validator.middleware(req, next)
+}
