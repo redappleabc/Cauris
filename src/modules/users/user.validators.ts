@@ -65,9 +65,11 @@ export function updatePasswordSchema(req: Request, res: Response, next: NextFunc
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
 }
-export function TwoFAgenerationSchema(req: Request, res: Response, next: NextFunction) {
+export function TwoFAverificationSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
-    email: Joi.string().empty('').email()
+    secret: Joi.string().empty('').required(),
+    encoding: Joi.string().empty('').required(),
+    token: Joi.string().empty('').required()
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
