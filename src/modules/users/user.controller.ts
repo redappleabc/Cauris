@@ -4,7 +4,6 @@ import {UserService} from '@servichain/modules/users'
 import { Request, Response, NextFunction } from 'express'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 
-
 const refreshTokenExpiresIn: number = config.get('tokens.refreshExpiresIn')
 
 export class UserController extends Controller {
@@ -15,6 +14,7 @@ export class UserController extends Controller {
     this.verifyUser = this.verifyUser.bind(this)
     this.passwordForgotten = this.passwordForgotten.bind(this)
     this.updatePassword = this.updatePassword.bind(this)
+    this.generateSecret = this.generateSecret.bind(this)
   }
 
   public async authenticate(req: Request, res: Response, next: NextFunction) {
@@ -47,6 +47,16 @@ export class UserController extends Controller {
       handler.handleResponse(res)
     } catch (err) {
       next(err)
+    }
+  }
+
+  public async generateSecret(req: Request, res: Response, next: NextFunction){
+    try {
+      const userId = res.locals.user.id
+      const handler: ValidResponse = await (this.service as UserService).generateSecret(userId)
+      handler.handleResponse(res)
+    } catch (error) {
+      next(error)
     }
   }
 

@@ -9,6 +9,7 @@ import {ValidationService} from '@servichain/modules/validations'
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EUserRole, EHttpStatusCode, ETokenType } from '@servichain/enums'
 import { IUser } from '@servichain/interfaces'
+import speakeasy from "speakeasy"
 
 const UserDetailed = {
   virtuals: true,
@@ -30,6 +31,7 @@ export class UserService extends Service {
     this.verifyUser = this.verifyUser.bind(this)
     this.changePassword = this.changePassword.bind(this)
     this.updatePassword = this.updatePassword.bind(this)
+    this.generateSecret = this.generateSecret.bind(this)
   }
 
   private async genHash(password: string) {
@@ -84,6 +86,24 @@ export class UserService extends Service {
       user.password = await this.genHash(newPassword)
       user.save()
       return new ValidResponse(EHttpStatusCode.Accepted, "Password was updated")
+    } catch (err) {
+      if (err instanceof BaseError)
+        throw err
+      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error as occured")
+    }
+  }
+  public async generateSecret(userId: string) {
+    try {
+      const user = await this.model.findById(userId)
+      if (!user) {
+        throw new BaseError(EHttpStatusCode.Unauthorized, "Invalid user credentials", true)
+      }
+      const secret = speakeasy.generateSecret({
+        name:"S-Wallet: "+user.email
+      })
+      return new ValidResponse(EHttpStatusCode.OK, {
+        secret
+      })
     } catch (err) {
       if (err instanceof BaseError)
         throw err
