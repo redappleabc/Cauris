@@ -147,7 +147,7 @@ export class UserService extends Service {
       const secret = speakeasy.generateSecret({
         name: "S-Wallet: " + user.email,
       });
-      user.secret=secret
+      user.secret=secret.base32
       user.secretGenerated= true
       user.save()
       return new ValidResponse(EHttpStatusCode.OK, {
