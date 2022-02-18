@@ -82,10 +82,9 @@ export class UserController extends Controller {
   /* 2FA verification */
   public async verifySecret(req: Request, res: Response, next: NextFunction) {
     try {
-      const { secret, encoding, token } = req.body;
+      const { encoding="base32", token } = req.body;
       const userId = res.locals.user.id;
       const handler: ValidResponse = await (this.service as UserService).verifySecret(
-        secret,
         encoding,
         token,
         userId

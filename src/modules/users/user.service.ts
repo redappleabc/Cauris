@@ -147,7 +147,7 @@ export class UserService extends Service {
       const secret = speakeasy.generateSecret({
         name: "S-Wallet: " + user.email,
       });
-      user.secret=secret.base32
+      user.secret=secret
       user.secretGenerated= true
       user.save()
       return new ValidResponse(EHttpStatusCode.OK, {
@@ -161,28 +161,34 @@ export class UserService extends Service {
       );
     }
   }
-  public async verifySecret(secret: string, encoding: speakeasy.Encoding, token: string, userId:string) {
+  public async verifySecret(encoding: speakeasy.Encoding, token: string, userId:string) {
     try {
-      const verification = speakeasy.totp.verify({
-        secret,
-        encoding,
-        token,
-      });
-      if(verification){
-        const user = await this.model.findById(userId);
-        if (!user) {
-          throw new BaseError(
-            EHttpStatusCode.Unauthorized,
-            "Invalid user credentials",
-            true
-          );
-        }
-        user.verified2FA=true;
-        user.save()
+      const user = await this.model.findById(userId);
+      
+      if (!user) {
+        throw new BaseError(
+          EHttpStatusCode.Unauthorized,
+          "Invalid user credentials",
+          true
+        );
       }
-      return new ValidResponse(EHttpStatusCode.OK, {
-        verification,
-      });
+      if(user.secretGenerated){
+        const verification = speakeasy.totp.verify({
+          secret:user.secret[encoding],
+          encoding,
+          token,
+        });
+        if(verification){
+          user.verified2FA=true;
+          user.save()
+        }
+        return new ValidResponse(EHttpStatusCode.OK, {
+          verification,
+        });
+      }else{
+        return new ValidResponse(EHttpStatusCode.BadRequest, "Generate a secret first");
+      }
+      
     } catch (err) {
       if (err instanceof BaseError) throw err;
       throw new BaseError(
