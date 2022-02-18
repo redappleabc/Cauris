@@ -22,7 +22,6 @@ const schema = new Schema({
   pin: {type: String, default: null},
   secret: {type: String, default: null},
   verified2FA: {type: Boolean, default: false},
-  secretGenerated: {type: Boolean, default: false},
   updated: Date,
   passwordReset: Date,
 });
@@ -36,7 +35,6 @@ schema.set("toJSON", {
     delete ret.created;
     delete ret.updated;
     delete ret.passwordReset;
-    delete ret.secret;
   },
 });
 

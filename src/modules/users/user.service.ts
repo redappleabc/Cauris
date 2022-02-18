@@ -161,7 +161,7 @@ export class UserService extends Service {
       );
     }
   }
-  public async verifySecret(encoding: speakeasy.Encoding, token: string, userId:string) {
+  public async verifySecret(secret:string, encoding: speakeasy.Encoding, token: string, userId:string) {
     try {
       const user = await this.model.findById(userId);
       
@@ -172,19 +172,24 @@ export class UserService extends Service {
           true
         );
       }
-      if(user.secretGenerated){
+      if(!!user.secret && user.secret===secret){
         const verification = speakeasy.totp.verify({
-          secret:user.secret[encoding],
+          secret,
           encoding,
           token,
         });
         if(verification){
           user.verified2FA=true;
           user.save()
+          return new ValidResponse(EHttpStatusCode.OK, {
+            verification,
+          });
+        }else{
+          return new ValidResponse(EHttpStatusCode.BadRequest, {
+            verification,
+          });
         }
-        return new ValidResponse(EHttpStatusCode.OK, {
-          verification,
-        });
+        
       }else{
         return new ValidResponse(EHttpStatusCode.BadRequest, "Generate a secret first");
       }
