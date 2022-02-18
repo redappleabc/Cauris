@@ -66,6 +66,7 @@ export class UserController extends Controller {
     }
   }
 
+  /* 2FA verification : generate secret */
   public async generateSecret(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = res.locals.user.id;
@@ -77,13 +78,17 @@ export class UserController extends Controller {
       next(error);
     }
   }
-  public verifySecret(req: Request, res: Response, next: NextFunction) {
+
+  /* 2FA verification */
+  public async verifySecret(req: Request, res: Response, next: NextFunction) {
     try {
       const { secret, encoding, token } = req.body;
-      const handler: ValidResponse = (this.service as UserService).verifySecret(
+      const userId = res.locals.user.id;
+      const handler: ValidResponse = await (this.service as UserService).verifySecret(
         secret,
         encoding,
-        token
+        token,
+        userId
       );
       handler.handleResponse(res);
     } catch (error) {
