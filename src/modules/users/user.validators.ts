@@ -32,11 +32,13 @@ export function passwordSchema(req: Request, res: Response, next: NextFunction) 
 export function registerSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     email: Joi.string().email().required(),
+    username: Joi.string().empty('').required(),
     password: Joi.string().min(6).required(),
     confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
     firstName: Joi.string().max(30),
     lastName: Joi.string().max(30),
-    devices:Joi.array().items(Joi.string())
+    devices:Joi.array().items(Joi.string()),
+    pin: Joi.string().regex(/^\d+$/).empty("").min(4).max(8)
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
@@ -45,9 +47,29 @@ export function registerSchema(req: Request, res: Response, next: NextFunction) 
 export function updateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     email: Joi.string().email().empty(''),
+    username: Joi.string().empty(''),
     firstName: Joi.string().empty(''),
     lastName: Joi.string().empty(''),
-    devices:Joi.array().items(Joi.string())
+    devices:Joi.array().items(Joi.string()),
+    pin: Joi.string().regex(/^\d+$/).min(4).max(8)
+  })
+  const validator = new JoiValidator(schema)
+  validator.middleware(req, next)
+}
+export function updatePasswordSchema(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    oldPassword: Joi.string().empty('').required(),
+    newPassword: Joi.string().empty('').required(),
+    newPasswordRepeat: Joi.string().empty('').required()
+  })
+  const validator = new JoiValidator(schema)
+  validator.middleware(req, next)
+}
+export function TwoFAverificationSchema(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    secret:Joi.string().empty('').required(),
+    encoding: Joi.string().empty('').default("base32"),
+    token: Joi.string().empty('').required()
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)

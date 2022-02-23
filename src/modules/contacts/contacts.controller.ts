@@ -12,8 +12,8 @@ export class ContactsController extends ControllerProtected {
 
   public async generate(req: Request, res: Response, next: NextFunction) {
     try {
-      let {address, email, name} = req.body;
-      const handler: IResponseHandler = await (this.service as ContactsService).generate(req.user['id'], address, name, email)
+      let {address = null, username = null, name} = req.body;
+      const handler: IResponseHandler = await (this.service as ContactsService).generate(req.user['id'], address, name, username)
       handler.handleResponse(res)
     } catch (err) {
       next(err)

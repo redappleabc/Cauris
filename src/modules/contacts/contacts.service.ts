@@ -8,11 +8,12 @@ export class ContactsService extends ServiceProtected {
     this.generate = this.generate.bind(this)
   }
 
-  public async generate(userId: string, address: string = null, name: string = null, email: string= null) {
+  public async generate(userId: string, address: string = null, name: string = null, username: string= null) {
     return super.insert({
       user: userId,
       name,
-      address, email
+      address,
+      username
     })
   }
 }

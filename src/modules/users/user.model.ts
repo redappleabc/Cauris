@@ -4,6 +4,14 @@ const { Schema } = mongoose;
 
 const schema = new Schema({
   email: { type: String, required: true, index: true, unique: true },
+  username: {type: String, 
+    required: true, 
+    index: true, 
+    unique: true, 
+    default: function() {
+      const instance = this as any
+      instance.username = instance.email.match(/[^(@.)]+/)[0];
+    }},
   password: { type: String, required: true },
   firstName: String,
   lastName: String,
@@ -11,6 +19,9 @@ const schema = new Schema({
   created: { type: Date, default: Date.now() },
   verified: { type: Boolean, default: false },
   devices: [{ type: String, default: [] }],
+  pin: {type: String, default: null},
+  secret: {type: String, default: null},
+  verified2FA: {type: Boolean, default: false},
   updated: Date,
   passwordReset: Date,
 });

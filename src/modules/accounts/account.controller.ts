@@ -8,6 +8,7 @@ export class AccountController extends ControllerProtected {
     super(service)
     this.generate = this.generate.bind(this)
     this.getByAddressProtected = this.getByAddressProtected.bind(this)
+    this.getByCoinId = this.getByCoinId.bind(this)
   }
 
   public async generate(req: Request, res: Response, next: NextFunction) {
@@ -25,6 +26,15 @@ export class AccountController extends ControllerProtected {
       const { address } = req.params
       const userId = res.locals.user.id
       let handler: IResponseHandler = await (this.service as AccountService).getByAddressProtected(address, userId)
+      return handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  public async getByCoinId(req: Request, res: Response, next: NextFunction) {
+    try {
+      let handler: IResponseHandler = await (this.service as AccountService).getByCoinId(req.query)
       return handler.handleResponse(res)
     } catch (err) {
       next(err)
