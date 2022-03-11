@@ -39,6 +39,13 @@ export class ScanHelper {
     return this.makeRequest("account", "tokentx", parameters)
   }
 
+  public async getGasOracle() {
+    const parameters = {
+      apiKey: this.apiKey
+    }
+    return this.makeRequest("gastracker", "gasoracle", parameters)
+  }
+
   private async makeRequest(module: string, action: string, parameters: any) {
     try {
       let res = await axios.get(`${this.url}/api`, {

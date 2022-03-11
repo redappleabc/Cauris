@@ -52,9 +52,16 @@ export class EthersRPC implements IRPC {
     )
   }
 
+  private async calculateGasPrice() {
+    let {gasPrice, maxPriorityFeePerGas} = await this.provider.getFeeData()
+    let scan = await this.parseGasScan()
+    gasPrice = (scan.gasPrice != null) ? scan.gasPrice : gasPrice
+    return {gasPrice, maxPriorityFeePerGas}
+  }
+
   private async calculateFeesFromBigNum(estimateGas: ethers.BigNumber) {
     try {
-      const {gasPrice, maxPriorityFeePerGas} = await this.provider.getFeeData()
+      const {gasPrice, maxPriorityFeePerGas} = await this.calculateGasPrice()
       return (gasPrice.add(maxPriorityFeePerGas)).mul(estimateGas)
     } catch (err) {
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err)
@@ -85,6 +92,23 @@ export class EthersRPC implements IRPC {
       })
     })
     return history
+  }
+
+  private async parseGasScan() {
+    try {
+      const {result} = await this.scan.getGasOracle()
+      console.log(result)
+      if (typeof result == 'string')
+        return {
+          gasPrice: null
+        }
+      else
+        return {
+          gasPrice: ethers.utils.parseUnits(result.ProposeGasPrice, "gwei")
+        }
+    } catch (err) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
+    }
   }
 
   public async getHistory(address: string, coin: ICoin, page: number = 1) {
@@ -118,18 +142,20 @@ export class EthersRPC implements IRPC {
     const signer = this.provider.getSigner(this.account.address)
     const {contractAddress = null} = coin
     const value = ethers.utils.parseUnits(rawValue, coin.decimals)
+    const {gasPrice} = await this.parseGasScan()
     var tx: any
     if ((await this.getBalance(contractAddress)).lt(value))
       throw new BaseError(EHttpStatusCode.BadRequest, "Your balance is insufficient to perform this transaction")
     try {
       if (!!contractAddress) {
         var contract = new ethers.Contract(contractAddress, abi, signer)
-        tx = await contract.transfer(to, value)
+        tx = await contract.transfer(to, value, {gasPrice})
       } else {
-        tx = await this.wallet.sendTransaction({to, value})
+        tx = await this.wallet.sendTransaction({to, value, gasPrice})
       }
       return tx.hash
     } catch (err) {
+      console.log(err)
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }
   }
