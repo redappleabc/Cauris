@@ -8,8 +8,19 @@ export class WalletController extends ControllerProtected {
   constructor(service: ServiceProtected) {
     super(service)
     this.generate = this.generate.bind(this)
+    this.deleteLogically = this.deleteLogically.bind(this)
+    this.getAllByUser = this.getAllByUser.bind(this)
   }
 
+  public async getAllByUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = res.locals.user.id
+      let handler: IResponseHandler = await (this.service as WalletService).getAllByUser(req.query, userId)
+      return handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
   public async generate(req: Request, res: Response, next: NextFunction) {
     try {
       let {mnemonic, name} = req.body;
@@ -19,4 +30,16 @@ export class WalletController extends ControllerProtected {
       next(err)
     }
   }
+
+  public async deleteLogically(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params
+      const handler: IResponseHandler = await (this.service as WalletService).deleteLogically(id, req.user['id'])
+      handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+
 }

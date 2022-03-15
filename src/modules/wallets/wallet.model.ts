@@ -5,7 +5,8 @@ const schema = new Schema({
   user: {type: Schema.Types.ObjectId, ref: 'User', required: true},
   seed: {type: String, unique: true, required: true},
   mnemonic: {type: String, unique: true, required: true},
-  name: String
+  name: String,
+  deleted: {type:Boolean, default: false}
 })
 
 

@@ -10,6 +10,7 @@ const controller = new WalletController(service)
 
 router.post('/', JwtHelper.middleware(), generateSchema, controller.generate)
 router.put('/:id', JwtHelper.middleware(), updateSchema, controller.updateProtected)
+router.delete('/:id/delete', JwtHelper.middleware(), controller.deleteLogically)
 router.get('/', JwtHelper.middleware(), controller.getAllByUser)
 router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
 router.delete('/', JwtHelper.middleware([EUserRole.Admin]),controller.delete)
