@@ -1,6 +1,6 @@
 import {db} from '@servichain/helpers/MongooseSingleton'
 import { ServiceProtected } from '@servichain/helpers/services'
-import { Model } from 'mongoose'
+import { isValidObjectId, Model } from 'mongoose'
 import { BaseError } from '@servichain/helpers/BaseError'
 import {generateRandomToken} from '@servichain/helpers/randomToken'
 import JwtHelper from '@servichain/middlewares/JwtHelper'
@@ -36,9 +36,10 @@ export class RefreshService extends ServiceProtected {
     }
   }
 
-    //internal
   public async generate(id: string, ipAddress: string) {
     try {
+      if (isValidObjectId(id) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       const refreshToken: any = {
         user: id,
         token: generateRandomToken(40),

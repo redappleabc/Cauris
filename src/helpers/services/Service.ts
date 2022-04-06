@@ -1,8 +1,9 @@
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { BaseError } from '@servichain/helpers/BaseError'
-import { Document, Model } from 'mongoose'
+import { Document, isValidObjectId, Model } from 'mongoose'
 import { IService, IResponseHandler } from "@servichain/interfaces";
 import { EHttpStatusCode } from '@servichain/enums';
+import sanitize from 'mongo-sanitize'
 const mongoose = require("mongoose")
 
 export class Service implements IService {
@@ -18,6 +19,7 @@ export class Service implements IService {
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {
+    
     let {skip, limit, populate} = query
 
     skip = skip ? Number(skip) : 0
@@ -26,6 +28,8 @@ export class Service implements IService {
 
     delete query.skip
     delete query.limit
+    delete query.$match
+
 
     if (query._id) {
       try {
@@ -52,6 +56,8 @@ export class Service implements IService {
 
   public async getById(id: string): Promise<IResponseHandler> {
     try {
+      if (isValidObjectId(id) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       let item: Document = await this.model.findById(id)
       if (!item)
         throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
@@ -63,10 +69,11 @@ export class Service implements IService {
 
   public async insert(data: any): Promise<IResponseHandler> {
     try {
+      var sanitizedData = sanitize(data)
       let item: Document = await this.model.create(data)
       if (!item)
         throw new BaseError(EHttpStatusCode.BadRequest, "Could not create item")
-      return new ValidResponse(EHttpStatusCode.Created, item)
+      return new ValidResponse(EHttpStatusCode.Created, sanitizedData)
     } catch (error) {
       if (error instanceof mongoose.Error) {
         throw new BaseError(EHttpStatusCode.BadRequest, error, true)
@@ -77,8 +84,10 @@ export class Service implements IService {
 
   public async update(id: string, data: any): Promise<IResponseHandler> {
     try {
-      let item: Document = await this.model.findByIdAndUpdate(id, data, {new: true})
-
+      var sanitizedData = sanitize(data)
+      if (isValidObjectId(id) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      let item: Document = await this.model.findByIdAndUpdate(id, sanitizedData, {new: true})
       if (!item) {
         throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
       }
@@ -90,8 +99,9 @@ export class Service implements IService {
 
   public async delete(id: string): Promise<IResponseHandler> {
     try {
+      if (isValidObjectId(id) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       let item: Document = await this.model.findByIdAndDelete(id)
-
       if (!item) {
         throw new BaseError(EHttpStatusCode.NotFound, "Item not found.", true)
       }

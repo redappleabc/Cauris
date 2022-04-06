@@ -9,29 +9,27 @@ export class ErrorResponse implements IResponseHandler {
 
   constructor(error: Error) {
     if (error instanceof BaseError) {
-      this.statusCode = error.status
+      this.statusCode = error.statusCode
       this.message = error.message
-    } else
-      this.formatMessage(error)
+    } else {
+      [this.statusCode, this.message] = this.processError(error)
+
+    }
   }
 
-  private formatMessage(error: Error) {
-    switch(true) {
-      case(error.name === 'ValidationError'):
-        this.statusCode = EHttpStatusCode.BadRequest
-        this.message = error.message
-        break;
-      case(error.name === 'Unauthorized'):
-        this.statusCode = EHttpStatusCode.Unauthorized
-        this.message = error.message
-        break;
-      case(error.name === 'MongooseError'):
-        this.statusCode = EHttpStatusCode.BadRequest
-        this.message = error.message
+  private processError(error: any) : [EHttpStatusCode, string, any?] {
+    switch (error.name) {
+      case 'ValidationError':
+        return [EHttpStatusCode.BadRequest, "JoiValidationError : " + error.path]
+      case 'MongoServerError':
+        if (error.code == 11000)
+          return [EHttpStatusCode.BadRequest, "DuplicateKey", ]
+        else if (error.code == 11600)
+          return [EHttpStatusCode.InternalServerError, "NoMongo"]
+      case 'Unauthorized':
+        return [EHttpStatusCode.Unauthorized, error.message]
       default:
-        this.statusCode = (error as BaseError).status
-        this.message = error.message
-        break;
+        return [EHttpStatusCode.InternalServerError, error.message]
     }
   }
 

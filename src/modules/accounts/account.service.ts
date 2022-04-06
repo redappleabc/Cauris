@@ -1,6 +1,6 @@
 import {db} from "@servichain/helpers/MongooseSingleton";
 import { ServiceProtected } from "@servichain/helpers/services";
-import { Model } from "mongoose";
+import { isValidObjectId, Model } from "mongoose";
 import { HDWallet } from "@servichain/helpers/hdwallets/HDWallet";
 import { EthereumWallet } from "@servichain/helpers/hdwallets/EthereumWallet";
 import { BaseError } from "@servichain/helpers/BaseError";
@@ -16,6 +16,7 @@ import { ValidResponse } from "@servichain/helpers/responses";
 import { rpcs } from "@servichain/helpers/RPCSingleton";
 import { utils } from "ethers";
 import { accountsAggregation, contactAggregation } from "./account.aggregation";
+import sanitize from 'mongo-sanitize'
 const mongoose = require("mongoose");
 
 const AccountDetailed = {
@@ -53,8 +54,11 @@ export class AccountService extends ServiceProtected {
 
     delete query.skip;
     delete query.limit;
+    delete query.$match
 
     try {
+      if (isValidObjectId(userId) === false || isValidObjectId(wallet) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       let walletExist = db.Wallet.findOne({_id: wallet, user: userId})
       if (!walletExist)
         throw new BaseError(EHttpStatusCode.BadRequest, "This wallet does not exist or does not belong to you")
@@ -78,10 +82,11 @@ export class AccountService extends ServiceProtected {
     let {username = null, coinId = null} = query
 
     try {
-    console.log(username, coinId)
       if (!username || !coinId)
         throw new BaseError(EHttpStatusCode.BadRequest, "You must specify an username and coinId in the query")
-
+      if (isValidObjectId(coinId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      username = sanitize(username)
       const aggregationPipeline = contactAggregation(username, coinId)
       let user: Document[] = await db.User.aggregate(aggregationPipeline)
       if (!user || !user.length)
@@ -96,7 +101,9 @@ export class AccountService extends ServiceProtected {
 
   public async getAllByUser(query: any, userId: string) {
     try {
-      // query["populate"] = "subscribedTo wallet";
+      if (!userId || isValidObjectId(userId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+
       let responseHandler = await this.getAllAggregated(query, userId);
       let accountsnetworks: any = responseHandler.getBody()["items"];
       let account_list = [];
@@ -147,6 +154,8 @@ export class AccountService extends ServiceProtected {
 
   public async updateProtected(id: string, userId: string, data: IAccount) {
     try {
+      if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       let itemCheck = await this.model.find({ _id: id, "wallet.user": userId });
       if (!itemCheck)
         throw new BaseError(
@@ -171,6 +180,8 @@ export class AccountService extends ServiceProtected {
     accountsArray: [IAccount] | IAccount
   ) {
     try {
+      if (isValidObjectId(userId) === false || isValidObjectId(walletId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       const userWallet: IWallet = await db.Wallet.findOne({
         user: userId,
         _id: walletId,

@@ -237,9 +237,7 @@ export class UserService extends Service {
   }
 
   public async getByIdDetailed(query: any) {
-    let responseHandler: ValidResponse = (await super.getById(
-      query
-    )) as ValidResponse;
+    let responseHandler: ValidResponse = (await super.getById(query)) as ValidResponse;
     responseHandler.data.toObject(UserDetailed);
     return responseHandler;
   }

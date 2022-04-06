@@ -4,7 +4,7 @@ import { BaseError } from '@servichain/helpers/BaseError'
 import {db} from '@servichain/helpers/MongooseSingleton'
 import { Service } from '@servichain/helpers/services'
 import { ICoin, IResponseHandler } from '@servichain/interfaces'
-import { Model } from 'mongoose'
+import { isValidObjectId, Model } from 'mongoose'
 import config from 'config'
 import Nomics, { IRawCurrencyTicker } from 'nomics'
 
@@ -33,6 +33,8 @@ export class CoinService extends Service {
   public async insert(data: ICoin): Promise<IResponseHandler> {
     try {
       let {network} = data
+      if (isValidObjectId(network) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       let netDoc = await db.Network.findOne({_id: network})
       if (!netDoc)
         throw new BaseError(EHttpStatusCode.NotFound, "Could not find the specified network ID")

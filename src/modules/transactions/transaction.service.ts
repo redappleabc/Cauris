@@ -1,7 +1,7 @@
 import {db} from "@servichain/helpers/MongooseSingleton";
 import {rpcs} from '@servichain/helpers/RPCSingleton';
 import { ServiceProtected } from "@servichain/helpers/services";
-import { Model } from "mongoose";
+import { isValidObjectId, Model } from "mongoose";
 import {
   IAccount,
   ICoin,
@@ -26,6 +26,8 @@ export class TransactionService extends ServiceProtected {
   }
 
   private async getCoinById(coinId: string) {
+    if (isValidObjectId(coinId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
     const coin: ICoin = await db.Coin.findOne({ _id: coinId }).populate("network")
     if (!coin)
       throw new BaseError(
@@ -36,6 +38,8 @@ export class TransactionService extends ServiceProtected {
   }
 
   private async retrieveRpcByCoin(coinId: string) {
+    if (isValidObjectId(coinId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
     const coin: ICoin = await this.getCoinById(coinId)
     if (!coin)
       throw new BaseError(EHttpStatusCode.BadRequest, "Could not find Coin")
@@ -47,6 +51,8 @@ export class TransactionService extends ServiceProtected {
   }
 
   private async retrieveAccountByAddress(userId: string, address: string) {
+    if (isValidObjectId(userId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
     const account: IAccount = await db.Account.findOne({
       address,
     }).populate("wallet");
@@ -66,6 +72,8 @@ export class TransactionService extends ServiceProtected {
   }
 
   private async getAllbyQuery(userId: string, query: any) {
+    if (isValidObjectId(userId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
     const user: IUser = await db.User.findOne({
       id: userId
     })
@@ -95,6 +103,8 @@ export class TransactionService extends ServiceProtected {
   public async getAllByCoin(userId: string, query: any) {
     const { coinId = null, address = null, page = 1} = query
     if (!!coinId && !!address) {
+      if (isValidObjectId(userId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
       const account = await this.retrieveAccountByAddress(userId, address)
       RPCHelper.setWallet(account)
@@ -106,6 +116,9 @@ export class TransactionService extends ServiceProtected {
   }
 
   public async estimate(userId: string, coinId: string, from: string, to: string, value: string) {
+    if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
@@ -115,6 +128,8 @@ export class TransactionService extends ServiceProtected {
 
   public async send(userId: string, coinId: string, from: string, to: string, value: string) {
     try {
+      if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
       const account = await this.retrieveAccountByAddress(userId, from)
       RPCHelper.setWallet(account);
