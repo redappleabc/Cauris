@@ -16,54 +16,36 @@ export class ValidationService extends ServiceProtected {
   }
 
   public async generateToken(type: ETokenType, email: string): Promise<IResponseHandler> {
-    try {
-      const user = await db.User.findOne({email})
-      const expiresIn: number = config.get('tokens.validationExpiresIn')
-      if (!user)
-        throw new BaseError(EHttpStatusCode.NotFound, "Could not found any user related to this e-mail")
-      var token = generateRandomToken(4)
-      var mail  = verificationTemplate(token, type)
-      MailerHelper.send(email, `${type} Validation`, mail)
-      var data = {
-        user,
-        token,
-        type,
-        expiresIn: new Date(Date.now() + expiresIn)
-      }
-      return super.insert(data)
-    } catch (err) {
-      if (err instanceof BaseError)
-        throw err
-      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error has occured")
+    const user = await db.User.findOne({email})
+    const expiresIn: number = config.get('tokens.validationExpiresIn')
+    if (!user)
+      throw new BaseError(EHttpStatusCode.NotFound, "Could not found any user related to this e-mail")
+    var token = generateRandomToken(4)
+    var mail  = verificationTemplate(token, type)
+    MailerHelper.send(email, `${type} Validation`, mail)
+    var data = {
+      user,
+      token,
+      type,
+      expiresIn: new Date(Date.now() + expiresIn)
     }
+    return super.insert(data)
   }
 
   public async verifyToken(tokenString: string, user: any) {
-    try {
-      let token = await this.model.findOne({user, token: tokenString})
-      if (!token)
-        throw new BaseError(EHttpStatusCode.NotFound, "The provided token wasn't found or does not belong to this user")
-      if (token.isExpired)
-        throw new BaseError(EHttpStatusCode.BadRequest, "This token has expired")
-      if (token.used)
-        throw new BaseError(EHttpStatusCode.BadRequest, "This token has already been used")
-      return token
-    } catch (err) {
-      if (err instanceof BaseError)
-        throw err
-      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error has occured")
-    }
+    let token = await this.model.findOne({user, token: tokenString})
+    if (!token)
+      throw new BaseError(EHttpStatusCode.NotFound, "The provided token wasn't found or does not belong to this user")
+    if (token.isExpired)
+      throw new BaseError(EHttpStatusCode.BadRequest, "This token has expired")
+    if (token.used)
+      throw new BaseError(EHttpStatusCode.BadRequest, "This token has already been used")
+    return token
   }
 
   public async consumeToken(token: any) {
-    try {
-      token.used = true
-      token.save()
-      return true
-    } catch(err) {
-      if (err instanceof BaseError)
-        throw err
-      throw new BaseError(EHttpStatusCode.InternalServerError, "An unknown error has occured")
-    }
+    token.used = true
+    token.save()
+    return true
   }
 }

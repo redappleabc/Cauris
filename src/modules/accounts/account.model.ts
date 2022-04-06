@@ -13,7 +13,7 @@ const schema = new Schema({
   subscribedTo: [{type: Schema.Types.ObjectId, ref: 'Coin'}]
 })
 
-schema.index({wallet: 1, coinIndex: 1, accountIndex: 1, addressIndex: 1}, {unique: true})
+schema.index({wallet: 1, coinIndex: 1, accountIndex: 1, addressIndex: 1, change: 1}, {unique: true})
 
 schema.set('toJSON', {
   virtuals: true,

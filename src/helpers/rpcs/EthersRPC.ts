@@ -37,11 +37,11 @@ export class EthersRPC implements IRPC {
         const balance = await this.wallet.getBalance()
         return balance
       }
-    } catch (err) {
-      if (!err.reason)
-        return ethers.BigNumber.from('0x00')
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
-    }
+  } catch (err) {
+    if (!err.reason)
+      return ethers.BigNumber.from('0x00')
+    throw err
+  }
   }
 
   private calculateFeesFromString(gas: string, gasPrice: string, gasUsed: string) {
@@ -60,12 +60,8 @@ export class EthersRPC implements IRPC {
   }
 
   private async calculateFeesFromBigNum(estimateGas: ethers.BigNumber) {
-    try {
-      const {gasPrice, maxPriorityFeePerGas} = await this.calculateGasPrice()
-      return (gasPrice.add(maxPriorityFeePerGas)).mul(estimateGas)
-    } catch (err) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err)
-    }
+    const {gasPrice, maxPriorityFeePerGas} = await this.calculateGasPrice()
+    return (gasPrice.add(maxPriorityFeePerGas)).mul(estimateGas)
   }
 
   private parseHistory(rawHistory: any, decimals: number) {
@@ -95,33 +91,25 @@ export class EthersRPC implements IRPC {
   }
 
   private async parseGasScan() {
-    try {
-      const {result} = await this.scan.getGasOracle()
-      console.log(result)
-      if (typeof result == 'string')
-        return {
-          gasPrice: null
-        }
-      else
-        return {
-          gasPrice: ethers.utils.parseUnits(result.ProposeGasPrice, "gwei")
-        }
-    } catch (err) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
+    const {result} = await this.scan.getGasOracle()
+    if (typeof result == 'string')
+      return {
+        gasPrice: null
+      }
+    else {
+      return {
+        gasPrice: ethers.utils.parseUnits(result.ProposeGasPrice, "gwei")
+      }
     }
   }
 
   public async getHistory(address: string, coin: ICoin, page: number = 1) {
-    try {
-      let history;
-      if (!!coin.contractAddress)
-        history = await this.scan.retrieveContractHistory(address, page, coin.contractAddress)
-      else
-        history = await this.scan.retrieveHistory(address, page)
-      return this.parseHistory(history, coin.decimals)
-    } catch (err) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
-    }
+    let history;
+    if (!!coin.contractAddress)
+      history = await this.scan.retrieveContractHistory(address, page, coin.contractAddress)
+    else
+      history = await this.scan.retrieveHistory(address, page)
+    return this.parseHistory(history, coin.decimals)
   }
 
   public async estimate(to: string, rawValue: string, coin: ICoin) {
@@ -146,17 +134,12 @@ export class EthersRPC implements IRPC {
     var tx: any
     if ((await this.getBalance(contractAddress)).lt(value))
       throw new BaseError(EHttpStatusCode.BadRequest, "Your balance is insufficient to perform this transaction")
-    try {
-      if (!!contractAddress) {
-        var contract = new ethers.Contract(contractAddress, abi, signer)
-        tx = await contract.transfer(to, value, {gasPrice})
-      } else {
-        tx = await this.wallet.sendTransaction({to, value, gasPrice})
-      }
-      return tx.hash
-    } catch (err) {
-      console.log(err)
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
+    if (!!contractAddress) {
+      var contract = new ethers.Contract(contractAddress, abi, signer)
+      tx = await contract.transfer(to, value, {gasPrice})
+    } else {
+      tx = await this.wallet.sendTransaction({to, value, gasPrice})
     }
+    return tx.hash
   }
 }

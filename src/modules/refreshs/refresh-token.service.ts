@@ -20,20 +20,18 @@ export class RefreshService extends ServiceProtected {
   }
 
   public async refresh(token: any, ipAddress: string) {
-    try {
-      const refreshToken: IRefresh = await this.model.findOne(token.id)
-      const { user }: IRefresh = refreshToken
-
-      const newToken = await this.generate(((user as IUser).id as string), ipAddress)
-      refreshToken.replacedByToken = newToken.token
-      this.revoke(refreshToken, ipAddress)
-      await this.model.create(newToken)
-      const {jwtToken} = JwtHelper.generate(user)
-
-      return new ValidResponse(200, {user, jwtToken, refreshToken: newToken})
-    } catch(err) {
+    const refreshToken: IRefresh = await this.model.findOne(token.id)
+    if (!refreshToken)
       throw new BaseError(EHttpStatusCode.NotFound, "Could not Refresh Token", true)
-    }
+    const { user }: IRefresh = refreshToken
+
+    const newToken = await this.generate(((user as IUser).id as string), ipAddress)
+    refreshToken.replacedByToken = newToken.token
+    this.revoke(refreshToken, ipAddress)
+    await this.model.create(newToken)
+    const {jwtToken} = JwtHelper.generate(user)
+
+    return new ValidResponse(200, {user, jwtToken, refreshToken: newToken})
   }
 
   public async generate(id: string, ipAddress: string) {

@@ -15,18 +15,12 @@ export class ServiceProtected extends Service {
   }
 
   public async getByIdProtected(id: string, userId: string) {
-    try {
-      if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
-        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-      let item = await this.model.findOne({_id: id, user: userId})
-      if (!item)
-        throw new BaseError(EHttpStatusCode.Unauthorized, "the resource doesnt exist or you do not have access to it", true)
-      return new ValidResponse(EHttpStatusCode.OK, item)
-    } catch (err) {
-      if (err instanceof BaseError)
-        throw err
-      throw new BaseError(EHttpStatusCode.InternalServerError, err, true)
-    }
+    if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+    let item = await this.model.findOne({_id: id, user: userId})
+    if (!item)
+      throw new BaseError(EHttpStatusCode.Unauthorized, "the resource doesnt exist or you do not have access to it", true)
+    return new ValidResponse(EHttpStatusCode.OK, item)
   }
 
   public async getAllByUser(query: any, userId: string) {
@@ -37,18 +31,12 @@ export class ServiceProtected extends Service {
   }
 
   public async updateProtected(id: string, userId: string, data: any) {
-    try {
-      if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
-        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-      let itemCheck = await this.model.find({_id: id, user: userId})
-      var sanitizedData = sanitize(data)
-      if (!itemCheck)
-        throw new BaseError(EHttpStatusCode.Unauthorized, "You do not have access to this resource")
-      return super.update(id, sanitizedData)
-    } catch(err) {
-      if (err instanceof BaseError)
-        throw err
-      throw new BaseError(EHttpStatusCode.InternalServerError, err)
-    }
+    if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+    let itemCheck = await this.model.find({_id: id, user: userId})
+    var sanitizedData = sanitize(data)
+    if (!itemCheck)
+      throw new BaseError(EHttpStatusCode.Unauthorized, "You do not have access to this resource")
+    return super.update(id, sanitizedData)
   }
 }

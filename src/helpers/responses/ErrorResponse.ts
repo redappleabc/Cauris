@@ -13,7 +13,6 @@ export class ErrorResponse implements IResponseHandler {
       this.message = error.message
     } else {
       [this.statusCode, this.message] = this.processError(error)
-
     }
   }
 
@@ -23,13 +22,13 @@ export class ErrorResponse implements IResponseHandler {
         return [EHttpStatusCode.BadRequest, "JoiValidationError : " + error.path]
       case 'MongoServerError':
         if (error.code == 11000)
-          return [EHttpStatusCode.BadRequest, "DuplicateKey", ]
+          return [EHttpStatusCode.BadRequest, "DuplicateKeyError"]
         else if (error.code == 11600)
-          return [EHttpStatusCode.InternalServerError, "NoMongo"]
+          return [EHttpStatusCode.InternalServerError, "NoMongoError"]
       case 'Unauthorized':
         return [EHttpStatusCode.Unauthorized, error.message]
       default:
-        return [EHttpStatusCode.InternalServerError, error.message]
+        return [error.status, error.message]
     }
   }
 

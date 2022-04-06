@@ -127,24 +127,19 @@ export class TransactionService extends ServiceProtected {
   }
 
   public async send(userId: string, coinId: string, from: string, to: string, value: string) {
-    try {
-      if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
-        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-      const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
-      const account = await this.retrieveAccountByAddress(userId, from)
-      RPCHelper.setWallet(account);
-      const hash = await RPCHelper.sendTransaction(to, value, coin);
-      return super.insert({
-        user: userId,
-        coin,
-        from,
-        to,
-        value,
-        hash
-      })
-    } catch (err) {
-      if (err instanceof BaseError) throw err;
-      throw new BaseError(EHttpStatusCode.InternalServerError, err);
-    }
+    if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+    const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
+    const account = await this.retrieveAccountByAddress(userId, from)
+    RPCHelper.setWallet(account);
+    const hash = await RPCHelper.sendTransaction(to, value, coin);
+    return super.insert({
+      user: userId,
+      coin,
+      from,
+      to,
+      value,
+      hash
+    })
   }
 }
