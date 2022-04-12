@@ -61,7 +61,8 @@ export class EthersRPC implements IRPC {
 
   private async calculateFeesFromBigNum(estimateGas: ethers.BigNumber) {
     try {
-      const {gasPrice, maxPriorityFeePerGas} = await this.calculateGasPrice()
+      let {gasPrice, maxPriorityFeePerGas} = await this.calculateGasPrice()
+      maxPriorityFeePerGas = (maxPriorityFeePerGas != null) ? maxPriorityFeePerGas : ethers.BigNumber.from('0x00')
       return (gasPrice.add(maxPriorityFeePerGas)).mul(estimateGas)
     } catch (err) {
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err)
