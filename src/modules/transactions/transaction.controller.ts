@@ -26,6 +26,30 @@ export class TransactionController extends ControllerProtected {
     }
   }
 
+  public async getPriceRoute(req: Request, res: Response, next: NextFunction) {
+    try {
+      let {srcCoinId, destCoinId, from, value} = req.body
+      const handler: IResponseHandler = await(this.service as TransactionService).swap(
+        req.user['id'], srcCoinId, destCoinId, from, value
+      );
+      handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  public async swap(req: Request, res: Response, next: NextFunction) {
+    try {
+      let {srcCoinId, destCoinId, from, priceRoute} = req.body
+      const handler: IResponseHandler = await(this.service as TransactionService).swap(
+        req.user['id'], srcCoinId, destCoinId, from, priceRoute
+      );
+      handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
   public async estimate(req: Request, res: Response, next: NextFunction) {
     try {
       let { coinId, from, to, value } = req.body

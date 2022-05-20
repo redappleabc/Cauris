@@ -15,6 +15,8 @@ import { EHttpStatusCode, EUserRole } from "@servichain/enums";
 import { IWallet } from "@servichain/interfaces/IWallet";
 import { ethers, utils } from "ethers";
 import { ValidResponse } from "@servichain/helpers/responses";
+import { EthersRPC } from "@servichain/helpers/rpcs";
+import { OptimalRate } from "paraswap-core";
 const mongoose = require("mongoose");
 
 export class TransactionService extends ServiceProtected {
@@ -103,6 +105,31 @@ export class TransactionService extends ServiceProtected {
     } else {
       return await this.getAllbyQuery(userId, query)
     }
+  }
+
+  public async getPriceRoute(userId:string, srcCoinId: string, destCoinId: string, from: string, value: string) {
+    const {coin, RPCHelper} = await this.retrieveRpcByCoin(srcCoinId)
+    const coinDest = await this.getCoinById(destCoinId)
+    const account = await this.retrieveAccountByAddress(userId, from)
+    RPCHelper.setWallet(account)
+    const priceRoute =  await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
+    return new ValidResponse(EHttpStatusCode.OK, {priceRoute})
+  }
+
+  public async swap(userId: string, srcCoinId: string, destCoinId: string, from: string, priceRoute: OptimalRate) {
+    const {coin, RPCHelper} = await this.retrieveRpcByCoin(srcCoinId)
+    const coinDest = await this.getCoinById(destCoinId)
+    const account = await this.retrieveAccountByAddress(userId, from)
+    RPCHelper.setWallet(account)
+    const hash = await (RPCHelper as EthersRPC).swap(coin, coinDest, priceRoute)
+    return super.insert({
+      user: userId,
+      coin,
+      from,
+      to: from,
+      value: priceRoute.srcAmount,
+      hash
+    })
   }
 
   public async estimate(userId: string, coinId: string, from: string, to: string, value: string) {

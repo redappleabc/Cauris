@@ -5,11 +5,16 @@ import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
 import config from 'config'
 import { ScanHelper } from '../ScanHelper'
+import { ParaSwapHelper } from '../ParaSwapHelper'
+import { NetworkID } from 'paraswap'
+import { OptimalRate } from "paraswap-core";
+
 
 export class EthersRPC implements IRPC {
   account: IAccount
   provider: ethers.providers.JsonRpcProvider
   scan: ScanHelper
+  paraswap: ParaSwapHelper
   wallet: ethers.Wallet
 
   constructor(network: INetwork) {
@@ -19,7 +24,8 @@ export class EthersRPC implements IRPC {
       this.provider = new ethers.providers.JsonRpcProvider({url: rpcUrl, ...options}, chainId)
     } else
       this.provider = new ethers.providers.JsonRpcProvider(rpcUrl, chainId)
-      this.scan =  new ScanHelper(apiUrl, config.get(`api.${configKey}`))
+    this.scan =  new ScanHelper(apiUrl, config.get(`api.${configKey}`))
+    this.paraswap = new ParaSwapHelper(chainId as NetworkID)
   }
 
   public setWallet(account:any){
@@ -123,6 +129,18 @@ export class EthersRPC implements IRPC {
     } catch (err) {
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }
+  }
+
+  public async getSwapPrice(src: ICoin, dest: ICoin, value: string) {
+    const priceRoute = (await this.paraswap.getPrices(src.symbol, dest.symbol, value)) as OptimalRate
+    console.log(priceRoute)
+    return priceRoute
+  }
+
+  public async swap(src: ICoin, dest: ICoin, priceRoute: OptimalRate) {
+    const txSwap = await this.paraswap.getTx(src.symbol, dest.symbol, priceRoute, this.account.address)
+    const tx = await this.wallet.sendTransaction(txSwap)
+    return tx.hash
   }
 
   public async estimate(to: string, rawValue: string, coin: ICoin) {

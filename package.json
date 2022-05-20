@@ -49,6 +49,7 @@
     "nodemailer": "^6.7.1",
     "nodemon": "^2.0.13",
     "nomics": "^0.5.7",
+    "paraswap": "^5.1.0",
     "passport": "^0.4.1",
     "socket.io": "^4.4.0",
     "speakeasy": "^2.0.0",
