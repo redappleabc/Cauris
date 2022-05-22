@@ -132,7 +132,8 @@ export class EthersRPC implements IRPC {
   }
 
   public async getSwapPrice(src: ICoin, dest: ICoin, value: string) {
-    const priceRoute = (await this.paraswap.getPrices(src.symbol, dest.symbol, value)) as OptimalRate
+    let bignum = ethers.utils.parseUnits(value, src.decimals)
+    const priceRoute = (await this.paraswap.getPrices(src.symbol, dest.symbol, bignum.toString())) as OptimalRate
     console.log(priceRoute)
     return priceRoute
   }
