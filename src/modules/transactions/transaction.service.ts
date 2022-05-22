@@ -116,7 +116,6 @@ export class TransactionService extends ServiceProtected {
     const coinDest = await this.getCoinById(destCoinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
-    console.log("GET PRICE ROUTE")
     const priceRoute =  await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
     return new ValidResponse(EHttpStatusCode.OK, {priceRoute})
   }

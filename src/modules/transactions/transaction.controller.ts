@@ -31,7 +31,7 @@ export class TransactionController extends ControllerProtected {
   public async getPriceRoute(req: Request, res: Response, next: NextFunction) {
     try {
       let {srcCoinId, destCoinId, from, value} = req.body
-      const handler: IResponseHandler = await(this.service as TransactionService).swap(
+      const handler: IResponseHandler = await(this.service as TransactionService).getPriceRoute(
         req.user['id'], srcCoinId, destCoinId, from, value
       );
       handler.handleResponse(res)
