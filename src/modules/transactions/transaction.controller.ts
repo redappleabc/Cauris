@@ -12,8 +12,8 @@ export class TransactionController extends ControllerProtected {
     this.send = this.send.bind(this);
     this.getAllByCoin = this.getAllByCoin.bind(this);
     this.estimate = this.estimate.bind(this);
-    this.getPriceRoute = this.estimate.bind(this)
-    this.swap = this.estimate.bind(this)
+    this.getPriceRoute = this.getPriceRoute.bind(this)
+    this.swap = this.swap.bind(this)
   }
 
   public async send(req: Request, res: Response, next: NextFunction) {
