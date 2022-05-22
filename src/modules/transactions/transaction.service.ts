@@ -25,6 +25,8 @@ export class TransactionService extends ServiceProtected {
     this.send = this.send.bind(this);
     this.getAllByCoin = this.getAllByCoin.bind(this);
     this.estimate = this.estimate.bind(this)
+    this.getPriceRoute = this.getPriceRoute.bind(this)
+    this.swap = this.swap.bind(this)
   }
 
   private async getCoinById(coinId: string) {
