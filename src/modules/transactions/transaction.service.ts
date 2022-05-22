@@ -110,15 +110,20 @@ export class TransactionService extends ServiceProtected {
   }
 
   public async getPriceRoute(userId:string, srcCoinId: string, destCoinId: string, from: string, value: string) {
+    if (srcCoinId === destCoinId)
+      throw new BaseError(EHttpStatusCode.BadRequest, "You cannot perform a swap on the same token")
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(srcCoinId)
     const coinDest = await this.getCoinById(destCoinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
+    console.log("GET PRICE ROUTE")
     const priceRoute =  await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
     return new ValidResponse(EHttpStatusCode.OK, {priceRoute})
   }
 
   public async swap(userId: string, srcCoinId: string, destCoinId: string, from: string, priceRoute: OptimalRate) {
+    if (srcCoinId === destCoinId)
+    throw new BaseError(EHttpStatusCode.BadRequest, "You cannot perform a swap on the same token")
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(srcCoinId)
     const coinDest = await this.getCoinById(destCoinId)
     const account = await this.retrieveAccountByAddress(userId, from)
