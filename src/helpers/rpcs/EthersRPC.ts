@@ -6,9 +6,10 @@ import { EHttpStatusCode } from '@servichain/enums'
 import config from 'config'
 import { ScanHelper } from '../ScanHelper'
 import { ParaSwapHelper } from '../ParaSwapHelper'
-import { NetworkID } from 'paraswap'
+import { APIError, NetworkID, Transaction } from 'paraswap'
 import { OptimalRate } from "paraswap-core";
-
+import { BigNumber } from 'bignumber.js'
+import { toHex } from '@servichain/utils/hex-converter'
 
 export class EthersRPC implements IRPC {
   account: IAccount
@@ -139,9 +140,23 @@ export class EthersRPC implements IRPC {
   }
 
   public async swap(src: ICoin, dest: ICoin, priceRoute: OptimalRate) {
-    const txSwap = await this.paraswap.getTx(src.symbol, dest.symbol, priceRoute, this.account.address)
-    const tx = await this.wallet.sendTransaction(txSwap)
+    const txSwap = await this.paraswap.getTx(priceRoute, this.account.address)
+    if ((txSwap as APIError).status === EHttpStatusCode.BadRequest)
+      throw new BaseError(EHttpStatusCode.BadRequest, (txSwap as APIError).message)
+    delete txSwap['gas']
+    let tx: any
+    try {
+      tx = await this.wallet.sendTransaction({
+        to: txSwap['to'],
+        value: ethers.BigNumber.from(txSwap['value']),
+        data: txSwap['data'],
+        gasPrice: ethers.BigNumber.from(txSwap['gasPrice'])
+      })
     return tx.hash
+    } catch (err) {
+      console.log(err)
+      new BaseError(EHttpStatusCode.InternalServerError, "Json RPC : " + err.reason)
+    }
   }
 
   public async estimate(to: string, rawValue: string, coin: ICoin) {

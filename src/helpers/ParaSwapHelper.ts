@@ -1,4 +1,5 @@
 import config from 'config'
+import { BigNumber } from 'bignumber.js';
 import { APIError, NetworkID, ParaSwap } from "paraswap";
 import { OptimalRate } from "paraswap-core";
 
@@ -14,10 +15,15 @@ export class ParaSwapHelper {
         return priceRoute
     }
 
-    async getTx(srcToken: string, destToken: string, priceRoute: OptimalRate, address: string) {
-        let {srcAmount, destAmount} = priceRoute
+    async getTx(priceRoute: OptimalRate, address: string) {
+        let {srcToken, destToken, srcAmount} = priceRoute
         let partnerFeeBps = 199
+        let slippage = 2.5
         let partnerAddress: string
+
+        let destAmount = new BigNumber(priceRoute.destAmount)
+        .times(1 - slippage / 100)
+        .toFixed(0)
 
         if (config.has(`wallet.address`))
             partnerAddress = config.get(`wallet.address`)
