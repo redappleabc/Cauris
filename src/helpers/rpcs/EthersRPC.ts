@@ -142,9 +142,13 @@ export class EthersRPC implements IRPC {
   
       if (!!contractAddress) {
         var contract = new ethers.Contract(contractAddress, abi, this.wallet)
-        await contract.approve(priceRoute.tokenTransferProxy, ethers.BigNumber.from(priceRoute.srcAmount))
+        var txApp = await contract.approve(
+          priceRoute.tokenTransferProxy, 
+          ethers.BigNumber.from(priceRoute.srcAmount))
+        await txApp.wait()
       }
       const txSwapRaw = await this.paraswap.getTx(priceRoute, this.account.address)
+
       if ((txSwapRaw as APIError).status === EHttpStatusCode.BadRequest)
         throw new BaseError(EHttpStatusCode.BadRequest, (txSwapRaw as APIError).message)
       let txSwap = {
