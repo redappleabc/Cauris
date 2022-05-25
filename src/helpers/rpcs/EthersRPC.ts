@@ -8,9 +8,6 @@ import { ScanHelper } from '../ScanHelper'
 import { ParaSwapHelper } from '../ParaSwapHelper'
 import { APIError, NetworkID, Transaction } from 'paraswap'
 import { OptimalRate } from "paraswap-core";
-import { BigNumber } from 'bignumber.js'
-import { toHex } from '@servichain/utils/hex-converter'
-
 export class EthersRPC implements IRPC {
   account: IAccount
   provider: ethers.providers.JsonRpcProvider
@@ -140,23 +137,30 @@ export class EthersRPC implements IRPC {
   }
 
   public async swap(src: ICoin, dest: ICoin, priceRoute: OptimalRate) {
-    const txSwap = await this.paraswap.getTx(priceRoute, this.account.address)
-    if ((txSwap as APIError).status === EHttpStatusCode.BadRequest)
-      throw new BaseError(EHttpStatusCode.BadRequest, (txSwap as APIError).message)
-    delete txSwap['gas']
-    let tx: any
     try {
-      tx = await this.wallet.sendTransaction({
-        to: txSwap['to'],
-        value: ethers.BigNumber.from(txSwap['value']),
-        data: txSwap['data'],
-        gasPrice: ethers.BigNumber.from(txSwap['gasPrice'])
-      })
-    return tx.hash
-    } catch (err) {
-      console.log(err)
-      new BaseError(EHttpStatusCode.InternalServerError, "Json RPC : " + err.reason)
-    }
+      const {contractAddress = null} = src
+  
+      if (!!contractAddress) {
+        var contract = new ethers.Contract(contractAddress, abi, this.wallet)
+        await contract.approve(priceRoute.tokenTransferProxy, ethers.BigNumber.from(priceRoute.srcAmount))
+      }
+      const txSwapRaw = await this.paraswap.getTx(priceRoute, this.account.address)
+      if ((txSwapRaw as APIError).status === EHttpStatusCode.BadRequest)
+        throw new BaseError(EHttpStatusCode.BadRequest, (txSwapRaw as APIError).message)
+      let txSwap = {
+          to: txSwapRaw['to'],
+          value: ethers.BigNumber.from(txSwapRaw['value']),
+          data: txSwapRaw['data'],
+          gasPrice: ethers.BigNumber.from(txSwapRaw['gasPrice'])
+      }
+      try {
+        const tx = await this.wallet.sendTransaction(txSwap)
+        return tx.hash
+      } catch (err) {
+        console.log(err)
+        new BaseError(EHttpStatusCode.InternalServerError, "Json RPC : " + err.reason)
+      }
+    } catch (err) { throw new BaseError(EHttpStatusCode.InternalServerError, "Json RPC : " + err)}
   }
 
   public async estimate(to: string, rawValue: string, coin: ICoin) {
@@ -166,7 +170,7 @@ export class EthersRPC implements IRPC {
     let estimateGas: ethers.BigNumber
     if (!!contractAddress) {
       var contract = new ethers.Contract(contractAddress, abi, signer)
-      estimateGas = await contract.estimateGas.transfer({to, value})
+      estimateGas = await contract.estimateGas.transfer(to, value)
     } else {
       estimateGas = await this.provider.estimateGas({to, value})
     }
@@ -174,7 +178,6 @@ export class EthersRPC implements IRPC {
   }
 
   public async sendTransaction(to: string, rawValue: string, coin: ICoin) {
-    const signer = this.provider.getSigner(this.account.address)
     const {contractAddress = null} = coin
     const value = ethers.utils.parseUnits(rawValue, coin.decimals)
     const {gasPrice} = await this.parseGasScan()
@@ -183,7 +186,7 @@ export class EthersRPC implements IRPC {
       throw new BaseError(EHttpStatusCode.BadRequest, "Your balance is insufficient to perform this transaction")
     try {
       if (!!contractAddress) {
-        var contract = new ethers.Contract(contractAddress, abi, signer)
+        var contract = new ethers.Contract(contractAddress, abi, this.wallet)
         tx = await contract.transfer(to, value, {gasPrice})
       } else {
         tx = await this.wallet.sendTransaction({to, value, gasPrice})
