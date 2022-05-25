@@ -102,7 +102,6 @@ export class EthersRPC implements IRPC {
   private async parseGasScan() {
     try {
       const {result} = await this.scan.getGasOracle()
-      console.log(result)
       if (typeof result == 'string')
         return {
           gasPrice: null
@@ -132,7 +131,6 @@ export class EthersRPC implements IRPC {
   public async getSwapPrice(src: ICoin, dest: ICoin, value: string) {
     let bignum = ethers.utils.parseUnits(value, src.decimals)
     const priceRoute = (await this.paraswap.getPrices(src.symbol, dest.symbol, bignum.toString())) as OptimalRate
-    console.log(priceRoute)
     return priceRoute
   }
 
@@ -161,7 +159,6 @@ export class EthersRPC implements IRPC {
         const tx = await this.wallet.sendTransaction(txSwap)
         return tx.hash
       } catch (err) {
-        console.log(err)
         new BaseError(EHttpStatusCode.InternalServerError, "Json RPC : " + err.reason)
       }
     } catch (err) { throw new BaseError(EHttpStatusCode.InternalServerError, "Json RPC : " + err)}
@@ -197,7 +194,6 @@ export class EthersRPC implements IRPC {
       }
       return tx.hash
     } catch (err) {
-      console.log(err)
       throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }
   }

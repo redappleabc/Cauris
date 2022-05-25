@@ -78,7 +78,6 @@ export class AccountService extends ServiceProtected {
     let {username = null, coinId = null} = query
 
     try {
-    console.log(username, coinId)
       if (!username || !coinId)
         throw new BaseError(EHttpStatusCode.BadRequest, "You must specify an username and coinId in the query")
 
