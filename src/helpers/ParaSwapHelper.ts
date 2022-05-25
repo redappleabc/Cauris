@@ -28,7 +28,7 @@ export class ParaSwapHelper {
         if (config.has(`wallet.address`))
             partnerAddress = config.get(`wallet.address`)
         else
-            partnerAddress = "0x6705743ca5bD1c89c633751F90A5C01927919ba8"
+            partnerAddress = "0x7E2935FD37b5CBd15FF32a076ee7cE3bf3EC1745"
         return await this.swap.buildTx(
             srcToken, 
             destToken, 
