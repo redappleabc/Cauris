@@ -13,10 +13,11 @@ import {
 import { BaseError } from "@servichain/helpers/BaseError";
 import { EHttpStatusCode, EUserRole } from "@servichain/enums";
 import { IWallet } from "@servichain/interfaces/IWallet";
-import { ethers, utils } from "ethers";
+import { utils } from "ethers";
 import { ValidResponse } from "@servichain/helpers/responses";
 import { EthersRPC } from "@servichain/helpers/rpcs";
 import { OptimalRate } from "paraswap-core";
+import { ITxBody } from "@servichain/interfaces/ITxBody";
 const mongoose = require("mongoose");
 
 export class TransactionService extends ServiceProtected {
@@ -24,9 +25,10 @@ export class TransactionService extends ServiceProtected {
     super(model);
     this.send = this.send.bind(this);
     this.getAllByCoin = this.getAllByCoin.bind(this);
-    this.estimate = this.estimate.bind(this)
-    this.getPriceRoute = this.getPriceRoute.bind(this)
-    this.swap = this.swap.bind(this)
+    this.estimateTransfer = this.estimateTransfer.bind(this)
+    this.estimateSwap = this.estimateSwap.bind(this)
+    this.approveSwap = this.approveSwap.bind(this)
+    this.sendSwap = this.sendSwap.bind(this)
   }
 
   private async getCoinById(coinId: string) {
@@ -109,7 +111,7 @@ export class TransactionService extends ServiceProtected {
     }
   }
 
-  public async getPriceRoute(userId:string, srcCoinId: string, destCoinId: string, from: string, value: string) {
+  public async estimateSwap(userId:string, srcCoinId: string, destCoinId: string, from: string, value: string) {
     if (srcCoinId === destCoinId)
       throw new BaseError(EHttpStatusCode.BadRequest, "You cannot perform a swap on the same token")
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(srcCoinId)
@@ -117,32 +119,47 @@ export class TransactionService extends ServiceProtected {
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
     const priceRoute =  await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
-    return new ValidResponse(EHttpStatusCode.OK, {priceRoute})
+    const isAllowed = await (RPCHelper as EthersRPC).hasAllowance(priceRoute?.tokenTransferProxy, priceRoute?.srcAmount as string, coin)
+    if (isAllowed) {
+      const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
+      const gasFees = await (RPCHelper as EthersRPC).estimate(txSwap, coin)
+      return new ValidResponse(EHttpStatusCode.OK, {priceRoute, txSwap, gasFees, needApproval: false})
+    } else {
+      const gasFees = await (RPCHelper as EthersRPC).estimate({to: priceRoute.tokenTransferProxy, value: priceRoute.srcAmount}, coin, "approve")
+      return new ValidResponse(EHttpStatusCode.OK, {priceRoute, txSwap: null, gasFees, needApproval: true})
+    }
   }
 
-  public async swap(userId: string, srcCoinId: string, destCoinId: string, from: string, priceRoute: OptimalRate) {
-    if (srcCoinId === destCoinId)
-    throw new BaseError(EHttpStatusCode.BadRequest, "You cannot perform a swap on the same token")
-    const {coin, RPCHelper} = await this.retrieveRpcByCoin(srcCoinId)
-    const coinDest = await this.getCoinById(destCoinId)
+  public async approveSwap(userId: string, coinId: string, from: string, priceRoute: OptimalRate) {
+    const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
-    const hash = await (RPCHelper as EthersRPC).swap(coin, coinDest, priceRoute)
+    const txAllowed = await (RPCHelper as EthersRPC).approve(priceRoute.tokenTransferProxy, priceRoute.srcAmount, coin)
+    const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
+    const gasFees = await (RPCHelper as EthersRPC).estimate(txSwap, coin)
+    return new ValidResponse(EHttpStatusCode.OK, {txAllowed, txSwap, gasFees})
+  }
+
+  public async sendSwap(userId: string, coinId: string, from: string, txSwap: ITxBody) {
+    const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
+    const account = await this.retrieveAccountByAddress(userId, from)
+    RPCHelper.setWallet(account)
+    const hash = await (RPCHelper as EthersRPC).swap(txSwap)
     return super.insert({
       user: userId,
       coin,
       from,
-      to: from,
-      value: priceRoute.srcAmount,
+      to: txSwap.to,
+      value: txSwap.value,
       hash
     })
   }
 
-  public async estimate(userId: string, coinId: string, from: string, to: string, value: string) {
+  public async estimateTransfer(userId: string, coinId: string, from: string, to: string, value: string) {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
-    const gasFees = await RPCHelper.estimate(to, value, coin)
+    const gasFees = await RPCHelper.estimate({to, value}, coin)
     return new ValidResponse(EHttpStatusCode.OK, {fees: utils.formatUnits(gasFees, "18")})
   }
 
@@ -151,7 +168,7 @@ export class TransactionService extends ServiceProtected {
       const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
       const account = await this.retrieveAccountByAddress(userId, from)
       RPCHelper.setWallet(account);
-      const hash = await RPCHelper.sendTransaction(to, value, coin);
+      const hash = await RPCHelper.transfer({to, value}, coin);
       return super.insert({
         user: userId,
         coin,
