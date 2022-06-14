@@ -165,24 +165,31 @@ export class EthersRPC implements IRPC {
     } return null
   }
 
-  public async buidSwapTx(priceRoute: OptimalRate) {
+  public async buidSwapTx({decimals}: ICoin, priceRoute: OptimalRate) {
     try {
       const swapTxRaw = await this.paraswap.getTx(priceRoute, this.account.address)
   
       if ((swapTxRaw as APIError).status === EHttpStatusCode.BadRequest)
-      throw new BaseError(EHttpStatusCode.BadRequest, (swapTxRaw as APIError).message)
+        throw new BaseError(EHttpStatusCode.BadRequest, (swapTxRaw as APIError).message)
+      const bnValue = ethers.BigNumber.from(swapTxRaw['value'])
       let swapTx = {
         to: swapTxRaw['to'],
-        value: ethers.BigNumber.from(swapTxRaw['value']),
+        value: ethers.utils.formatUnits(bnValue, decimals),
         data: swapTxRaw['data'],
-        gasPrice: ethers.BigNumber.from(swapTxRaw['gasPrice'])
+        gasPrice: swapTxRaw['gasPrice']
       }
       return swapTx
     }catch (err) { throw new BaseError(EHttpStatusCode.InternalServerError, "Json RPC : " + err)}
   }
 
-  public async swap(txSwap: ITxBody) {
+  public async swap({decimals}: ICoin, txSwap: ITxBody) {
     try {
+      if (typeof txSwap.value === 'string')
+        txSwap.value = ethers.utils.parseUnits(txSwap.value, decimals)
+      if (!txSwap.gasPrice)
+        txSwap.gasPrice = (await this.parseGasScan()).gasPrice
+      else if (typeof txSwap.gasPrice === 'string')
+        txSwap.gasPrice = ethers.BigNumber.from(txSwap.gasPrice)
       const tx = await this.wallet.sendTransaction(txSwap)
       return tx.hash
     } catch (err) {
@@ -193,14 +200,17 @@ export class EthersRPC implements IRPC {
   public async estimate(tx: ITxBody, coin: ICoin, call: string = 'transfer') {
     const signer = this.provider.getSigner(this.account.address)
     const {contractAddress = null} = coin
-    tx.value = ethers.utils.parseUnits(tx.value as string, coin.decimals)
+    if (typeof tx.value === 'string')
+      tx.value = ethers.utils.parseUnits(tx.value, coin.decimals)
+    if (typeof tx.gasPrice === 'string')
+      tx.gasPrice = ethers.BigNumber.from(tx.gasPrice)
     let estimateGas: ethers.BigNumber
     if (!!contractAddress) {
       var contract = new ethers.Contract(contractAddress, abi, signer)
-      estimateGas = (tx.data) ? 
-      await contract.estimateGas[call](tx.to, tx.value, tx.data) :
-      await contract.estimateGas[call](tx.to, tx.value)
+      delete tx.data
+      estimateGas = await contract.estimateGas[call](tx.to, tx.value)
     } else {
+      delete tx.data
       estimateGas = await this.provider.estimateGas(tx)
       if (!estimateGas)
         throw new BaseError(EHttpStatusCode.InternalServerError, "An error occured while trying to estimate " + call)
@@ -210,8 +220,12 @@ export class EthersRPC implements IRPC {
 
   public async transfer(tx: ITxBody, coin: ICoin) {
     const {contractAddress = null} = coin
-    tx.value = ethers.utils.parseUnits(tx.value as string, coin.decimals)
-    tx.gasPrice = await (await this.parseGasScan()).gasPrice
+    if (typeof tx.value === 'string')
+      tx.value = ethers.utils.parseUnits(tx.value, coin.decimals)
+    if (!tx.gasPrice)
+      tx.gasPrice = (await this.parseGasScan()).gasPrice
+    else if (typeof tx.gasPrice === 'string')
+      tx.gasPrice = ethers.BigNumber.from(tx.gasPrice)
     const {to, value, gasPrice} = tx
     var txRes: any
     if ((await this.getBalance(contractAddress)).lt(value))

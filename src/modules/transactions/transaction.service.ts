@@ -121,12 +121,14 @@ export class TransactionService extends ServiceProtected {
     const priceRoute =  await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
     const isAllowed = await (RPCHelper as EthersRPC).hasAllowance(priceRoute?.tokenTransferProxy, priceRoute?.srcAmount as string, coin)
     if (isAllowed) {
-      const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
-      const gasFees = await (RPCHelper as EthersRPC).estimate(txSwap, coin)
+      const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(coin, priceRoute)
+      const gasFees = await (RPCHelper as EthersRPC).estimate({to: txSwap.to, value: txSwap.value, data: txSwap.data}, coin)
+      console.log('done')
       return new ValidResponse(EHttpStatusCode.OK, {priceRoute, txSwap, gasFees, needApproval: false})
     } else {
       const gasFees = await (RPCHelper as EthersRPC).estimate({to: priceRoute.tokenTransferProxy, value: priceRoute.srcAmount}, coin, "approve")
-      return new ValidResponse(EHttpStatusCode.OK, {priceRoute, txSwap: null, gasFees, needApproval: true})
+      console.log('done')
+      return new ValidResponse(EHttpStatusCode.OK, {priceRoute, txSwap: null, fees: utils.formatUnits(gasFees, "18"), needApproval: true})
     }
   }
 
@@ -135,7 +137,7 @@ export class TransactionService extends ServiceProtected {
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
     const txAllowed = await (RPCHelper as EthersRPC).approve(priceRoute.tokenTransferProxy, priceRoute.srcAmount, coin)
-    const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
+    const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(coin, priceRoute)
     const gasFees = await (RPCHelper as EthersRPC).estimate(txSwap, coin)
     return new ValidResponse(EHttpStatusCode.OK, {txAllowed, txSwap, gasFees})
   }
@@ -144,7 +146,7 @@ export class TransactionService extends ServiceProtected {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     RPCHelper.setWallet(account)
-    const hash = await (RPCHelper as EthersRPC).swap(txSwap)
+    const hash = await (RPCHelper as EthersRPC).swap(coin, txSwap)
     return super.insert({
       user: userId,
       coin,
