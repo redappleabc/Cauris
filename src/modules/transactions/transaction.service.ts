@@ -139,7 +139,7 @@ export class TransactionService extends ServiceProtected {
     const txAllowed = await (RPCHelper as EthersRPC).approve(priceRoute.tokenTransferProxy, priceRoute.srcAmount, coin)
     const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(coin, priceRoute)
     const gasFees = await (RPCHelper as EthersRPC).estimate(txSwap, coin)
-    return new ValidResponse(EHttpStatusCode.OK, {txAllowed, txSwap, gasFees})
+    return new ValidResponse(EHttpStatusCode.OK, {txAllowed, txSwap, fees: utils.formatUnits(gasFees, "18")})
   }
 
   public async sendSwap(userId: string, coinId: string, from: string, txSwap: ITxBody) {
