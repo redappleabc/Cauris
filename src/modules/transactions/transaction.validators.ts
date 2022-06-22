@@ -24,7 +24,7 @@ export function sendSchema(req: Request, res: Response, next: NextFunction) {
 }
 
 
-export function swapPriceSchema(req: Request, res: Response, next: NextFunction) {
+export function swapEstimateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     srcCoinId: Joi.string().alphanum().required(),
     destCoinId: Joi.string().alphanum().required(),
@@ -35,12 +35,21 @@ export function swapPriceSchema(req: Request, res: Response, next: NextFunction)
   validator.middleware(req, next)
 }
 
-export function swapTxSchema(req: Request, res: Response, next: NextFunction) {
+export function swapApproveSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
-    srcCoinId: Joi.string().alphanum().required(),
-    destCoinId: Joi.string().alphanum().required(),
+    coinId: Joi.string().alphanum().required(),
     from: Joi.string().required().alphanum(),
     priceRoute: Joi.object().required()
+  })
+  const validator = new JoiValidator(schema)
+  validator.middleware(req, next)
+}
+
+export function swapSendSchema(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    coinId: Joi.string().alphanum().required(),
+    from: Joi.string().required().alphanum(),
+    txSwap: Joi.object().required()
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)
