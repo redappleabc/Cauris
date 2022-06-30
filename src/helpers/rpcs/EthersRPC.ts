@@ -162,6 +162,7 @@ export class EthersRPC implements IRPC {
         var txRes = await contract.approve(to, value)
         return await txRes.wait()
       }
+      return allowed
     } return null
   }
 
@@ -190,9 +191,11 @@ export class EthersRPC implements IRPC {
         txSwap.gasPrice = (await this.parseGasScan()).gasPrice
       else if (typeof txSwap.gasPrice === 'string')
         txSwap.gasPrice = ethers.BigNumber.from(txSwap.gasPrice)
+      txSwap.gasLimit = ethers.BigNumber.from("500000")
       const tx = await this.wallet.sendTransaction(txSwap)
       return tx.hash
     } catch (err) {
+      console.log("swap error     ", err)
       new BaseError(EHttpStatusCode.InternalServerError, "Json RPC : " + err.reason)
     }
   }

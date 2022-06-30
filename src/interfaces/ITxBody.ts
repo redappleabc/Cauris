@@ -5,4 +5,5 @@ export interface ITxBody {
     value: string | BigNumber
     data?: string
     gasPrice?: string | BigNumber
+    gasLimit?: string | BigNumber
 }
