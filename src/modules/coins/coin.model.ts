@@ -7,6 +7,7 @@ const schema = new Schema({
   name: {type: String, required: true},
   symbol: {type: String, required: true},
   decimals: {type: String, required: true},
+  logo: String,
   contractAddress: String,
   createdAt: {type: Date, default: Date.now()},
 })

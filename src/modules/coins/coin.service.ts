@@ -49,8 +49,9 @@ export class CoinService extends Service {
       responseHandler.data.items.forEach((element: ICoin, index: number, items: Array<any>) => {
         items[index] = items[index].toObject(CoinDetailed)
         let match = coinData.filter((item: IRawCurrencyTicker) => item.symbol === element.symbol)
-        items[index]['price'] = match[0].price
-        items[index]['logo'] = match[0].logo_url
+        items[index]['price'] = match[0] ? match[0].price : "0.00000000"
+        if (!items[index]['logo'])
+          items[index]['logo'] = match[0] ? match[0].logo_url : undefined
         items[index]['price_currency'] = currency
       });
     }
@@ -63,8 +64,9 @@ export class CoinService extends Service {
     let symbol: string[] = [responseHandler.data.symbol.toUpperCase()]
     const coinData: IRawCurrencyTicker[] = await this.retrieveCoinsNomics(symbol, currency)
     responseHandler.message = responseHandler.message.toObject(CoinDetailed)
-    responseHandler.message['price'] = coinData[0].price
-    responseHandler.message['logo'] = coinData[0].logo_url
+    responseHandler.message['price'] = coinData[0]?.price
+    if (!responseHandler.message['logo'])
+      responseHandler.message['logo'] = coinData[0]?.logo_url
     responseHandler.message['price_currency'] = currency
     return responseHandler
   }

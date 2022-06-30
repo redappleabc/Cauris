@@ -5,7 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "test": "mocha -r ts-node/register -r tsconfig-paths/register test/**/*.ts --exit",
-    "start": "nodemon --exec 'ts-node -r tsconfig-paths/register server.ts'"
+    "start": "nodemon --exec ts-node -r tsconfig-paths/register server.ts"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,7 @@
     "@types/nodemailer": "^6.4.4",
     "axios": "^0.25.0",
     "bcryptjs": "^2.4.3",
+    "bignumber.js": "^9.0.2",
     "bip32": "^2.0.6",
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "^5.2.0",
@@ -33,6 +34,7 @@
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
+    "crypto-ts": "^1.0.2",
     "ethereumjs-util": "^7.1.0",
     "ethers": "^5.4.7",
     "express": "^4.17.1",
@@ -50,6 +52,7 @@
     "nodemailer": "^6.7.1",
     "nodemon": "^2.0.13",
     "nomics": "^0.5.7",
+    "paraswap": "^5.1.0",
     "passport": "^0.4.1",
     "socket.io": "^4.4.0",
     "speakeasy": "^2.0.0",

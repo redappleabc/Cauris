@@ -5,11 +5,15 @@ import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
 import config from 'config'
 import { ScanHelper } from '../ScanHelper'
-
+import { ParaSwapHelper } from '../ParaSwapHelper'
+import { APIError, NetworkID, Transaction } from 'paraswap'
+import { OptimalRate } from "paraswap-core";
+import { ITxBody } from '@servichain/interfaces/ITxBody'
 export class EthersRPC implements IRPC {
   account: IAccount
   provider: ethers.providers.JsonRpcProvider
   scan: ScanHelper
+  paraswap: ParaSwapHelper
   wallet: ethers.Wallet
 
   constructor(network: INetwork) {
@@ -19,29 +23,8 @@ export class EthersRPC implements IRPC {
       this.provider = new ethers.providers.JsonRpcProvider({url: rpcUrl, ...options}, chainId)
     } else
       this.provider = new ethers.providers.JsonRpcProvider(rpcUrl, chainId)
-      this.scan =  new ScanHelper(apiUrl, config.get(`api.${configKey}`))
-  }
-
-  public setWallet(account:any){
-    this.account = account
-    this.wallet = new ethers.Wallet(account.privateKey, this.provider)
-  }
-
-  public async getBalance(contractAddress: string = null): Promise<ethers.ethers.BigNumber> {
-    try {
-      if (contractAddress) {
-        const contract = new ethers.Contract(contractAddress, abi, this.wallet)
-        const balance = await contract.balanceOf(this.account.address)
-        return balance
-      } else {
-        const balance = await this.wallet.getBalance()
-        return balance
-      }
-  } catch (err) {
-    if (!err.reason)
-      return ethers.BigNumber.from('0x00')
-    throw err
-  }
+    this.scan =  new ScanHelper(apiUrl, config.get(`api.${configKey}`))
+    this.paraswap = new ParaSwapHelper(chainId as NetworkID)
   }
 
   private calculateFeesFromString(gas: string, gasPrice: string, gasUsed: string) {
@@ -60,7 +43,8 @@ export class EthersRPC implements IRPC {
   }
 
   private async calculateFeesFromBigNum(estimateGas: ethers.BigNumber) {
-    const {gasPrice, maxPriorityFeePerGas} = await this.calculateGasPrice()
+    let {gasPrice, maxPriorityFeePerGas} = await this.calculateGasPrice()
+    maxPriorityFeePerGas = (maxPriorityFeePerGas != null) ? maxPriorityFeePerGas : ethers.BigNumber.from('0x00')
     return (gasPrice.add(maxPriorityFeePerGas)).mul(estimateGas)
   }
 
@@ -96,10 +80,31 @@ export class EthersRPC implements IRPC {
       return {
         gasPrice: null
       }
-    else {
+    else
       return {
         gasPrice: ethers.utils.parseUnits(result.ProposeGasPrice, "gwei")
       }
+  }
+
+  public setWallet(account:any){
+    this.account = account
+    this.wallet = new ethers.Wallet(account.privateKey, this.provider)
+  }
+
+  public async getBalance(contractAddress: string = null): Promise<ethers.ethers.BigNumber> {
+    try {
+      if (contractAddress) {
+        const contract = new ethers.Contract(contractAddress, abi, this.wallet)
+        const balance = await contract.balanceOf(this.account.address)
+        return balance
+      } else {
+        const balance = await this.wallet.getBalance()
+        return balance
+      }
+    } catch (err) {
+      if (!err.reason)
+        return ethers.BigNumber.from('0x00')
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + err.reason)
     }
   }
 
@@ -112,34 +117,109 @@ export class EthersRPC implements IRPC {
     return this.parseHistory(history, coin.decimals)
   }
 
-  public async estimate(to: string, rawValue: string, coin: ICoin) {
+  public async getSwapPrice(src: ICoin, dest: ICoin, value: string) {
+    let bignum = ethers.utils.parseUnits(value, src.decimals)
+    let priceRoute = (await this.paraswap.getPrices(src.symbol, dest.symbol, bignum.toString())) as OptimalRate
+    
+    return priceRoute
+  }
+
+  public async hasAllowance(to: string, value: string | ethers.BigNumber, coin: ICoin) {
+    const {contractAddress = null} = coin
+
+    if (!!contractAddress) {
+      var contract = new ethers.Contract(contractAddress, abi, this.wallet)
+      var allowance = await contract.allowance(this.account.address, to)
+      if (ethers.BigNumber.from(allowance).lt(value)) {
+        return false
+      } else return true
+    }
+    return true
+  }
+
+  public async approve(to: string, value: string | ethers.BigNumber, coin: ICoin) {
+    const {contractAddress = null} = coin
+
+    if (!!contractAddress) {
+      if (typeof value === 'string')
+        value = ethers.BigNumber.from(value)
+  
+      var allowed = await this.hasAllowance(to, value, coin)
+      if (!allowed) {
+        var contract = new ethers.Contract(contractAddress, abi, this.wallet)
+        var txRes = await contract.approve(to, value)
+        return await txRes.wait()
+      }
+      return allowed
+    } return null
+  }
+
+  public async buidSwapTx({decimals}: ICoin, priceRoute: OptimalRate) {
+    const swapTxRaw = await this.paraswap.getTx(priceRoute, this.account.address)
+
+    if ((swapTxRaw as APIError).status === EHttpStatusCode.BadRequest)
+      throw new BaseError(EHttpStatusCode.BadRequest, (swapTxRaw as APIError).message)
+    const bnValue = ethers.BigNumber.from(swapTxRaw['value'])
+    let swapTx = {
+      to: swapTxRaw['to'],
+      value: ethers.utils.formatUnits(bnValue, decimals),
+      data: swapTxRaw['data'],
+      gasPrice: swapTxRaw['gasPrice']
+    }
+    return swapTx
+  }
+
+  public async swap({decimals}: ICoin, txSwap: ITxBody) {
+    if (typeof txSwap.value === 'string')
+      txSwap.value = ethers.utils.parseUnits(txSwap.value, decimals)
+    if (!txSwap.gasPrice)
+      txSwap.gasPrice = (await this.parseGasScan()).gasPrice
+    else if (typeof txSwap.gasPrice === 'string')
+      txSwap.gasPrice = ethers.BigNumber.from(txSwap.gasPrice)
+    txSwap.gasLimit = ethers.BigNumber.from("500000")
+    const tx = await this.wallet.sendTransaction(txSwap)
+    return tx.hash
+  }
+
+  public async estimate(tx: ITxBody, coin: ICoin, call: string = 'transfer') {
     const signer = this.provider.getSigner(this.account.address)
     const {contractAddress = null} = coin
-    const value = ethers.utils.parseUnits(rawValue, coin.decimals)
+    if (typeof tx.value === 'string')
+      tx.value = ethers.utils.parseUnits(tx.value, coin.decimals)
+    if (typeof tx.gasPrice === 'string')
+      tx.gasPrice = ethers.BigNumber.from(tx.gasPrice)
     let estimateGas: ethers.BigNumber
     if (!!contractAddress) {
       var contract = new ethers.Contract(contractAddress, abi, signer)
-      estimateGas = await contract.estimateGas.transfer({to, value})
+      delete tx.data
+      estimateGas = await contract.estimateGas[call](tx.to, tx.value)
     } else {
-      estimateGas = await this.provider.estimateGas({to, value})
+      delete tx.data
+      estimateGas = await this.provider.estimateGas(tx)
+      if (!estimateGas)
+        throw new BaseError(EHttpStatusCode.InternalServerError, "An error occured while trying to estimate " + call)
     }
     return this.calculateFeesFromBigNum(estimateGas)
   }
 
-  public async sendTransaction(to: string, rawValue: string, coin: ICoin) {
-    const signer = this.provider.getSigner(this.account.address)
+  public async transfer(tx: ITxBody, coin: ICoin) {
     const {contractAddress = null} = coin
-    const value = ethers.utils.parseUnits(rawValue, coin.decimals)
-    const {gasPrice} = await this.parseGasScan()
-    var tx: any
+    if (typeof tx.value === 'string')
+      tx.value = ethers.utils.parseUnits(tx.value, coin.decimals)
+    if (!tx.gasPrice)
+      tx.gasPrice = (await this.parseGasScan()).gasPrice
+    else if (typeof tx.gasPrice === 'string')
+      tx.gasPrice = ethers.BigNumber.from(tx.gasPrice)
+    const {to, value, gasPrice} = tx
+    var txRes: any
     if ((await this.getBalance(contractAddress)).lt(value))
       throw new BaseError(EHttpStatusCode.BadRequest, "Your balance is insufficient to perform this transaction")
     if (!!contractAddress) {
-      var contract = new ethers.Contract(contractAddress, abi, signer)
-      tx = await contract.transfer(to, value, {gasPrice})
+        var contract = new ethers.Contract(contractAddress, abi, this.wallet)
+        txRes = await contract.transfer(to, value, {gasPrice})
     } else {
-      tx = await this.wallet.sendTransaction({to, value, gasPrice})
+      txRes = await this.wallet.sendTransaction(tx)
     }
-    return tx.hash
+    return txRes.hash
   }
 }
