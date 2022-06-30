@@ -47,6 +47,7 @@ export class TransactionController extends ControllerProtected {
       const handler: IResponseHandler = await(this.service as TransactionService).approveSwap(
         req.user['id'], coinId, from, priceRoute
       )
+      handler.handleResponse(res)
     } catch (err) {
       next(err)
     }
