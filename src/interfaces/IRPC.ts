@@ -1,12 +1,13 @@
 import ethers from 'ethers'
 import { ICoin } from '.';
 import { IAccount } from './IAccount';
+import { ITxBody } from './ITxBody';
 
 export interface IRPC {
   account: IAccount
   setWallet(account:any)
   getBalance(contractAddress: string)
-  sendTransaction(to: string, rawValue: any, coin: ICoin)
   getHistory(address: string, coin: ICoin, page: number)
-  estimate(to: string, rawValue: any, coin: ICoin)
+  estimate(tx: ITxBody, coin: ICoin)
+  transfer(tx: ITxBody, coin: ICoin)
 }

@@ -5,7 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "test": "mocha -r ts-node/register -r tsconfig-paths/register test/**/*.ts --exit",
-    "start": "nodemon --exec 'ts-node -r tsconfig-paths/register server.ts'"
+    "start": "nodemon --exec ts-node -r tsconfig-paths/register server.ts"
   },
   "repository": {
     "type": "git",

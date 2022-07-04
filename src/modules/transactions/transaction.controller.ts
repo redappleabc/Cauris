@@ -12,8 +12,9 @@ export class TransactionController extends ControllerProtected {
     this.send = this.send.bind(this);
     this.getAllByCoin = this.getAllByCoin.bind(this);
     this.estimate = this.estimate.bind(this);
-    this.getPriceRoute = this.getPriceRoute.bind(this)
-    this.swap = this.swap.bind(this)
+    this.estimateSwap = this.estimateSwap.bind(this)
+    this.approveSwap = this.approveSwap.bind(this)
+    this.sendSwap = this.sendSwap.bind(this)
   }
 
   public async send(req: Request, res: Response, next: NextFunction) {
@@ -28,10 +29,10 @@ export class TransactionController extends ControllerProtected {
     }
   }
 
-  public async getPriceRoute(req: Request, res: Response, next: NextFunction) {
+  public async estimateSwap(req: Request, res: Response, next: NextFunction) {
     try {
       let {srcCoinId, destCoinId, from, value} = req.body
-      const handler: IResponseHandler = await(this.service as TransactionService).getPriceRoute(
+      const handler: IResponseHandler = await(this.service as TransactionService).estimateSwap(
         req.user['id'], srcCoinId, destCoinId, from, value
       );
       handler.handleResponse(res)
@@ -40,11 +41,23 @@ export class TransactionController extends ControllerProtected {
     }
   }
 
-  public async swap(req: Request, res: Response, next: NextFunction) {
+  public async approveSwap(req: Request, res: Response, next:NextFunction) {
     try {
-      let {srcCoinId, destCoinId, from, priceRoute} = req.body
-      const handler: IResponseHandler = await(this.service as TransactionService).swap(
-        req.user['id'], srcCoinId, destCoinId, from, priceRoute
+      let {coinId, from, priceRoute} = req.body
+      const handler: IResponseHandler = await(this.service as TransactionService).approveSwap(
+        req.user['id'], coinId, from, priceRoute
+      )
+      handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  public async sendSwap(req: Request, res: Response, next: NextFunction) {
+    try {
+      let {coinId, from, txSwap} = req.body
+      const handler: IResponseHandler = await(this.service as TransactionService).sendSwap(
+        req.user['id'], coinId, from, txSwap
       );
       handler.handleResponse(res)
     } catch (err) {
@@ -58,7 +71,7 @@ export class TransactionController extends ControllerProtected {
       if (!coinId)
         throw new BaseError(EHttpStatusCode.BadRequest, "Coin ID not specified for gas Estimation")
       const handler: IResponseHandler = await (this.service as TransactionService
-        ).estimate(req.user["id"], coinId, from, to, value);
+        ).estimateTransfer(req.user["id"], coinId, from, to, value);
       handler.handleResponse(res)
     } catch (err) {
       next(err)
