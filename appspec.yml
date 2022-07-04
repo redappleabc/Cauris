@@ -1,0 +1,26 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/servichain-backend-dev
+    overwrite: true
+hooks:
+  ApplicationStop:
+    - location: deployment_scripts/stop_server.sh
+      timeout: 3000
+      
+  BeforeInstall:
+    - location: deployment_scripts/before_install.sh
+      timeout: 3000
+
+  AfterInstall:
+    - location: deployment_scripts/after_install.sh
+      timeout: 3000
+
+  ApplicationStart:
+    - location: deployment_scripts/start_server.sh
+      timeout: 3000
+
+  ValidateService:
+    - location: deployment_scripts/validate_service.sh
+      timeout: 3000
