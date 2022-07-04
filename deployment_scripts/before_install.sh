@@ -1,4 +1,5 @@
 #!/bin/bash
+source /home/ubuntu/.bash_profile
 FILE=/home/ubuntu/servichain-backend-dev/server.ts
 if test -f "$FILE"; then
    echo "$FILE exists"
