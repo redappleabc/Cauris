@@ -5,7 +5,7 @@ if test -f "$FILE"; then
    echo "$FILE exists"
    cd /home/ubuntu/servichain-backend-dev
    sudo pm2 stop npm
-   sudo pm2 delete server.ts
+   sudo pm2 delete npm
    sudo killall -9 node
 else 
     echo "$FILE does not exist."
