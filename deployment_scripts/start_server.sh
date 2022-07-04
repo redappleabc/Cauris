@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /home/ubuntu/servichain-backend-dev
-pm2 start
+sudo pm2 start server.ts -f
