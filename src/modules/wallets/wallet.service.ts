@@ -4,6 +4,7 @@ import { isValidObjectId, Model } from 'mongoose'
 import { HDWallet } from '@servichain/helpers/hdwallets'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
+import { AESHelper } from '@servichain/helpers/HashingHelper'
 
 export class WalletService extends ServiceProtected {
   constructor(model: Model<any> = db.Wallet) {
@@ -27,10 +28,11 @@ export class WalletService extends ServiceProtected {
 
     const wallet: HDWallet = new HDWallet(userMnemonic)
     const {mnemonic, seed} = wallet.getWallet()
+    const AES = new AESHelper(userId)
     return super.insert({
       user: userId,
-      mnemonic,
-      seed,
+      mnemonic: AES.encrypt(mnemonic),
+      seed: AES.encrypt(seed),
       name
     })
   }

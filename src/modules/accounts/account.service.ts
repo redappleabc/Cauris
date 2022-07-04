@@ -17,6 +17,8 @@ import { rpcs } from "@servichain/helpers/RPCSingleton";
 import { utils } from "ethers";
 import { accountsAggregation, contactAggregation } from "./account.aggregation";
 import sanitize from 'mongo-sanitize'
+import { AES } from "crypto-ts";
+import { AESHelper } from "@servichain/helpers/HashingHelper";
 const mongoose = require("mongoose");
 
 const AccountDetailed = {
@@ -92,6 +94,8 @@ export class AccountService extends ServiceProtected {
     let accountsnetworks: any = responseHandler.getBody()["items"];
     let account_list = [];
 
+    const AES = new AESHelper(userId)
+
     for (let i = 0; i < accountsnetworks.length; i++) {
       const netAccount = accountsnetworks[i];
       let network = netAccount._id;
@@ -105,7 +109,7 @@ export class AccountService extends ServiceProtected {
           let N_account = { ...account, id: account._id };
           delete N_account._id;
           if (N_account.subscribedTo) {
-            N_account = await this.fetchCoins(N_account, RPCHelper);
+            N_account = await this.fetchCoins(N_account, RPCHelper, AES);
           }
           delete N_account.privateKey;
           N_account.wallet = N_account.wallet._id;
@@ -166,11 +170,13 @@ export class AccountService extends ServiceProtected {
         "You cannot generate an account without owning a wallet"
       );
     const hdWallet: HDWallet = new EthereumWallet(userWallet.mnemonic);
+    const AES = new AESHelper(userId)
 
     if (accountsArray instanceof Array === false) {
       let responseItem: IAccount = await this.generateOne(
         walletId,
         hdWallet,
+        AES,
         accountsArray as IAccount
       );
       if (!responseItem)
@@ -186,6 +192,7 @@ export class AccountService extends ServiceProtected {
         let accountResponse = await this.generateOne(
           walletId,
           hdWallet,
+          AES,
           item
         );
         if (accountResponse) responseArray.push(accountResponse);
@@ -202,6 +209,7 @@ export class AccountService extends ServiceProtected {
   public async generateOne(
     wallet: string,
     hdWallet: HDWallet,
+    AES: AESHelper,
     {
       coinIndex,
       accountIndex = 0,
@@ -228,7 +236,7 @@ export class AccountService extends ServiceProtected {
       );
     } else if (!subscribedTo)
       subscribedTo = await this.defaultSubscription(coinIndex);
-    const newAccount: IAccount = {
+    let newAccount: IAccount = {
       wallet,
       coinIndex,
       accountIndex,
@@ -237,6 +245,7 @@ export class AccountService extends ServiceProtected {
       subscribedTo,
       ...keyPair,
     };
+    newAccount['privateKey'] = AES.encrypt(newAccount['privateKey'])
     return this.model.create(newAccount);
   }
 
@@ -256,20 +265,22 @@ export class AccountService extends ServiceProtected {
     return defaultCryptos.map((item) => item._id);
   }
 
-  public async fetchCoins(account: any, RPCHelper) {
+  private async fetchCoins(account: any, RPCHelper: IRPC, AES: AESHelper) {
     let coinID: string = account.subscribedTo["_id"] as string;
     account.subscribedTo["balance"] = await this.getBalance(
       coinID,
       account,
-      RPCHelper
+      RPCHelper,
+      AES
     );
     return account;
   }
 
-  private async getBalance(coinID: string, account: IAccount, RPCHelper) {
+  private async getBalance(coinID: string, account: IAccount, RPCHelper: IRPC, AES: AESHelper) {
     const coin: ICoin = await db.Coin.findOne({ _id: coinID }).populate(
       "network"
     );
+    account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account);
     const balance = (
       await RPCHelper.getBalance(coin.contractAddress)

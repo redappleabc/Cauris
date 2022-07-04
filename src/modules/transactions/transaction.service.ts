@@ -18,6 +18,7 @@ import { ValidResponse } from "@servichain/helpers/responses";
 import { EthersRPC } from "@servichain/helpers/rpcs";
 import { OptimalRate } from "paraswap-core";
 import { ITxBody } from "@servichain/interfaces/ITxBody";
+import { AESHelper } from "@servichain/helpers/HashingHelper";
 const mongoose = require("mongoose");
 
 export class TransactionService extends ServiceProtected {
@@ -113,6 +114,8 @@ export class TransactionService extends ServiceProtected {
         throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
       const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
       const account = await this.retrieveAccountByAddress(userId, address)
+      const AES = new AESHelper(userId)
+      account.privateKey = AES.decrypt(account.privateKey)
       RPCHelper.setWallet(account)
       const history = await RPCHelper.getHistory(address, coin, page)
       return new ValidResponse(EHttpStatusCode.OK, history)
@@ -130,6 +133,8 @@ export class TransactionService extends ServiceProtected {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(srcCoinId)
     const coinDest = await this.getCoinById(destCoinId)
     const account = await this.retrieveAccountByAddress(userId, from)
+    const AES = new AESHelper(userId)
+    account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const priceRoute =  await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
     const isAllowed = await (RPCHelper as EthersRPC).hasAllowance(priceRoute?.tokenTransferProxy, priceRoute?.srcAmount as string, coin)
@@ -148,6 +153,8 @@ export class TransactionService extends ServiceProtected {
   public async approveSwap(userId: string, coinId: string, from: string, priceRoute: OptimalRate) {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
+    const AES = new AESHelper(userId)
+    account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const txAllowed = await (RPCHelper as EthersRPC).approve(priceRoute.tokenTransferProxy, priceRoute.srcAmount, coin)
     const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(coin, priceRoute)
@@ -158,6 +165,8 @@ export class TransactionService extends ServiceProtected {
   public async sendSwap(userId: string, coinId: string, from: string, txSwap: ITxBody) {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
+    const AES = new AESHelper(userId)
+    account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const hash = await (RPCHelper as EthersRPC).swap(coin, txSwap)
     return super.insert({
@@ -176,6 +185,8 @@ export class TransactionService extends ServiceProtected {
 
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
+    const AES = new AESHelper(userId)
+    account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const gasFees = await RPCHelper.estimate({to, value}, coin)
     return new ValidResponse(EHttpStatusCode.OK, {fees: utils.formatUnits(gasFees, "18")})
@@ -187,6 +198,8 @@ export class TransactionService extends ServiceProtected {
 
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
+    const AES = new AESHelper(userId)
+    account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account);
     const hash = await RPCHelper.transfer({to, value}, coin);
     return super.insert({
