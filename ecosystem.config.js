@@ -1,7 +1,7 @@
 module.exports = {
   apps : [{
     name: "npm",
-    cwd: '/home/ubuntu/servichain-backend-dev',
+    cwd: '/home/ubuntu/servichain-backend',
     script: "npm",
     args: 'start',
     env: {
