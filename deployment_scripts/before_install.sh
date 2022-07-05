@@ -7,6 +7,7 @@ if test -f "$FILE"; then
    sudo pm2 stop npm
    sudo pm2 delete npm
    sudo killall -9 node
+   sudo pm2 kill
 else 
     echo "$FILE does not exist."
 fi
