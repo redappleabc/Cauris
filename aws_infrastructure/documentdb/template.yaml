@@ -1,4 +1,4 @@
-Description:  "AWS CloudFormation Sample Template DocumentDB_Quick_Create: Sample template showing how to create a DocumentDB DB cluster and DB instance. **WARNING** This template creates an Amazon DocumentDB resources and you will be billed for the AWS resources used if you create a stack from this template."
+Description:  "AWS CloudFormation Sample Template DocumentDB"
 
 Parameters: 
   DBClusterName: 
@@ -54,6 +54,21 @@ Parameters:
     ConstraintDescription : "Instance type must be of the ones supported for the region. Please refer to: https://docs.aws.amazon.com/documentdb/latest/developerguide/db-instance-classes.html#db-instance-classes-by-region"  
 
 Resources:
+  DocumentDBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Amazon DocumentDB Security Group
+      GroupName: !Sub ${AWS::StackName}-SG-DocumentDB
+      VpcId: vpc-fefc0c95
+      SecurityGroupIngress:
+         - IpProtocol: tcp
+           CidrIp: 10.0.0.0/16
+           FromPort: 27017
+           ToPort: 27017
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-SG-DocumentDB
+
   DBCluster:
     Type: "AWS::DocDB::DBCluster"
     DeletionPolicy: Delete
@@ -61,7 +76,9 @@ Resources:
       DBClusterIdentifier: !Ref DBClusterName
       MasterUsername: !Ref MasterUser
       MasterUserPassword: !Ref MasterPassword
-      EngineVersion: 4.0.0
+      EngineVersion: 5.0.0
+      VpcSecurityGroupIds:
+       - !Ref DocumentDBSecurityGroup
 
   DBInstance:
     Type: "AWS::DocDB::DBInstance"
@@ -79,5 +96,5 @@ Outputs:
   ClusterPort:
     Value: !GetAtt DBCluster.Port
   EngineVersion:
-    Value: "4.0.0"
+    Value: "5.0.0"
 
