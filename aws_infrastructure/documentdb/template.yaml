@@ -76,7 +76,7 @@ Resources:
       DBClusterIdentifier: !Ref DBClusterName
       MasterUsername: !Ref MasterUser
       MasterUserPassword: !Ref MasterPassword
-      EngineVersion: 5.0.0
+      EngineVersion: 4.0.0
       VpcSecurityGroupIds:
        - !Ref DocumentDBSecurityGroup
 
@@ -96,5 +96,5 @@ Outputs:
   ClusterPort:
     Value: !GetAtt DBCluster.Port
   EngineVersion:
-    Value: "5.0.0"
+    Value: "4.0.0"
 
