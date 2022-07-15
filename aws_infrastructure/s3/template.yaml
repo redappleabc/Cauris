@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Default: servichain
+    Description: Project name
+    Type: String
+  Stage:
+    Default: dev
+    Description: The deployment stage for this stack. Used to name a variety of different resources.
+    Type: String
+
+Resources:
+  ConfigDevBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      BucketName: !Sub servichain-backend-dev-config
+  ConfigProdBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      BucketName: !Sub servichain-backend-prod-config
+
+
+
+### SSM PARAMS ###
+  ConfigDevBucketName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub servichain-backend-dev-config
+      Type: String
+      Value: !Ref ConfigDevBucket
+      Description: SSM Parameter for config bucket name
+      Tags:
+        Environment: !Ref Stage
+  ConfigProdBucketBucketName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub servichain-backend-prod-config
+      Type: String
+      Value: !Ref ConfigProdBucket
+      Description: SSM Parameter for config bucket name
+      Tags:
+        Environment: !Ref Stage
