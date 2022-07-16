@@ -8,7 +8,8 @@ RUN apk update
 
 WORKDIR /servichain-backend
 
-COPY ["package.json","tsconfig.json",  "/servichain-backend"]
+COPY package.json /servichain-backend
+COPY tsconfig.json /servichain-backend
 
 COPY . /servichain-backend
 
