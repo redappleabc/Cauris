@@ -6,6 +6,8 @@ FROM node:14.18.0-alpine
 # update packages
 RUN apk update
 
+RUN apk add --update python make g++ && rm -rf /var/cache/apk/*
+
 WORKDIR /servichain-backend
 
 COPY package.json /servichain-backend
