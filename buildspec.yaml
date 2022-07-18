@@ -27,5 +27,5 @@ phases:
     - echo Writing image definitions file…
     - printf '[{"name":"servichain-backend-container","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
     - cat imagedefinitions.json 
-#artifacts:
- #files: imagedefinitions.json
+artifacts:
+  files: imagedefinitions.json
