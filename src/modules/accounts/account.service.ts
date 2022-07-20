@@ -17,8 +17,7 @@ import { rpcs } from "@servichain/helpers/RPCSingleton";
 import { utils } from "ethers";
 import { accountsAggregation, contactAggregation } from "./account.aggregation";
 import sanitize from 'mongo-sanitize'
-import { AES } from "crypto-ts";
-import { AESHelper } from "@servichain/helpers/HashingHelper";
+import { AESHelper } from "@servichain/helpers/AESHelper";
 const mongoose = require("mongoose");
 
 const AccountDetailed = {
@@ -169,8 +168,8 @@ export class AccountService extends ServiceProtected {
         EHttpStatusCode.Forbidden,
         "You cannot generate an account without owning a wallet"
       );
-    const hdWallet: HDWallet = new EthereumWallet(userWallet.mnemonic);
     const AES = new AESHelper(userId)
+    const hdWallet: HDWallet = new EthereumWallet(AES.decrypt(userWallet.mnemonic));
 
     if (accountsArray instanceof Array === false) {
       let responseItem: IAccount = await this.generateOne(
@@ -218,7 +217,7 @@ export class AccountService extends ServiceProtected {
       subscribedTo,
     }: IAccount
   ): Promise<IAccount> {
-    const coinItem: ICoin = await db.Coin.findOne({ coinIndex: coinIndex });
+    const coinItem: ICoin = await db.Coin.findOne({ coinIndex });
     if (!coinItem) return null;
     const keyPair = hdWallet.generateKeyPair(
       coinIndex,

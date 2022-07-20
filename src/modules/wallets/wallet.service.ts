@@ -1,10 +1,10 @@
 import {db} from '@servichain/helpers/MongooseSingleton'
 import { ServiceProtected } from '@servichain/helpers/services'
-import { isValidObjectId, Model } from 'mongoose'
+import { Document, isValidObjectId, Model } from 'mongoose'
 import { HDWallet } from '@servichain/helpers/hdwallets'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
-import { AESHelper } from '@servichain/helpers/HashingHelper'
+import { AESHelper } from '@servichain/helpers/AESHelper'
 
 export class WalletService extends ServiceProtected {
   constructor(model: Model<any> = db.Wallet) {
@@ -26,14 +26,33 @@ export class WalletService extends ServiceProtected {
     if (isValidObjectId(userId) === false)
       throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
 
+    const AES = new AESHelper(userId)
     const wallet: HDWallet = new HDWallet(userMnemonic)
     const {mnemonic, seed} = wallet.getWallet()
-    const AES = new AESHelper(userId)
     return super.insert({
       user: userId,
       mnemonic: AES.encrypt(mnemonic),
       seed: AES.encrypt(seed),
       name
+    })
+  }
+
+  public async encryptAll() {
+    let accItems: Document[] = await db.Account.find().populate('wallet')
+
+    accItems.forEach((item: Document) => {
+      let AES = new AESHelper(item['wallet']['user'])
+      AES.encrypt(item['privateKey'])
+      item.save()
+    })
+
+    let walletItems: Document[] = await db.Wallet.find()
+
+    walletItems.forEach((item: Document) => {
+      let AES = new AESHelper(item['user'])
+      AES.encrypt(item['seed'])
+      AES.encrypt(item['mnemonic'])
+      item.save()
     })
   }
 

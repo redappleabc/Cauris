@@ -18,7 +18,7 @@ import { ValidResponse } from "@servichain/helpers/responses";
 import { EthersRPC } from "@servichain/helpers/rpcs";
 import { OptimalRate } from "paraswap-core";
 import { ITxBody } from "@servichain/interfaces/ITxBody";
-import { AESHelper } from "@servichain/helpers/HashingHelper";
+import { AESHelper } from "@servichain/helpers/AESHelper";
 const mongoose = require("mongoose");
 
 export class TransactionService extends ServiceProtected {

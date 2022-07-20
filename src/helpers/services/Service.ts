@@ -55,11 +55,10 @@ export class Service implements IService {
   }
 
   public async insert(data: any): Promise<IResponseHandler> {
-    var sanitizedData = sanitize(data)
     let item: Document = await this.model.create(data)
     if (!item)
       throw new BaseError(EHttpStatusCode.BadRequest, "Could not create item")
-    return new ValidResponse(EHttpStatusCode.Created, sanitizedData)
+    return new ValidResponse(EHttpStatusCode.Created, data)
   }
 
   public async update(id: string, data: any): Promise<IResponseHandler> {
