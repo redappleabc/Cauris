@@ -5,6 +5,8 @@ import { HDWallet } from '@servichain/helpers/hdwallets'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
 import { AESHelper } from '@servichain/helpers/AESHelper'
+import { randomBytes } from 'ethers/lib/utils'
+import { ValidResponse } from '@servichain/helpers/responses'
 
 export class WalletService extends ServiceProtected {
   constructor(model: Model<any> = db.Wallet) {
@@ -12,6 +14,7 @@ export class WalletService extends ServiceProtected {
     this.generate = this.generate.bind(this)
     this.deleteLogically = this.deleteLogically.bind(this)
     this.getAllByUser = this.getAllByUser.bind(this)
+    this.encryptAll = this.encryptAll.bind(this)
   }
 
   public async getAllByUser(query: any, userId: string) {
@@ -27,6 +30,8 @@ export class WalletService extends ServiceProtected {
       throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
 
     const AES = new AESHelper(userId)
+    await AES.initialize()
+
     const wallet: HDWallet = new HDWallet(userMnemonic)
     const {mnemonic, seed} = wallet.getWallet()
     return super.insert({
@@ -40,20 +45,26 @@ export class WalletService extends ServiceProtected {
   public async encryptAll() {
     let accItems: Document[] = await db.Account.find().populate('wallet')
 
-    accItems.forEach((item: Document) => {
-      let AES = new AESHelper(item['wallet']['user'])
-      AES.encrypt(item['privateKey'])
-      item.save()
-    })
+    for (let i = 0; i < accItems.length; i++) {
+      let AES = new AESHelper(accItems[i]['wallet']['user'])
+      await AES.initialize()
+
+      accItems[i]['privateKey'] = AES.encrypt(accItems[i]['privateKey'])
+      accItems[i].save()
+    }
 
     let walletItems: Document[] = await db.Wallet.find()
 
-    walletItems.forEach((item: Document) => {
-      let AES = new AESHelper(item['user'])
-      AES.encrypt(item['seed'])
-      AES.encrypt(item['mnemonic'])
-      item.save()
-    })
+    for (let i = 0; i < walletItems.length; i++) {
+      let AES = new AESHelper(walletItems[i]['user'])
+      await AES.initialize()
+
+      walletItems[i]['seed'] = AES.encrypt(walletItems[i]['seed'])
+      walletItems[i]['mnemonic'] = AES.encrypt(walletItems[i]['mnemonic'])
+      walletItems[i].save()
+    }
+
+    return new ValidResponse(200, 'Encryption complete')
   }
 
   public async deleteLogically(id: string = null, userId: string = null) {

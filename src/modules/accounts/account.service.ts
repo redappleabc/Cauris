@@ -94,6 +94,7 @@ export class AccountService extends ServiceProtected {
     let account_list = [];
 
     const AES = new AESHelper(userId)
+    await AES.initialize()
 
     for (let i = 0; i < accountsnetworks.length; i++) {
       const netAccount = accountsnetworks[i];
@@ -169,6 +170,8 @@ export class AccountService extends ServiceProtected {
         "You cannot generate an account without owning a wallet"
       );
     const AES = new AESHelper(userId)
+    await AES.initialize()
+
     const hdWallet: HDWallet = new EthereumWallet(AES.decrypt(userWallet.mnemonic));
 
     if (accountsArray instanceof Array === false) {

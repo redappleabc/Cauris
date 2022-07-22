@@ -115,6 +115,8 @@ export class TransactionService extends ServiceProtected {
       const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
       const account = await this.retrieveAccountByAddress(userId, address)
       const AES = new AESHelper(userId)
+      await AES.initialize()
+
       account.privateKey = AES.decrypt(account.privateKey)
       RPCHelper.setWallet(account)
       const history = await RPCHelper.getHistory(address, coin, page)
@@ -134,6 +136,8 @@ export class TransactionService extends ServiceProtected {
     const coinDest = await this.getCoinById(destCoinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     const AES = new AESHelper(userId)
+    await AES.initialize()
+
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const priceRoute =  await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
@@ -154,6 +158,8 @@ export class TransactionService extends ServiceProtected {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     const AES = new AESHelper(userId)
+    await AES.initialize()
+
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const txAllowed = await (RPCHelper as EthersRPC).approve(priceRoute.tokenTransferProxy, priceRoute.srcAmount, coin)
@@ -166,6 +172,8 @@ export class TransactionService extends ServiceProtected {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     const AES = new AESHelper(userId)
+    await AES.initialize()
+
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const hash = await (RPCHelper as EthersRPC).swap(coin, txSwap)
@@ -186,6 +194,8 @@ export class TransactionService extends ServiceProtected {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     const AES = new AESHelper(userId)
+    await AES.initialize()
+
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const gasFees = await RPCHelper.estimate({to, value}, coin)
@@ -199,6 +209,8 @@ export class TransactionService extends ServiceProtected {
     const {coin, RPCHelper} = await this.retrieveRpcByCoin(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     const AES = new AESHelper(userId)
+    await AES.initialize()
+
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account);
     const hash = await RPCHelper.transfer({to, value}, coin);

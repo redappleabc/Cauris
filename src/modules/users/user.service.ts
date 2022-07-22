@@ -10,6 +10,7 @@ import { ValidResponse } from "@servichain/helpers/responses/ValidResponse";
 import { EUserRole, EHttpStatusCode, ETokenType } from "@servichain/enums";
 import { IUser } from "@servichain/interfaces";
 import speakeasy from "speakeasy";
+import { randomBytes } from "ethers/lib/utils";
 
 const UserDetailed = {
   virtuals: true,
@@ -177,6 +178,8 @@ export class UserService extends Service {
   public async insert(data: any) {
     data.role = await this.checkFirstUser();
     data.password = await this.genHash(data.password);
+    let iv = Buffer.from(randomBytes(16)).toString('hex')
+    data.iv = iv
     const validationService = new ValidationService();
     const result = await super.insert(data);
     await validationService.generateToken(ETokenType.Verification, data.email);
