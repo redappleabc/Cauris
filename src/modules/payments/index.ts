@@ -1,0 +1,5 @@
+export * from './payments.model'
+export * from './payments.service'
+export * from './payments.controller'
+export * from './payments.validators'
+export * from './payments.router'

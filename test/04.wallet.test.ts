@@ -20,3 +20,27 @@
  * - Trying to delete an account by ID
  * - Trying to update subscribed array of owned account
  */
+
+describe('Wallets', () => {
+    describe('[POST] /', () => {
+        
+    })
+    describe('[GET] /', () => {
+
+    })
+})
+
+describe('Accounts', () => {
+    describe('[POST] /', () => {
+
+    })
+    describe('[GET] /', () => {
+
+    })
+    describe('[PUT] /', () => {
+
+    })
+    describe('[DEL] /', () => {
+        
+    })
+})
