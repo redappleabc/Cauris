@@ -17,16 +17,16 @@ export class AESHelper {
     async initialize() {
         try {
             let user = (await db.User.findOne({_id: this.user}))
+            if (!user)
+                return false;
             if (!user.iv) {
                 let iv = Buffer.from(randomBytes(16)).toString('hex')
-                console.log("iv : " + iv)
                 user.iv = iv
                 user.save()
             }
             this.iv = Buffer.from(user.iv, 'hex')
             this.key = Buffer.from((await smh.getSecret('servichain-aes-secret'))['SECRET_KEY'], 'hex')
-            console.log(this.iv)
-            console.log(this.key)
+            return true
         } catch (err) {throw err}
     }
 
@@ -34,7 +34,6 @@ export class AESHelper {
         const cipher = createCipheriv(this.ALGORITHM, this.key, this.iv)
         let enc = cipher.update(str, 'utf8', 'base64')
         enc += cipher.final('base64')
-        console.log("encryption : " + enc)
         return enc
     }
 
@@ -43,7 +42,6 @@ export class AESHelper {
         const decipher = createDecipheriv(this.ALGORITHM, this.key, this.iv);
         let str = decipher.update(enc, 'base64', 'utf8');
         str += decipher.final('utf8');
-        console.log("decrypted value : " + str)
         return str;
     }
 } 
