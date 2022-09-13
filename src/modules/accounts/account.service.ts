@@ -222,7 +222,7 @@ export class AccountService extends ServiceProtected {
   ): Promise<IAccount> {
     const coinItem: ICoin = await db.Coin.findOne({ coinIndex });
     if (!coinItem) return null;
-    const keyPair = hdWallet.generateKeyPair(
+    let keyPair = hdWallet.generateKeyPair(
       coinIndex,
       accountIndex,
       change,
@@ -238,6 +238,7 @@ export class AccountService extends ServiceProtected {
       );
     } else if (!subscribedTo)
       subscribedTo = await this.defaultSubscription(coinIndex);
+    keyPair.privateKey = AES.encrypt(keyPair.privateKey)
     let newAccount: IAccount = {
       wallet,
       coinIndex,
@@ -247,7 +248,6 @@ export class AccountService extends ServiceProtected {
       subscribedTo,
       ...keyPair,
     };
-    newAccount['privateKey'] = AES.encrypt(newAccount['privateKey'])
     return this.model.create(newAccount);
   }
 
