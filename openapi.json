@@ -1,0 +1,19 @@
+{
+    "openapi": "3.0",
+    "info": {
+        "title": "Servichain",
+        "description": "Servichain REST API, managing the users and blockchain logic",
+        "version": "1.0.0"
+    },
+    "servers": [{
+        "url": "https://api.servichain.io/api/v2",
+        "description": "Production API"
+    },
+    {
+        "url": "ubuntu@ec2-3-138-193-129.us-east-2.compute.amazonaws.com",
+        "description": "Development API"
+    }],
+    "paths": {
+        
+    }
+}

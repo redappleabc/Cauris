@@ -7,7 +7,7 @@ const router = express.Router()
 const service = new NotificationsService()
 const controller = new NotificationsController(service)
 
-router.post('/', JwtHelper.middleware(), generateSchema, controller.generate)
+router.post('/', JwtHelper.middleware(), generateSchema, controller.insert)
 router.put('/:id', JwtHelper.middleware(), updateSchema, controller.updateProtected)
 router.get('/', JwtHelper.middleware(), controller.getAllByUser)
 router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)

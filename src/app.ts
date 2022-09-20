@@ -58,7 +58,6 @@ app.use(expressWinston.logger({
       new winston.transports.Console()
     ],
     format: winston.format.combine(
-      winston.format.colorize(),
       winston.format.json()
     ),
     expressFormat: true, // Use the default Express/morgan request formatting. Enabling this will override any msg if true. Will only output colors with colorize set to true
@@ -70,7 +69,6 @@ app.use(expressWinston.errorLogger({
       new winston.transports.Console()
     ],
     format: winston.format.combine(
-      winston.format.colorize(),
       winston.format.json()
     )
   }));

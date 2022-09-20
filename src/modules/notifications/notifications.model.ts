@@ -17,4 +17,4 @@ schema.set("toJSON", {
   },
 });
 
-export const NotificationModel = mongoose.model("Notifications", schema);
+export const NotificationModel = mongoose.model("CinetPayment", schema);

@@ -7,9 +7,9 @@ export async function errorMiddleware(err: Error, req: Request, res: Response, n
   return handler.handleResponse(res)
 }
 
-export async function isOperationalError(err: Error) {
+export async function isCriticalError(err: Error) {
   if (err instanceof BaseError)
-    return err.isOperational
+    return err.critical
   else
     return false
 }

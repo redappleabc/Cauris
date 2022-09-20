@@ -10,6 +10,7 @@ import { ValidResponse } from "@servichain/helpers/responses/ValidResponse";
 import { EUserRole, EHttpStatusCode, ETokenType } from "@servichain/enums";
 import { IUser } from "@servichain/interfaces";
 import speakeasy from "speakeasy";
+import { randomBytes } from "ethers/lib/utils";
 
 const UserDetailed = {
   virtuals: true,
@@ -36,200 +37,149 @@ export class UserService extends Service {
   }
 
   private async genHash(password: string) {
-    try {
-      let salt = await bcrypt.genSalt(10);
-      let hash = await bcrypt.hash(password, salt);
-      return hash;
-    } catch (err) {
-      throw new BaseError(
-        EHttpStatusCode.InternalServerError,
-        "An unknown error as occured"
-      );
-    }
+    let salt = await bcrypt.genSalt(10);
+    let hash = await bcrypt.hash(password, salt);
+    return hash;
   }
 
   public async authenticate({ email, password, ipAddress }) {
-    try {
-      const user: IUser = await this.model.findOne({ email });
-      if (!user || !bcrypt.compareSync(password, user.password)) {
-        throw new BaseError(
-          EHttpStatusCode.NotFound,
-          "Could not found User",
-          true
-        );
-      }
-      const { jwtToken } = JwtHelper.generate(user);
-      const refreshService = new RefreshService();
-      const refreshToken = await refreshService.generate(
-        user.id as string,
-        ipAddress
-      );
-      await refreshService.insert(refreshToken);
-      return new ValidResponse(EHttpStatusCode.OK, {
-        user,
-        jwtToken,
-        refreshToken,
-      });
-    } catch (err) {
-      if (err instanceof BaseError) throw err;
+    const user: IUser = await this.model.findOne({ email });
+    if (!user || !bcrypt.compareSync(password, user.password)) {
       throw new BaseError(
-        EHttpStatusCode.InternalServerError,
-        "An unknown error as occured"
+        EHttpStatusCode.NotFound,
+        "Could not found User",
+        true
       );
     }
+    const { jwtToken } = JwtHelper.generate(user);
+    const refreshService = new RefreshService();
+    const refreshToken = await refreshService.generate(
+      user.id as string,
+      ipAddress
+    );
+    await refreshService.insert(refreshToken);
+    return new ValidResponse(EHttpStatusCode.OK, {
+      user,
+      jwtToken,
+      refreshToken,
+    });
   }
 
   public async changePassword(userId: string, password: string) {
-    try {
-      const user = await this.model.findById(userId);
-      if (!user)
-        throw new BaseError(
-          EHttpStatusCode.NotFound,
-          "Could not found User",
-          true
-        );
-      user.password = await this.genHash(password);
-      user.save();
-      return new ValidResponse(
-        EHttpStatusCode.Accepted,
-        "Password was changed"
-      );
-    } catch (err) {
-      if (err instanceof BaseError) throw err;
+    const user = await this.model.findById(userId);
+    if (!user)
       throw new BaseError(
-        EHttpStatusCode.InternalServerError,
-        "An unknown error as occured"
+        EHttpStatusCode.NotFound,
+        "Could not found User",
+        true
       );
-    }
+    user.password = await this.genHash(password);
+    user.save();
+    return new ValidResponse(
+      EHttpStatusCode.Accepted,
+      "Password was changed"
+    );
   }
+
   public async updatePassword(
     userId: string,
     oldPassword: string,
     newPassword: string,
     newPasswordRepeat: string
   ) {
-    try {
-      const user = await this.model.findById(userId);
-      if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
-        throw new BaseError(EHttpStatusCode.NotFound, "Invalid password", true);
-      }
-      if (newPassword !== newPasswordRepeat)
-        throw new BaseError(
-          EHttpStatusCode.BadRequest,
-          "Password confirmation must be the same",
-          true
-        );
-      user.password = await this.genHash(newPassword);
-      user.save();
-      return new ValidResponse(
-        EHttpStatusCode.Accepted,
-        "Password was updated"
-      );
-    } catch (err) {
-      if (err instanceof BaseError) throw err;
-      throw new BaseError(
-        EHttpStatusCode.InternalServerError,
-        "An unknown error as occured"
-      );
+    const user = await this.model.findById(userId);
+    if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
+      throw new BaseError(EHttpStatusCode.NotFound, "Invalid password", true);
     }
+    if (newPassword !== newPasswordRepeat)
+      throw new BaseError(
+        EHttpStatusCode.BadRequest,
+        "Password confirmation must be the same",
+        true
+      );
+    user.password = await this.genHash(newPassword);
+    user.save();
+    return new ValidResponse(
+      EHttpStatusCode.Accepted,
+      "Password was updated"
+    );
   }
+
   public async generateSecret(userId: string) {
-    try {
-      const user = await this.model.findById(userId);
-      
-      if (!user) {
-        throw new BaseError(
-          EHttpStatusCode.Unauthorized,
-          "Invalid user credentials",
-          true
-        );
-      }
-      const secret = speakeasy.generateSecret({
-        name: "S-Wallet: " + user.email,
-      });
-      user.secret=secret.base32
-      user.secretGenerated= true
-      user.save()
-      return new ValidResponse(EHttpStatusCode.OK, {
-        user,
-      });
-    } catch (err) {
-      if (err instanceof BaseError) throw err;
+    const user = await this.model.findById(userId);
+
+    if (!user) {
       throw new BaseError(
-        EHttpStatusCode.InternalServerError,
-        "An unknown error as occured"
+        EHttpStatusCode.Unauthorized,
+        "Invalid user credentials",
+        true
       );
     }
+    const secret = speakeasy.generateSecret({
+      name: "S-Wallet: " + user.email,
+    });
+    user.secret=secret.base32
+    user.secretGenerated= true
+    user.save()
+    return new ValidResponse(EHttpStatusCode.OK, {
+      user,
+    });
   }
+
   public async verifySecret(secret:string, encoding: speakeasy.Encoding, token: string, userId:string) {
-    try {
-      const user = await this.model.findById(userId);
-      
-      if (!user) {
-        throw new BaseError(
-          EHttpStatusCode.Unauthorized,
-          "Invalid user credentials",
-          true
-        );
-      }
-      if(!!user.secret && user.secret===secret){
-        const verification = speakeasy.totp.verify({
-          secret,
-          encoding,
-          token,
-        });
-        if(verification){
-          user.verified2FA=true;
-          user.save()
-          return new ValidResponse(EHttpStatusCode.OK, {
-            verification,
-          });
-        }else{
-          return new ValidResponse(EHttpStatusCode.BadRequest, {
-            verification,
-          });
-        }
-        
-      }else{
-        return new ValidResponse(EHttpStatusCode.BadRequest, "Generate a secret first");
-      }
-      
-    } catch (err) {
-      if (err instanceof BaseError) throw err;
+    const user = await this.model.findById(userId);
+
+    if (!user) {
       throw new BaseError(
-        EHttpStatusCode.InternalServerError,
-        "An unknown error as occured"
+        EHttpStatusCode.Unauthorized,
+        "Invalid user credentials",
+        true
       );
+    }
+    if (!!user.secret && user.secret===secret) {
+      const verification = speakeasy.totp.verify({
+        secret,
+        encoding,
+        token,
+      });
+      if (verification) {
+        user.verified2FA=true;
+        user.save()
+        return new ValidResponse(EHttpStatusCode.OK, {
+          verification,
+        });
+      } else {
+        return new ValidResponse(EHttpStatusCode.BadRequest, {
+          verification,
+        });
+      }
+    } else {
+      return new ValidResponse(EHttpStatusCode.BadRequest, "Generate a secret first");
     }
   }
 
   public async verifyUser(userId: string) {
-    try {
-      const user = await this.model.findById(userId);
-      if (!user)
-        throw new BaseError(
-          EHttpStatusCode.NotFound,
-          "Could not found User",
-          true
-        );
-      user.verified = true;
-      user.save();
-      return new ValidResponse(
-        EHttpStatusCode.Accepted,
-        "User is now verified"
-      );
-    } catch (err) {
-      if (err instanceof BaseError) throw err;
+    const user = await this.model.findById(userId);
+
+    if (!user)
       throw new BaseError(
-        EHttpStatusCode.InternalServerError,
-        "An unknown error as occured"
+        EHttpStatusCode.NotFound,
+        "Could not found User",
+        true
       );
-    }
+    user.verified = true;
+    user.save();
+    return new ValidResponse(
+      EHttpStatusCode.Accepted,
+      "User is now verified"
+    );
   }
 
   public async insert(data: any) {
     data.role = await this.checkFirstUser();
     data.password = await this.genHash(data.password);
+    let iv = Buffer.from(randomBytes(16)).toString('hex')
+    data.iv = iv
     const validationService = new ValidationService();
     const result = await super.insert(data);
     await validationService.generateToken(ETokenType.Verification, data.email);
@@ -237,9 +187,7 @@ export class UserService extends Service {
   }
 
   public async getByIdDetailed(query: any) {
-    let responseHandler: ValidResponse = (await super.getById(
-      query
-    )) as ValidResponse;
+    let responseHandler: ValidResponse = (await super.getById(query)) as ValidResponse;
     responseHandler.data.toObject(UserDetailed);
     return responseHandler;
   }

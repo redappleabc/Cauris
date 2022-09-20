@@ -24,6 +24,7 @@ const schema = new Schema({
   verified2FA: {type: Boolean, default: false},
   updated: Date,
   passwordReset: Date,
+  iv: String
 });
 
 schema.set("toJSON", {
@@ -35,6 +36,7 @@ schema.set("toJSON", {
     delete ret.created;
     delete ret.updated;
     delete ret.passwordReset;
+    delete ret.iv;
   },
 });
 
