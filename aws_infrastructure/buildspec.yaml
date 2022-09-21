@@ -4,4 +4,4 @@ phases:
   build:
     commands:
       - cd aws_infrastructure/documentdb
-      - aws cloudformation deploy --stack-name servichain-documentdb-prod --template template.yaml --region us-east-2 --capabilities CAPABILITY_IAM
+      - aws cloudformation deploy --stack-name servichain-documentdb-dev --template template.yaml --region us-east-2 --capabilities CAPABILITY_IAM
