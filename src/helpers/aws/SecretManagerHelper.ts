@@ -6,7 +6,7 @@ import { BaseError } from '../BaseError'
 export class SecretManagerHelper {
     private client: SecretsManagerClient
     constructor() {
-        this.client = new SecretsManagerClient({region: 'us-east-2', credentials: fromIni({profile: 'default'})})
+        this.client = new SecretsManagerClient({region: 'us-east-2', credentials: fromIni({profile: 'servichain'})})
     }
 
     async getSecret(name: string): Promise<string> {

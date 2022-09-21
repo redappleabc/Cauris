@@ -17,7 +17,7 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: !Sub servichain-backend-dev-config
+      BucketName: !Sub servichain-backend-prod-config
   ConfigProdBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -33,7 +33,7 @@ Resources:
   ConfigDevBucketName:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub servichain-backend-dev-config
+      Name: !Sub servichain-backend-prod-config
       Type: String
       Value: !Ref ConfigDevBucket
       Description: SSM Parameter for config bucket name

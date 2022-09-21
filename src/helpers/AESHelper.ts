@@ -38,7 +38,6 @@ export class AESHelper {
     }
 
     decrypt(enc: string) {
-        console.log("encrypted value : " + enc)
         const decipher = createDecipheriv(this.ALGORITHM, this.key, this.iv);
         let str = decipher.update(enc, 'base64', 'utf8');
         str += decipher.final('utf8');
