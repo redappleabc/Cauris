@@ -7,6 +7,9 @@ import { EHttpStatusCode } from '@servichain/enums'
 import { AESHelper } from '@servichain/helpers/AESHelper'
 import { randomBytes } from 'ethers/lib/utils'
 import { ValidResponse } from '@servichain/helpers/responses'
+const { performance } = require('perf_hooks');
+
+
 
 export class WalletService extends ServiceProtected {
   constructor(model: Model<any> = db.Wallet) {
@@ -14,7 +17,6 @@ export class WalletService extends ServiceProtected {
     this.generate = this.generate.bind(this)
     this.deleteLogically = this.deleteLogically.bind(this)
     this.getAllByUser = this.getAllByUser.bind(this)
-    this.encryptAll = this.encryptAll.bind(this)
   }
 
   public async getAllByUser(query: any, userId: string) {
@@ -40,32 +42,6 @@ export class WalletService extends ServiceProtected {
       seed: AES.encrypt(seed),
       name
     })
-  }
-
-  public async encryptAll() {
-    let accItems: Document[] = await db.Account.find().populate('wallet')
-
-    for (let i = 0; i < accItems.length; i++) {
-      let AES = new AESHelper(accItems[i]['wallet']['user'])
-      if (await AES.initialize()) {
-        accItems[i]['privateKey'] = AES.encrypt(accItems[i]['privateKey'])
-        accItems[i].save()
-      }
-    }
-
-    let walletItems: Document[] = await db.Wallet.find()
-
-    for (let i = 0; i < walletItems.length; i++) {
-      let AES = new AESHelper(walletItems[i]['user'])
-      if (await AES.initialize()) {
-        walletItems[i]['seed'] = AES.encrypt(walletItems[i]['seed'])
-        walletItems[i]['mnemonic'] = AES.encrypt(walletItems[i]['mnemonic'])
-        walletItems[i].save()
-      }
-
-    }
-
-    return new ValidResponse(200, 'Encryption complete')
   }
 
   public async deleteLogically(id: string = null, userId: string = null) {

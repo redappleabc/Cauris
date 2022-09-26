@@ -10,7 +10,6 @@ export class WalletController extends ControllerProtected {
     this.generate = this.generate.bind(this)
     this.deleteLogically = this.deleteLogically.bind(this)
     this.getAllByUser = this.getAllByUser.bind(this)
-    this.encrypt = this.encrypt.bind(this)
   }
 
   public async getAllByUser(req: Request, res: Response, next: NextFunction) {
@@ -32,15 +31,6 @@ export class WalletController extends ControllerProtected {
     }
   }
 
-  public async encrypt(req: Request, res: Response, next: NextFunction) {
-    try {
-      let handler: IResponseHandler = await (this.service as WalletService).encryptAll()
-      return handler.handleResponse(res)
-    } catch (err) {
-      next(err)
-    }
-  }
-
   public async deleteLogically(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params
@@ -50,6 +40,4 @@ export class WalletController extends ControllerProtected {
       next(err)
     }
   }
-
-
 }
