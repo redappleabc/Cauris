@@ -58,7 +58,7 @@ export class Service implements IService {
     let item: Document = await this.model.create(data)
     if (!item)
       throw new BaseError(EHttpStatusCode.BadRequest, "Could not create item")
-    return new ValidResponse(EHttpStatusCode.Created, data)
+    return new ValidResponse(EHttpStatusCode.Created, item)
   }
 
   public async update(id: string, data: any): Promise<IResponseHandler> {
