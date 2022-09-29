@@ -5,7 +5,7 @@ phases:
     - echo Logging in to Amazon ECR…
     - aws --version
     - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 751548806774.dkr.ecr.us-east-2.amazonaws.com
-    - REPOSITORY_URI="751548806774.dkr.ecr.us-east-2.amazonaws.com/servichain-backend-prod"
+    - REPOSITORY_URI="751548806774.dkr.ecr.us-east-2.amazonaws.com/servichain-backend"
     - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
     - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
  build:
@@ -13,7 +13,7 @@ phases:
     - echo Build started on `date`
     - echo Building the Docker image…
     - echo $REPOSITORY_URI
-    - aws s3 cp s3://servichain-backend-prod-config/config ./config --recursive
+    - aws s3 cp s3://servichain-backend-dev-config/config ./config --recursive
     - docker build -t $REPOSITORY_URI:latest .
     - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
  post_build:
