@@ -5,7 +5,7 @@ phases:
     - echo Logging in to Amazon ECR…
     - aws --version
     - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 751548806774.dkr.ecr.us-east-2.amazonaws.com
-    - REPOSITORY_URI="751548806774.dkr.ecr.us-east-2.amazonaws.com/servichain-backend"
+    - REPOSITORY_URI="751548806774.dkr.ecr.us-east-2.amazonaws.com/servichain-backend-dev"
     - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
     - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
  build:
@@ -25,7 +25,7 @@ phases:
     - docker push $REPOSITORY_URI:latest
     - docker push $REPOSITORY_URI:$IMAGE_TAG
     - echo Writing image definitions file…
-    - printf '[{"name":"servichain-backend-container","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+    - printf '[{"name":"servichain-backend-dev","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
     - cat imagedefinitions.json 
 artifacts:
   files: imagedefinitions.json
