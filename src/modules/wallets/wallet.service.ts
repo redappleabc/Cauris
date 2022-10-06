@@ -9,7 +9,15 @@ import { randomBytes } from 'ethers/lib/utils'
 import { ValidResponse } from '@servichain/helpers/responses'
 const { performance } = require('perf_hooks');
 
-
+const Detailed = {
+  vituals: true,
+  versionKey: false,
+  transform: function(doc, ret) {
+    ret.id = ret._id
+    delete ret._id
+    return ret
+  }
+}
 
 export class WalletService extends ServiceProtected {
   constructor(model: Model<any> = db.Wallet) {
@@ -17,6 +25,22 @@ export class WalletService extends ServiceProtected {
     this.generate = this.generate.bind(this)
     this.deleteLogically = this.deleteLogically.bind(this)
     this.getAllByUser = this.getAllByUser.bind(this)
+    this.getByIdProtected = this.getByIdProtected.bind(this)
+  }
+
+  public async getByIdProtected(id: string, userId: string) {
+    if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
+      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+    let item: Document = await this.model.findOne({_id: id, user: userId})
+    if (!item)
+      throw new BaseError(EHttpStatusCode.Unauthorized, "the resource doesnt exist or you do not have access to it", true)
+    const wallet: any = item.toObject(Detailed)
+    const AES = new AESHelper(userId)
+    await AES.initialize()
+
+    wallet.mnemonic = AES.decrypt(wallet.mnemonic)
+    wallet.seed = AES.decrypt(wallet.seed)
+    return new ValidResponse(EHttpStatusCode.OK, wallet)
   }
 
   public async getAllByUser(query: any, userId: string) {
