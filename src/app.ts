@@ -42,16 +42,18 @@ app.use(passport.initialize())
 app.use(passport.session())
 app.use(bearerToken())
 
-app.use('/users', UserRouter)
-app.use('/wallets', wallets)
-app.use('/contacts', contacts)
-app.use('/notifications', notifications)
-app.use('/accounts', AccountRouter)
-app.use('/refresh-tokens', RefreshTokenRouter)
-app.use('/validation-tokens', ValidationRouter)
-app.use('/networks', NetworkRouter)
-app.use('/coins', CoinRouter)
-app.use('/transactions', TransactionRouter)
+const version = '/api/v2'
+
+app.use(`${version}/users`, UserRouter)
+app.use(`${version}/wallets`, wallets)
+app.use(`${version}/contacts`, contacts)
+app.use(`${version}/notifications`, notifications)
+app.use(`${version}/accounts`, AccountRouter)
+app.use(`${version}/refresh-tokens`, RefreshTokenRouter)
+app.use(`${version}/validation-tokens`, ValidationRouter)
+app.use(`${version}/networks`, NetworkRouter)
+app.use(`${version}/coins`, CoinRouter)
+app.use(`${version}/transactions`, TransactionRouter)
 
 app.use(expressWinston.logger({
     transports: [
