@@ -1,4 +1,5 @@
 import { ENetworkType } from '@servichain/enums'
+import { CoinModel } from '../coins/coin.model'
 import mongoose from 'mongoose'
 const Schema = mongoose.Schema
 
@@ -12,6 +13,12 @@ const schema = new Schema({
   currencySymbol: {type: String, required: true},
   type: {type: Number, enum: ENetworkType, default: ENetworkType.evm}
 })
+
+schema.pre('findOneAndDelete', function(next) {
+  const network_id = this.getQuery()._id;
+  CoinModel.deleteMany({network: network_id}).exec();
+  next();
+});
 
 schema.set('toJSON', {
   virtuals: true,
