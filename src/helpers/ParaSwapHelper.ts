@@ -19,7 +19,7 @@ export class ParaSwapHelper {
 
     async getTx(priceRoute: OptimalRate, address: string) {
         let {srcToken, destToken, srcAmount} = priceRoute
-        let partnerFeeBps = 50
+        let partnerFeeBps = 199
         let slippage = 2.5
         let partnerAddress: string
 
