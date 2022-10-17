@@ -6,4 +6,5 @@ export interface ITxBody {
     data?: string
     gasPrice?: string | BigNumber
     gasLimit?: string | BigNumber
+    chainId?: number
 }

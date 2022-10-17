@@ -1,14 +1,15 @@
 import { IAccount, ICoin, INetwork, IRPC } from '@servichain/interfaces'
 import * as ethers from 'ethers'
-import {abi} from '@servichain/files/test-token.json'
+import { abi } from '@servichain/files/test-token.json'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
 import config from 'config'
 import { ScanHelper } from '../ScanHelper'
 import { ParaSwapHelper } from '../ParaSwapHelper'
-import { APIError, NetworkID, Transaction } from 'paraswap'
-import { OptimalRate } from "paraswap-core";
+import { OptimalRate } from "@paraswap/sdk";
 import { ITxBody } from '@servichain/interfaces/ITxBody'
+import { genSalt } from 'bcryptjs'
+declare type NetworkID = 1 | 3 | 42 | 4 | 56 | 137 | 43114;
 export class EthersRPC implements IRPC {
   account: IAccount
   provider: ethers.providers.JsonRpcProvider
@@ -17,33 +18,33 @@ export class EthersRPC implements IRPC {
   wallet: ethers.Wallet
 
   constructor(network: INetwork) {
-    const {rpcUrl, apiUrl, chainId, configKey = null} = network
+    const { rpcUrl, apiUrl, chainId, configKey = null } = network
     if (config.has(`rpc.${configKey}`)) {
       const options: any = config.get(`rpc.${configKey}`)
-      this.provider = new ethers.providers.JsonRpcProvider({url: rpcUrl, ...options}, chainId)
+      this.provider = new ethers.providers.JsonRpcProvider({ url: rpcUrl, ...options }, chainId)
     } else
       this.provider = new ethers.providers.JsonRpcProvider(rpcUrl, chainId)
-    this.scan =  new ScanHelper(apiUrl, config.get(`api.${configKey}`))
+    this.scan = new ScanHelper(apiUrl, config.get(`api.${configKey}`))
     this.paraswap = new ParaSwapHelper(chainId as NetworkID)
   }
 
   private calculateFeesFromString(gas: string, gasPrice: string, gasUsed: string) {
     return (
       ethers.BigNumber.from(gasPrice)
-      .add(ethers.BigNumber.from(gas))
-      .mul(ethers.BigNumber.from(gasUsed))
+        .add(ethers.BigNumber.from(gas))
+        .mul(ethers.BigNumber.from(gasUsed))
     )
   }
 
   private async calculateGasPrice() {
-    let {gasPrice, maxPriorityFeePerGas} = await this.provider.getFeeData()
+    let { gasPrice, maxPriorityFeePerGas } = await this.provider.getFeeData()
     let scan = await this.parseGasScan()
     gasPrice = (scan.gasPrice != null) ? scan.gasPrice : gasPrice
-    return {gasPrice, maxPriorityFeePerGas}
+    return { gasPrice, maxPriorityFeePerGas }
   }
 
   private async calculateFeesFromBigNum(estimateGas: ethers.BigNumber) {
-    let {gasPrice, maxPriorityFeePerGas} = await this.calculateGasPrice()
+    let { gasPrice, maxPriorityFeePerGas } = await this.calculateGasPrice()
     maxPriorityFeePerGas = (maxPriorityFeePerGas != null) ? maxPriorityFeePerGas : ethers.BigNumber.from('0x00')
     return (gasPrice.add(maxPriorityFeePerGas)).mul(estimateGas)
   }
@@ -52,13 +53,13 @@ export class EthersRPC implements IRPC {
     let history = []
     let unparsedArray: [] = (!!rawHistory.result) ? rawHistory.result : []
     unparsedArray.forEach(item => {
-      let {timeStamp, hash, to, from, value, confirmations, gas, gasPrice, gasUsed} = item
+      let { timeStamp, hash, to, from, value, confirmations, gas, gasPrice, gasUsed } = item
       let fees = (!!gas && !!gasPrice && !!gasUsed) ? this.calculateFeesFromString(gas, gasPrice, gasUsed) : '0'
       history.push({
         to,
         from,
         value: ethers.utils.formatUnits(
-          ethers.BigNumber.from(value), 
+          ethers.BigNumber.from(value),
           decimals
         ),
         status: confirmations == 0 ? 'pending' : 'success',
@@ -75,7 +76,7 @@ export class EthersRPC implements IRPC {
   }
 
   private async parseGasScan() {
-    const {result} = await this.scan.getGasOracle()
+    const { result } = await this.scan.getGasOracle()
     if (typeof result == 'string')
       return {
         gasPrice: null
@@ -86,7 +87,7 @@ export class EthersRPC implements IRPC {
       }
   }
 
-  public setWallet(account:any){
+  public setWallet(account: any) {
     this.account = account
     this.wallet = new ethers.Wallet(account.privateKey, this.provider)
   }
@@ -120,12 +121,16 @@ export class EthersRPC implements IRPC {
   public async getSwapPrice(src: ICoin, dest: ICoin, value: string) {
     let bignum = ethers.utils.parseUnits(value, src.decimals)
     let priceRoute = (await this.paraswap.getPrices(src.symbol, dest.symbol, bignum.toString())) as OptimalRate
-    
+
     return priceRoute
   }
 
+  /**
+ * @deprecated
+ * Use isAllowanced, instead of this.
+ */
   public async hasAllowance(to: string, value: string | ethers.BigNumber, coin: ICoin) {
-    const {contractAddress = null} = coin
+    const { contractAddress = null } = coin
 
     if (!!contractAddress) {
       var contract = new ethers.Contract(contractAddress, abi, this.wallet)
@@ -137,14 +142,23 @@ export class EthersRPC implements IRPC {
     return true
   }
 
-  public async approve(to: string, value: string | ethers.BigNumber, coin: ICoin) {
-    const {contractAddress = null} = coin
+  public async isAllowanced(to: string, value: string | ethers.BigNumber, contractAddress: string) {
+    if (!contractAddress) return true
+    var contract = new ethers.Contract(contractAddress, abi, this.wallet)
+    var allowance = await contract.allowance(this.account.address, to)
+    if (ethers.BigNumber.from(allowance).lt(value)) {
+      return false
+    } else return true
+  }
+
+  public async approve(to: string, value: string | ethers.BigNumber, contractAddress: string) {
+    //const {contractAddress = null} = coin
 
     if (!!contractAddress) {
       if (typeof value === 'string')
         value = ethers.BigNumber.from(value)
-  
-      var allowed = await this.hasAllowance(to, value, coin)
+      //var allowed = await this.hasAllowance(to, value, coin)
+      var allowed = await this.isAllowanced(to, value, contractAddress)
       if (!allowed) {
         var contract = new ethers.Contract(contractAddress, abi, this.wallet)
         var txRes = await contract.approve(to, value)
@@ -154,36 +168,43 @@ export class EthersRPC implements IRPC {
     } return null
   }
 
-  public async buidSwapTx({decimals}: ICoin, priceRoute: OptimalRate) {
-    const swapTxRaw = await this.paraswap.getTx(priceRoute, this.account.address)
-
-    if ((swapTxRaw as APIError).status === EHttpStatusCode.BadRequest)
-      throw new BaseError(EHttpStatusCode.BadRequest, (swapTxRaw as APIError).message)
-    const bnValue = ethers.BigNumber.from(swapTxRaw['value'])
-    let swapTx = {
-      to: swapTxRaw['to'],
-      value: ethers.utils.formatUnits(bnValue, decimals),
-      data: swapTxRaw['data'],
-      gasPrice: swapTxRaw['gasPrice']
+  public async buidSwapTx(priceRoute: OptimalRate) {
+    let swapTxRaw;
+    try {
+      swapTxRaw = await this.paraswap.getTx(priceRoute, this.account.address)
     }
+    catch (e) {
+      throw new BaseError(EHttpStatusCode.BadRequest, e.message)
+    }
+    const bnValue = ethers.BigNumber.from(swapTxRaw['value'])
+    const { gas = null, ...swapTx } = { ...swapTxRaw, gasLimit: swapTxRaw.gas, value: ethers.utils.formatUnits(bnValue, priceRoute.srcDecimals) }
     return swapTx
   }
 
-  public async swap({decimals}: ICoin, txSwap: ITxBody) {
+  public async swap({ decimals }: ICoin, txSwap: ITxBody) {
     if (typeof txSwap.value === 'string')
       txSwap.value = ethers.utils.parseUnits(txSwap.value, decimals)
     if (!txSwap.gasPrice)
       txSwap.gasPrice = (await this.parseGasScan()).gasPrice
     else if (typeof txSwap.gasPrice === 'string')
       txSwap.gasPrice = ethers.BigNumber.from(txSwap.gasPrice)
-    txSwap.gasLimit = ethers.BigNumber.from("500000")
-    const tx = await this.wallet.sendTransaction(txSwap)
+    if(!txSwap.gasLimit)
+      txSwap.gasLimit = ethers.BigNumber.from("300000")
+    else
+      txSwap.gasLimit = ethers.BigNumber.from(txSwap.gasLimit)
+    let tx;
+    try {
+      tx = await this.wallet.sendTransaction(txSwap)
+    } catch (e) {
+      console.log("error", e.message)
+      throw new BaseError(EHttpStatusCode.Unauthorized, e.message, true)
+    }
     return tx.hash
   }
 
   public async estimate(tx: ITxBody, coin: ICoin, call: string = 'transfer') {
     const signer = this.provider.getSigner(this.account.address)
-    const {contractAddress = null} = coin
+    const { contractAddress = null } = coin
     if (typeof tx.value === 'string')
       tx.value = ethers.utils.parseUnits(tx.value, coin.decimals)
     if (typeof tx.gasPrice === 'string')
@@ -203,20 +224,20 @@ export class EthersRPC implements IRPC {
   }
 
   public async transfer(tx: ITxBody, coin: ICoin) {
-    const {contractAddress = null} = coin
+    const { contractAddress = null } = coin
     if (typeof tx.value === 'string')
       tx.value = ethers.utils.parseUnits(tx.value, coin.decimals)
     if (!tx.gasPrice)
       tx.gasPrice = (await this.parseGasScan()).gasPrice
     else if (typeof tx.gasPrice === 'string')
       tx.gasPrice = ethers.BigNumber.from(tx.gasPrice)
-    const {to, value, gasPrice} = tx
+    const { to, value, gasPrice } = tx
     var txRes: any
     if ((await this.getBalance(contractAddress)).lt(value))
       throw new BaseError(EHttpStatusCode.BadRequest, "Your balance is insufficient to perform this transaction")
     if (!!contractAddress) {
-        var contract = new ethers.Contract(contractAddress, abi, this.wallet)
-        txRes = await contract.transfer(to, value, {gasPrice})
+      var contract = new ethers.Contract(contractAddress, abi, this.wallet)
+      txRes = await contract.transfer(to, value, { gasPrice })
     } else {
       txRes = await this.wallet.sendTransaction(tx)
     }
