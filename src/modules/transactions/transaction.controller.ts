@@ -31,9 +31,9 @@ export class TransactionController extends ControllerProtected {
 
   public async estimateSwap(req: Request, res: Response, next: NextFunction) {
     try {
-      let {srcCoinId, destCoinId, from, value} = req.body
+      let {networkId, srcCoinId, destCoinId, from, value} = req.body
       const handler: IResponseHandler = await(this.service as TransactionService).estimateSwap(
-        req.user['id'], srcCoinId, destCoinId, from, value
+        req.user['id'], networkId, srcCoinId, destCoinId, from, value
       );
       handler.handleResponse(res)
     } catch (err) {

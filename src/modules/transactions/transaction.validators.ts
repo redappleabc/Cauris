@@ -26,6 +26,7 @@ export function sendSchema(req: Request, res: Response, next: NextFunction) {
 
 export function swapEstimateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
+    networkId: Joi.string().alphanum().required(),
     srcCoinId: Joi.string().alphanum().required(),
     destCoinId: Joi.string().alphanum().required(),
     from: Joi.string().required().alphanum(),
