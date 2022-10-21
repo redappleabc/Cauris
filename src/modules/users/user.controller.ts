@@ -3,7 +3,8 @@ import { Controller } from "@servichain/helpers/controllers";
 import { UserService } from "@servichain/modules/users";
 import { Request, Response, NextFunction } from "express";
 import { ValidResponse } from "@servichain/helpers/responses/ValidResponse";
-
+import { BaseError } from "@servichain/helpers/BaseError";
+import {EHttpStatusCode} from '@servichain/enums'
 const refreshTokenExpiresIn: number = config.get("tokens.refreshExpiresIn");
 
 export class UserController extends Controller {
@@ -22,6 +23,8 @@ export class UserController extends Controller {
     try {
       const { email, password } = req.body;
       const ipAddress: string = req.ip;
+      if (!email || !password || !ipAddress)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Empty values")
       const handler: ValidResponse = await (
         this.service as UserService
       ).authenticate({ email, password, ipAddress });
@@ -41,9 +44,12 @@ export class UserController extends Controller {
   ) {
     try {
       const { newPassword } = req.body;
+      const {id} = req.params
+      if (!newPassword || !id)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Empty values")
       const handler: ValidResponse = await (
         this.service as UserService
-      ).changePassword(req.params.id, newPassword);
+      ).changePassword(id, newPassword);
       handler.handleResponse(res);
     } catch (err) {
       next(err);
@@ -52,6 +58,8 @@ export class UserController extends Controller {
   public async updatePassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { oldPassword, newPassword, newPasswordRepeat } = req.body;
+      if (!oldPassword || !newPassword || !newPasswordRepeat)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Empty values")
       const handler: ValidResponse = await (
         this.service as UserService
       ).updatePassword(
@@ -70,6 +78,8 @@ export class UserController extends Controller {
   public async generateSecret(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = res.locals.user.id;
+      if (!userId)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Empty values")
       const handler: ValidResponse = await (
         this.service as UserService
       ).generateSecret(userId);
@@ -84,6 +94,8 @@ export class UserController extends Controller {
     try {
       const { secret, encoding="base32", token } = req.body;
       const userId = res.locals.user.id;
+      if (!userId)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Empty values")
       const handler: ValidResponse = await (this.service as UserService).verifySecret(
         secret,
         encoding,
@@ -98,9 +110,12 @@ export class UserController extends Controller {
 
   public async verifyUser(req: Request, res: Response, next: NextFunction) {
     try {
+      const {id} = req.params
+      if (!id)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Empty values")
       const handler: ValidResponse = await (
         this.service as UserService
-      ).verifyUser(req.params.id);
+      ).verifyUser(id);
       handler.handleResponse(res);
     } catch (err) {
       next(err);
