@@ -8,8 +8,7 @@ var session = require('express-session')
 var bearerToken = require('express-bearer-token')
 var MongoStore = require('connect-mongo')
 var config = require('config')
-var winston = require('winston')
-var expressWinston = require('express-winston');
+var morgan = require('morgan')
 
 import {UserRouter} from '@servichain/modules/users'
 import wallets from '@servichain/modules/wallets/wallet.router'
@@ -23,10 +22,13 @@ import {TransactionRouter} from '@servichain/modules/transactions/transaction.ro
 import { ValidationRouter } from './modules/validations'
 import * as ErrorHandler from '@servichain/middlewares/ErrorHandler'
 
+import logger from '@servichain/utils/logger'
+
 const secret = config.get('secrets.app')
 const mongoDB = config.get('mongoDB')
 
 var app = express()
+app.use(morgan('combined', { stream: logger.stream }));
 
 mongoose.connect(mongoDB, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
 var db = mongoose.connection
@@ -54,26 +56,6 @@ app.use(`${version}/validation-tokens`, ValidationRouter)
 app.use(`${version}/networks`, NetworkRouter)
 app.use(`${version}/coins`, CoinRouter)
 app.use(`${version}/transactions`, TransactionRouter)
-
-app.use(expressWinston.logger({
-    transports: [
-      new winston.transports.Console()
-    ],
-    format: winston.format.combine(
-      winston.format.json()
-    ),
-    expressFormat: true, // Use the default Express/morgan request formatting. Enabling this will override any msg if true. Will only output colors with colorize set to true
-    colorize: false, // Color the text and status code, using the Express/morgan color palette (text: gray, status: default green, 3XX cyan, 4XX yellow, 5XX red).
-}));
-
-app.use(expressWinston.errorLogger({
-    transports: [
-      new winston.transports.Console()
-    ],
-    format: winston.format.combine(
-      winston.format.json()
-    )
-  }));
 
 app.use(ErrorHandler.errorMiddleware)
 

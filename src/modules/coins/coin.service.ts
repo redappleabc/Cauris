@@ -1,21 +1,17 @@
 import { ValidResponse } from '@servichain/helpers/responses/ValidResponse'
 import { EHttpStatusCode } from '@servichain/enums'
 import { BaseError } from '@servichain/helpers/BaseError'
-import {db} from '@servichain/helpers/MongooseSingleton'
+import { db } from '@servichain/helpers/MongooseSingleton'
 import { Service } from '@servichain/helpers/services'
 import { ICoin, IResponseHandler } from '@servichain/interfaces'
 import { isValidObjectId, Model } from 'mongoose'
-import config from 'config'
-import Nomics, { IRawCurrencyTicker } from 'nomics'
-
-const nomics = new Nomics({
-  apiKey: config.get('secrets.nomics')
-})
+import { ITokenExplorer } from '@servichain/interfaces/ITokenExplorer'
+import { TokenNomics } from '@servichain/helpers/TokenNomics'
 
 const CoinDetailed = {
   vituals: true,
   versionKey: false,
-  transform: function(doc, ret) {
+  transform: function (doc, ret) {
     ret.id = ret._id
     delete ret._id
     return ret
@@ -23,63 +19,42 @@ const CoinDetailed = {
 }
 
 export class CoinService extends Service {
+  coin: ITokenExplorer
+
   constructor(model: Model<any> = db.Coin) {
     super(model)
     this.insert = this.insert.bind(this)
     this.getAll = this.getAll.bind(this)
     this.getById = this.getById.bind(this)
+    this.coin = new TokenNomics()
   }
 
   public async insert(data: ICoin): Promise<IResponseHandler> {
-    let {network} = data
+    let { network } = data
     if (isValidObjectId(network) === false)
       throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-    let netDoc = await db.Network.findOne({_id: network})
+    let netDoc = await db.Network.findOne({ _id: network })
     if (!netDoc)
       throw new BaseError(EHttpStatusCode.NotFound, "Could not find the specified network ID")
     return super.insert(data)
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {
-    let currency = (query && query.currency) ? query.currency : 'USD'
-    let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
-    if (responseHandler.data.items.length) {
-      const coinArray: string[] = responseHandler.data.items.map(item => item.symbol.toUpperCase())
-      const coinData: IRawCurrencyTicker[] = await this.retrieveCoinsNomics(coinArray, currency)
-      responseHandler.data.items.forEach((element: ICoin, index: number, items: Array<any>) => {
-        items[index] = items[index].toObject(CoinDetailed)
-        let match = coinData.filter((item: IRawCurrencyTicker) => item.symbol === element.symbol)
-        items[index]['price'] = match[0] ? match[0].price : "0.00000000"
-        if (!items[index]['logo'])
-          items[index]['logo'] = match[0] ? match[0].logo_url : undefined
-        items[index]['price_currency'] = currency
-      });
-    }
-    return responseHandler
+    try {
+      let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
+      if (responseHandler.data?.items?.length) {
+        console.log("passed length check")
+        responseHandler.data.items = await this.coin.getCoins(responseHandler.data.items)
+      }
+      return responseHandler
+    } catch (e) { throw new BaseError(EHttpStatusCode.InternalServerError, e.message)}
   }
 
   public async getById(query: any): Promise<IResponseHandler> {
-    let currency = (query && query.currency) ? query.currency : 'USD'
+    try {
     let responseHandler : ValidResponse = (await super.getById(query) as ValidResponse);
-    let symbol: string[] = [responseHandler.data.symbol.toUpperCase()]
-    const coinData: IRawCurrencyTicker[] = await this.retrieveCoinsNomics(symbol, currency)
-    responseHandler.message = responseHandler.message.toObject(CoinDetailed)
-    responseHandler.message['price'] = coinData[0]?.price
-    if (!responseHandler.message['logo'])
-      responseHandler.message['logo'] = coinData[0]?.logo_url
-    responseHandler.message['price_currency'] = currency
+    responseHandler.message = await this.coin.getCoin(responseHandler.message)
     return responseHandler
-  }
-
-  private async retrieveCoinsNomics(coinID: Array<string>, currency: string) {
-    let coinsData = await nomics.currenciesTicker({
-      interval: ['1d'],
-      ids: coinID,
-      convert: currency
-    })
-    if (!coinsData) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "Could not retrieve coins infos")
-    }
-    return coinsData
+    } catch (e) { throw new BaseError(EHttpStatusCode.InternalServerError, e.message)}
   }
 }
