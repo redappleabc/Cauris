@@ -69,10 +69,6 @@ export class TransactionService extends ServiceProtected {
     return network
   }
 
-  /**
-   * @deprecated
-   * Use retrieveRpcByNetwork, instead of this.
-   */
   private async retrieveRpcByCoin(coinId: string) {
     if (isValidObjectId(coinId) === false)
       throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
@@ -171,16 +167,16 @@ export class TransactionService extends ServiceProtected {
     }
   }
 
-  public async estimateSwap(userId: string, networkId: string,  srcCoinId: string, destCoinId: string, from: string, value: string) {
+  public async estimateSwap(userId: string, srcCoinId: string, destCoinId: string, from: string, value: string) {
     if (srcCoinId === destCoinId)
       throw new BaseError(EHttpStatusCode.BadRequest, "You cannot perform a swap on the same token")
-    if (isValidObjectId(userId) === false || isValidObjectId(networkId) == false || isValidObjectId(srcCoinId) === false || isValidObjectId(destCoinId) === false) {
+    if (isValidObjectId(userId) === false || isValidObjectId(srcCoinId) === false || isValidObjectId(destCoinId) === false) {
       throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
     }
     try {
-      //const { coin, RPCHelper } = await this.retrieveRpcByCoin(srcCoinId)
-      const { network, RPCHelper } = await this.retrieveRpcByNetwork(networkId)
-      const coin = await this.getCoinById(srcCoinId)
+      const { coin, RPCHelper } = await this.retrieveRpcByCoin(srcCoinId)
+      //const { network, RPCHelper } = await this.retrieveRpcByNetwork(srcCoinId)
+      //const coin = await this.getCoinById(srcCoinId)
       const coinDest = await this.getCoinById(destCoinId)
       const account = await this.retrieveAccountByAddress(userId, from)
       const AES = new AESHelper(userId)

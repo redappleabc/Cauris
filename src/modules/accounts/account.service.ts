@@ -55,7 +55,7 @@ export class AccountService extends ServiceProtected {
     let walletExist = db.Wallet.findOne({_id: wallet, user: userId})
     if (!walletExist)
       throw new BaseError(EHttpStatusCode.BadRequest, "This wallet does not exist or does not belong to you")
-    const aggregationPipeline = accountsAggregation(wallet)
+    const aggregationPipeline = accountsAggregation(wallet, userId)
     let accountsByNetwork: Document[] = await this.model
       .aggregate(aggregationPipeline)
       .group({ _id: "$network_infos", accounts: { $push: "$$ROOT" } });
