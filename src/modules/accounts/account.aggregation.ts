@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 export function accountsAggregation(wallet: string = null, userId: string) {
     return [
-    {
+    /*{
       $lookup: {
         from: 'wallets',
         localField: 'wallet',
@@ -15,11 +15,22 @@ export function accountsAggregation(wallet: string = null, userId: string) {
     },
     {
       $match: {'wallet.user': mongoose.Types.ObjectId(userId) }
-    },
+    },*/
     {
       $match: wallet
         ? { wallet: mongoose.Types.ObjectId(wallet) }
         : {},
+    },
+    {
+      $lookup: {
+        from: 'wallets',
+        localField: 'wallet',
+        foreignField: '_id',
+        as: 'wallet'
+      }
+    },
+    {
+      $unwind: "$wallet"
     },
     {
       $unwind: {
