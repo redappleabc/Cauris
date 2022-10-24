@@ -3,7 +3,7 @@ import config from "config"
 import { ITokenExplorer } from "@servichain/interfaces/ITokenExplorer"
 import { ICoin } from "@servichain/interfaces"
 import { EHttpStatusCode } from "@servichain/enums"
-import { BaseError } from "./BaseError"
+import { BaseError } from "@servichain/helpers/BaseError"
 
 const Detailed = {
     vituals: true,
@@ -41,7 +41,7 @@ export class TokenNomics implements ITokenExplorer {
         let ids: string[] = [coin.symbol.toUpperCase()]
         let nomicsData: IRawCurrencyTicker[] = await this.getServiceData(ids, currency)
         coin = (coin as any).toObject(Detailed)
-        coin['price'] = nomicsData[0] ? nomicsData[0] : "0.00000000"
+        coin['price'] = nomicsData[0] ? nomicsData[0] : "1.00000000"
         coin['price_currency'] = currency
         if (!coin['logo'])
             coin['logo'] = nomicsData[0]?.logo_url
@@ -54,7 +54,7 @@ export class TokenNomics implements ITokenExplorer {
         coins.forEach((element: ICoin, i: number, items: any[]) => {
             items[i] = items[i].toObject(Detailed)
             let match = nomicsData.filter((item: IRawCurrencyTicker) => item.symbol === element.symbol)
-            items[i]['price'] = match[0] ? match[0].price : "0.00000000"
+            items[i]['price'] = match[0] ? match[0].price : "1.00000000"
             items[i]['price_currency'] = currency
             if (!items[i]['logo'])
                 items[i]['logo'] = match[0]?.logo_url
@@ -63,6 +63,11 @@ export class TokenNomics implements ITokenExplorer {
     }
 
     async ping() {
-        this.service.currenciesTicker()
+        try {
+            await this.service.currenciesTicker()
+            return true
+        } catch (err) {
+            return false
+        }
     }
 }

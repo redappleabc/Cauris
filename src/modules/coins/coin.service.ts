@@ -6,7 +6,8 @@ import { Service } from '@servichain/helpers/services'
 import { ICoin, IResponseHandler } from '@servichain/interfaces'
 import { isValidObjectId, Model } from 'mongoose'
 import { ITokenExplorer } from '@servichain/interfaces/ITokenExplorer'
-import { TokenNomics } from '@servichain/helpers/TokenNomics'
+import { TokenNomics } from '@servichain/helpers/trackers/TokenNomics'
+import { CurrencyManager } from '@servichain/helpers/trackers/CurrencyManager'
 
 const CoinDetailed = {
   vituals: true,
@@ -19,14 +20,15 @@ const CoinDetailed = {
 }
 
 export class CoinService extends Service {
-  coin: ITokenExplorer
+  coin: CurrencyManager
 
   constructor(model: Model<any> = db.Coin) {
     super(model)
     this.insert = this.insert.bind(this)
     this.getAll = this.getAll.bind(this)
     this.getById = this.getById.bind(this)
-    this.coin = new TokenNomics()
+    this.coin = new CurrencyManager()
+    setInterval(() => this.coin.resetSelector(), 1000 * 60 * 10)
   }
 
   public async insert(data: ICoin): Promise<IResponseHandler> {
@@ -40,21 +42,17 @@ export class CoinService extends Service {
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {
-    try {
-      let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
-      if (responseHandler.data?.items?.length) {
-        console.log("passed length check")
-        responseHandler.data.items = await this.coin.getCoins(responseHandler.data.items)
-      }
-      return responseHandler
-    } catch (e) { throw new BaseError(EHttpStatusCode.InternalServerError, e.message)}
+    let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
+    if (responseHandler.data?.items?.length && await this.coin.ping()) {
+      responseHandler.data.items = await this.coin.getCoins(responseHandler.data.items)
+    }
+    return responseHandler
   }
 
   public async getById(query: any): Promise<IResponseHandler> {
-    try {
     let responseHandler : ValidResponse = (await super.getById(query) as ValidResponse);
-    responseHandler.message = await this.coin.getCoin(responseHandler.message)
+    if (await this.coin.ping())
+      responseHandler.message = await this.coin.getCoin(responseHandler.message)
     return responseHandler
-    } catch (e) { throw new BaseError(EHttpStatusCode.InternalServerError, e.message)}
   }
 }
