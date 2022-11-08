@@ -1,5 +1,75 @@
 const mongoose = require("mongoose");
 
+export function addressesAggregation(coinName: string = null) {
+  return [
+    {
+      '$lookup': {
+        'from': 'wallets', 
+        'localField': 'wallet', 
+        'foreignField': '_id', 
+        'as': 'wallet'
+      }
+    }, {
+      '$unwind': {
+        'path': '$wallet'
+      }
+    }, {
+      '$lookup': {
+        'from': 'users', 
+        'localField': 'wallet.user', 
+        'foreignField': '_id', 
+        'as': 'userData'
+      }
+    }, {
+      '$unwind': {
+        'path': '$userData'
+      }
+    }, {
+      '$set': {
+        'user': {
+          'email': '$userData.email', 
+          'username': '$userData.username', 
+          'verified': '$userData.verified'
+        }
+      }
+    }, {
+      '$unset': [
+        'wallet', 'accountIndex', 'addressIndex', 'publicKey', 'privateKey', 'change', '__v', 'subscribedTo', 'userData'
+      ]
+    }, {
+      '$lookup': {
+        'from': 'coins', 
+        'localField': 'coinIndex', 
+        'foreignField': 'coinIndex', 
+        'as': 'coin'
+      }
+    }, {
+      '$unwind': {
+        'path': '$coin'
+      }
+    }, {
+      '$lookup': {
+        'from': 'networks', 
+        'localField': 'coin.network', 
+        'foreignField': '_id', 
+        'as': 'network'
+      }
+    }, {
+      '$unwind': {
+        'path': '$network'
+      }
+    }, {
+      '$set': {
+        'coin': '$coin.name', 
+        'network': '$network.name'
+      }
+    },
+    {
+      '$match': coinName ? {coin: coinName} : {}
+    }
+  ]
+}
+
 export function accountsAggregation(wallet: string = null, userId: string) {
     return [
     /*{

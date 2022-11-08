@@ -8,6 +8,7 @@ const router = express.Router()
 const service = new AccountService()
 const controller = new AccountController(service)
 
+router.get('/metrics', JwtHelper.middleware([EUserRole.Admin]), controller.getAllAddresses)
 router.get('/', JwtHelper.middleware(), controller.getAllByUser)
 router.get('/contact', JwtHelper.middleware(), controller.getByCoinId)
 router.get('/address/:address', JwtHelper.middleware(), controller.getByAddressProtected)

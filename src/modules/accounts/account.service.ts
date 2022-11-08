@@ -15,7 +15,7 @@ import { IWallet } from "@servichain/interfaces/IWallet";
 import { ValidResponse } from "@servichain/helpers/responses";
 import { rpcs } from "@servichain/helpers/RPCSingleton";
 import { utils } from "ethers";
-import { accountsAggregation, contactAggregation } from "./account.aggregation";
+import { accountsAggregation, addressesAggregation, contactAggregation } from "./account.aggregation";
 import sanitize from 'mongo-sanitize'
 import { AESHelper } from "@servichain/helpers/AESHelper";
 const mongoose = require("mongoose");
@@ -37,6 +37,20 @@ export class AccountService extends ServiceProtected {
     this.generateOne = this.generateOne.bind(this);
     this.getAllByUser = this.getAllByUser.bind(this);
     this.getByCoinId = this.getByCoinId.bind(this)
+    this.getAllAddresses = this.getAllAddresses.bind(this)
+  }
+
+  public async getAllAddresses(query: any) {
+    let {coin} = query
+
+    console.log(coin)
+    const addressesPipeline = addressesAggregation(coin)
+    let addresses: Document[] = await this.model.aggregate(addressesPipeline)
+    let total: number = await this.model.count()
+    return new ValidResponse(EHttpStatusCode.OK, {
+      items: addresses,
+      total
+    })
   }
 
   private async getAllAggregated(query: any, userId: string): Promise<IResponseHandler> {
