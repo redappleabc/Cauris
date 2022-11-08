@@ -5,6 +5,7 @@ import { Request, Response, NextFunction } from "express";
 import { ValidResponse } from "@servichain/helpers/responses/ValidResponse";
 import { BaseError } from "@servichain/helpers/BaseError";
 import {EHttpStatusCode} from '@servichain/enums'
+import { IResponseHandler } from "@servichain/interfaces";
 const refreshTokenExpiresIn: number = config.get("tokens.refreshExpiresIn");
 
 export class UserController extends Controller {
@@ -17,6 +18,7 @@ export class UserController extends Controller {
     this.updatePassword = this.updatePassword.bind(this);
     this.generateSecret = this.generateSecret.bind(this);
     this.verifySecret = this.verifySecret.bind(this);
+    this.promote = this.promote.bind(this)
   }
 
   public async authenticate(req: Request, res: Response, next: NextFunction) {
@@ -83,6 +85,19 @@ export class UserController extends Controller {
       const handler: ValidResponse = await (
         this.service as UserService
       ).generateSecret(userId);
+      handler.handleResponse(res);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async promote(req: Request, res: Response, next: NextFunction) {
+    try {
+      const {id} = req.params
+      const {role} = req.body
+      if (!id)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Empty values")
+      const handler: IResponseHandler = await (this.service as UserService).update(id, {role});
       handler.handleResponse(res);
     } catch (error) {
       next(error);

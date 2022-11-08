@@ -11,6 +11,14 @@ export function authenticateSchema(req: Request, res: Response, next: NextFuncti
   validator.middleware(req, next)
 }
 
+export function promoteSchema(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    role: Joi.string().valid('admin', 'user', 'partner').required()
+  })
+  const validator = new JoiValidator(schema)
+  validator.middleware(req, next)
+}
+
 export function verifySchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     token: Joi.string().empty('').required()
