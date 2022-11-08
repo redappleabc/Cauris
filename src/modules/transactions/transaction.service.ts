@@ -273,7 +273,6 @@ export class TransactionService extends ServiceProtected {
     const account = await this.retrieveAccountByAddress(userId, from)
     const AES = new AESHelper(userId)
     await AES.initialize()
-
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account);
     const hash = await RPCHelper.transfer({ to, value }, coin);

@@ -2,6 +2,8 @@ import { IAccount, ICoin, IRPC } from "@servichain/interfaces";
 
 import { INetwork } from "@servichain/interfaces";
 import { ITxBody } from "@servichain/interfaces/ITxBody";
+import { EHttpStatusCode } from '@servichain/enums'
+
 
 import axios from "axios";
 
@@ -10,6 +12,7 @@ import * as bitcoin from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
 
 import { ECPairFactory } from 'ecpair';
+import { BaseError } from "../BaseError";
 
 const ECPair = ECPairFactory(ecc);
 
@@ -45,13 +48,18 @@ export class BitcoinRPC implements IRPC {
 
 
   private async getLastTxId() {
-    const txUnspentUrl = `${this.rpcUrl}get_tx_unspent/${this.currencySymbol}/${this.account.address}`;
-    const response = await axios.get(txUnspentUrl)
-    const index = response.data.data.txs.length - 1;
-    var latestTx = response.data.data.txs[index];
-    const txUrl = `${this.rpcUrl}get_tx/${this.currencySymbol}/${latestTx.txid}`
-    const txHex = (await axios.get(txUrl)).data.data.tx_hex
-    return { ...latestTx, tx_hex: txHex }
+    try {
+      const txUnspentUrl = `${this.rpcUrl}get_tx_unspent/${this.currencySymbol}/${this.account.address}`;
+      const response = await axios.get(txUnspentUrl)
+      const index = response.data.data.txs.length - 1;
+      var latestTx = response.data.data.txs[index];
+      const txUrl = `${this.rpcUrl}get_tx/${this.currencySymbol}/${latestTx.txid}`
+      const txHex = (await axios.get(txUrl)).data.data.tx_hex
+      return { ...latestTx, tx_hex: txHex }
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
+    }
+
   }
 
   public async getHistory() {
@@ -74,49 +82,56 @@ export class BitcoinRPC implements IRPC {
     pubkey: Buffer,
     msghash: Buffer,
     signature: Buffer,
-  ):boolean  => ECPair.fromPublicKey(pubkey).verify(msghash, signature);
+  ): boolean => ECPair.fromPublicKey(pubkey).verify(msghash, signature);
 
 
-  private toSatoshi(value: string){
+  private toSatoshi(value: string) {
     return parseFloat(value) * 100000000
   }
   public async transfer(tx: ITxBody, coin: ICoin) {
-
-    let {to, value} = tx;
-    var satoshiValue:number = 0;
+    let { to, value } = tx;
+    var satoshiValue: number = 0;
     if (typeof value === 'string')
       satoshiValue = this.toSatoshi(value)
+
 
     const latestTx = await this.getLastTxId()
 
     const fee = await this.estimate()
 
-    const psbt = new bitcoin.Psbt({ network: this.chainId?testNetwork: network })
+    const psbt = new bitcoin.Psbt({ network: this.currencySymbol === "BTCTEST" ? testNetwork : network })
+
+    try {
+      psbt.addInput({ hash: latestTx.txid, index: latestTx.output_no, nonWitnessUtxo: Buffer.from(latestTx.tx_hex, 'hex') })
+
+      psbt.addOutput({ address: to, value: satoshiValue })
+
+      psbt.addOutput({ address: this.account.address, value: this.toSatoshi(latestTx.value) - satoshiValue - fee })
+
+      psbt.signInput(0, ECPair.fromWIF(this.account.privateKey));
+
+      psbt.validateSignaturesOfInput(0);
+      psbt.finalizeAllInputs();
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
+    }
 
 
-    psbt.addInput({ hash: latestTx.txid, index: latestTx.output_no, nonWitnessUtxo: Buffer.from(latestTx.tx_hex, 'hex') })
-
-    psbt.addOutput({ address: to, value: satoshiValue })
-    psbt.addOutput({ address: this.account.address, value: this.toSatoshi(latestTx.value) - satoshiValue - fee})
-
-    psbt.signInput(0, ECPair.fromWIF(this.account.privateKey));
-    psbt.validateSignaturesOfInput(0);
-    psbt.finalizeAllInputs();
 
     var Transaction = psbt.extractTransaction(true).toHex();
-    
-    // var Sendingoptions = {
-    //     method: 'POST', url: `${this.rpcUrl}send_tx/${this.currencySymbol}`,
-    //     body: { tx_hex: Transaction }, json: true
-    // };
 
-    const response = await axios.post(`${this.rpcUrl}send_tx/${this.currencySymbol}`, {tx_hex: Transaction})
+    try {
+      console.log(`${this.rpcUrl}send_tx/${this.currencySymbol}`)
+      const response = await axios.post(`${this.rpcUrl}send_tx/${this.currencySymbol}`, { tx_hex: Transaction })
 
-    const Jresponse = JSON.stringify(response)
+      console.log("Transaction ID:\n" + JSON.stringify(response.data));
 
-    console.log("Transaction ID:\n"+Jresponse);
-    
-    return response.data.txid
+      return response.data.data.txid
+
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
+    }
+
 
   }
 
