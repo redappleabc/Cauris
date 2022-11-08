@@ -42,17 +42,19 @@ export class CoinService extends Service {
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {
+    const {currency} = query
     let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
     if (responseHandler.data?.items?.length && await this.coin.ping()) {
-      responseHandler.data.items = await this.coin.getCoins(responseHandler.data.items)
+      responseHandler.data.items = await this.coin.getCoins(responseHandler.data.items, currency)
     }
     return responseHandler
   }
 
   public async getById(query: any): Promise<IResponseHandler> {
+    const {currency} = query
     let responseHandler : ValidResponse = (await super.getById(query) as ValidResponse);
     if (await this.coin.ping())
-      responseHandler.message = await this.coin.getCoin(responseHandler.message)
+      responseHandler.message = await this.coin.getCoin(responseHandler.message, currency)
     return responseHandler
   }
 }
