@@ -6,7 +6,7 @@ const Schema = mongoose.Schema
 const schema = new Schema({
   name: {type: String, required: true},
   chainId: {type: Number, unique: true},
-  rpcUrl: {type: String, required: true, unique: true},
+  rpcUrl: {type: String, required: true},
   apiUrl: String,
   explorerUrl: String,
   configKey: String,

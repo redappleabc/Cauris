@@ -262,7 +262,7 @@ export class TransactionService extends ServiceProtected {
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const gasFees = await RPCHelper.estimate({ to, value }, coin)
-    return new ValidResponse(EHttpStatusCode.OK, { fees: utils.formatUnits(gasFees, "18") })
+    return new ValidResponse(EHttpStatusCode.OK, { fees: utils.formatUnits(gasFees, coin.decimals) })
   }
 
   public async send(userId: string, coinId: string, from: string, to: string, value: string) {
@@ -273,7 +273,6 @@ export class TransactionService extends ServiceProtected {
     const account = await this.retrieveAccountByAddress(userId, from)
     const AES = new AESHelper(userId)
     await AES.initialize()
-
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account);
     const hash = await RPCHelper.transfer({ to, value }, coin);
