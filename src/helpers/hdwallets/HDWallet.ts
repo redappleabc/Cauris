@@ -39,6 +39,7 @@ export class HDWallet implements IHDWallet {
   }
 
   generateKeyPair(coinIndex: number, account_index: number = 0, change: number = 0, address_index: number = 0) {
+    this.coinIndex = coinIndex;
     let childrenNode = this.hdMaster
     .deriveHardened(bip44Constant)
     .deriveHardened(coinIndex)

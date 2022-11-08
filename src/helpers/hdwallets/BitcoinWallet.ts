@@ -6,6 +6,7 @@ const network = bitcoin.networks.bitcoin
 const testNetwork = bitcoin.networks.testnet
 
 export class BitcoinWallet extends HDWallet {
+  coinIndex: number;
   constructor(mnemonic: string) {
     super(mnemonic)
   }
