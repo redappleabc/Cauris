@@ -1,7 +1,7 @@
 import {db} from '@servichain/helpers/MongooseSingleton'
 import {IRPC} from '@servichain/interfaces'
 import {EthersRPC} from '@servichain/helpers/rpcs/EthersRPC'
-import { BitcoinRPC } from './rpcs/BitcoinRPC'
+import { BitcoinRPC } from '@servichain/helpers/rpcs/BitcoinRPC'
 import { ENetworkType } from '@servichain/enums'
 
 class RPCArray {
@@ -31,8 +31,10 @@ class RPCArray {
     switch (network.type) {
       case ENetworkType.evm:
         rpc = new EthersRPC(network)
+        break;
       case ENetworkType.bitcoin:
         rpc = new BitcoinRPC(network)
+        break;
       default:
         rpc = new EthersRPC(network)
     }
