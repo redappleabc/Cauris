@@ -3,6 +3,7 @@ import { ServiceProtected } from "@servichain/helpers/services";
 import { isValidObjectId, Model } from "mongoose";
 import { HDWallet } from "@servichain/helpers/hdwallets/HDWallet";
 import { EthereumWallet } from "@servichain/helpers/hdwallets/EthereumWallet";
+import { BitcoinWallet } from "@servichain/helpers/hdwallets/BitcoinWallet";
 import { BaseError } from "@servichain/helpers/BaseError";
 import { EHttpStatusCode } from "@servichain/enums";
 import {
@@ -167,6 +168,13 @@ export class AccountService extends ServiceProtected {
     return super.update(id, data);
   }
 
+  private getHDWalletByCoinIndex(coinIndex: number) {
+    
+    if(coinIndex < 60)
+      return BitcoinWallet
+    return EthereumWallet
+  }
+
   public async generate(
     userId: string,
     walletId: string,
@@ -186,12 +194,11 @@ export class AccountService extends ServiceProtected {
     const AES = new AESHelper(userId)
     await AES.initialize()
 
-    const hdWallet: HDWallet = new EthereumWallet(AES.decrypt(userWallet.mnemonic));
 
     if (accountsArray instanceof Array === false) {
       let responseItem: IAccount = await this.generateOne(
         walletId,
-        hdWallet,
+        userWallet,
         AES,
         accountsArray as IAccount
       );
@@ -207,7 +214,7 @@ export class AccountService extends ServiceProtected {
         let item = (accountsArray as [IAccount])[i];
         let accountResponse = await this.generateOne(
           walletId,
-          hdWallet,
+          userWallet,
           AES,
           item
         );
@@ -224,7 +231,7 @@ export class AccountService extends ServiceProtected {
 
   public async generateOne(
     wallet: string,
-    hdWallet: HDWallet,
+    userWallet: IWallet,
     AES: AESHelper,
     {
       coinIndex,
@@ -236,6 +243,9 @@ export class AccountService extends ServiceProtected {
   ): Promise<IAccount> {
     const coinItem: ICoin = await db.Coin.findOne({ coinIndex });
     if (!coinItem) return null;
+
+    const hdWallet: HDWallet = new (this.getHDWalletByCoinIndex(coinIndex))(AES.decrypt(userWallet.mnemonic));
+
     let keyPair = hdWallet.generateKeyPair(
       coinIndex,
       accountIndex,

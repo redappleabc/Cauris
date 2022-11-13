@@ -8,6 +8,7 @@ export class HDWallet implements IHDWallet {
   mnemonic: string
   seed: string
   hdMaster: bip32.BIP32Interface
+  coinIndex: number
 
   constructor(mnemonic: string = null) {
     this.mnemonic = (mnemonic) ? mnemonic : bip39.generateMnemonic()
@@ -24,6 +25,7 @@ export class HDWallet implements IHDWallet {
   }
 
   generateMasterNode(coinIndex: number) {
+    this.coinIndex = coinIndex
     let mainNode = this.hdMaster
     .deriveHardened(bip44Constant)
     .deriveHardened(coinIndex)
@@ -37,6 +39,7 @@ export class HDWallet implements IHDWallet {
   }
 
   generateKeyPair(coinIndex: number, account_index: number = 0, change: number = 0, address_index: number = 0) {
+    this.coinIndex = coinIndex;
     let childrenNode = this.hdMaster
     .deriveHardened(bip44Constant)
     .deriveHardened(coinIndex)
