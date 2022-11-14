@@ -3,7 +3,7 @@ import { Request, Response, NextFunction} from 'express'
 import { JoiValidator } from '@servichain/middlewares/JoiValidator';
 
 let joiAccount = Joi.object({
-  coinIndex: Joi.number().positive().required(),
+  coinIndex: Joi.number().min(0).required(),
   accountIndex: Joi.number().min(0),
   change: Joi.number().min(0).max(1),
   addressIndex: Joi.number().min(0),

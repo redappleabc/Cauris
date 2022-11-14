@@ -1,7 +1,12 @@
 import {HDWallet} from '@servichain/helpers/hdwallets/HDWallet'
 import * as bitcoin from 'bitcoinjs-lib'
 
+const network = bitcoin.networks.bitcoin
+
+const testNetwork = bitcoin.networks.testnet
+
 export class BitcoinWallet extends HDWallet {
+  coinIndex: number;
   constructor(mnemonic: string) {
     super(mnemonic)
   }
@@ -16,7 +21,8 @@ export class BitcoinWallet extends HDWallet {
 
   getAddress(childrenNode: bitcoin.BIP32Interface): string {
     return bitcoin.payments.p2pkh({
-      pubkey: childrenNode.publicKey
+      pubkey: childrenNode.publicKey,
+      network: this.coinIndex?testNetwork: network
     }).address
   }
 }
