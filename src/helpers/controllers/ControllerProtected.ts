@@ -11,6 +11,8 @@ export class ControllerProtected extends Controller {
     this.getByIdProtected = this.getByIdProtected.bind(this)
     this.getAllByUser = this.getAllByUser.bind(this)
     this.updateProtected = this.updateProtected.bind(this)
+    this.claimFeeProtected = this.claimFeeProtected.bind(this)
+    this.claimFeeEstimateProtected = this.claimFeeEstimateProtected.bind(this)
   }
 
   public async getByIdProtected(req: Request, res: Response, next: NextFunction) {
@@ -44,4 +46,33 @@ export class ControllerProtected extends Controller {
       next(err)
     }
   }
+
+
+  public async claimFeeProtected(req: Request, res: Response, next: NextFunction) {
+    try {
+      let {coinId} = req.body
+      const handler: IResponseHandler = await (this.service as TransactionService).claimFee(
+        req.user['id'], coinId,
+      );
+      handler.handleResponse(res)
+    } catch (err) {
+      console.log(err.message)
+      next(err)
+    }
+  }
+
+  public async claimFeeEstimateProtected(req: Request, res: Response, next: NextFunction) {
+    try {
+      let {coinId} = req.body
+      const handler: IResponseHandler = await (this.service as TransactionService).claimFeeEstimate(
+        req.user['id'], coinId,
+      );
+      handler.handleResponse(res)
+    } catch (err) {
+      console.log(err.message)
+      next(err)
+    }
+  }
+
+  
 }
