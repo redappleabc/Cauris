@@ -42,7 +42,6 @@ export class BitcoinRPC implements IRPC {
   public async getBalance() {
     const balanceUrl = `${this.rpcUrl}get_address_balance/${this.currencySymbol}/${this.account.address}`
     const response = await axios.get(balanceUrl)
-    console.log(response.data.data.confirmed_balance)
     return response.data.data.confirmed_balance
   }
 

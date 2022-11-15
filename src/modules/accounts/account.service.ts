@@ -8,6 +8,7 @@ import { BaseError } from "@servichain/helpers/BaseError";
 import { EHttpStatusCode } from "@servichain/enums";
 import {
   IAccount,
+  INetwork,
   IResponseHandler,
   IRPC,
 } from "@servichain/interfaces";
@@ -44,7 +45,6 @@ export class AccountService extends ServiceProtected {
   public async getAllAddresses(query: any) {
     let {coin} = query
 
-    console.log(coin)
     const addressesPipeline = addressesAggregation(coin)
     let addresses: Document[] = await this.model.aggregate(addressesPipeline)
     let total: number = await this.model.count()
@@ -293,12 +293,13 @@ export class AccountService extends ServiceProtected {
 
   private async fetchCoins(account: any, RPCHelper: IRPC, AES: AESHelper) {
     let coinID: string = account.subscribedTo["_id"] as string;
-    account.subscribedTo["balance"] = await this.getBalance(
+    let balance = await this.getBalance(
       coinID,
       account,
       RPCHelper,
       AES
     );
+    account.subscribedTo["balance"] = balance
     return account;
   }
 
@@ -308,10 +309,13 @@ export class AccountService extends ServiceProtected {
     );
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account);
-    const balance = (
+    let balance = (
       await RPCHelper.getBalance(coin.contractAddress)
-    ).toString();
-    return utils.formatUnits(balance, coin.decimals);
+    )
+    if ((coin.network as INetwork).type === 1) {
+      return balance.toString()
+    } else
+      return utils.formatUnits(balance, coin.decimals);
   }
 
   public async getByAddressProtected(address: string, userId: string) {
