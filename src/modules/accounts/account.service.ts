@@ -8,6 +8,7 @@ import { BaseError } from "@servichain/helpers/BaseError";
 import { EHttpStatusCode } from "@servichain/enums";
 import {
   IAccount,
+  INetwork,
   IResponseHandler,
   IRPC,
 } from "@servichain/interfaces";
@@ -16,7 +17,7 @@ import { IWallet } from "@servichain/interfaces/IWallet";
 import { ValidResponse } from "@servichain/helpers/responses";
 import { rpcs } from "@servichain/helpers/RPCSingleton";
 import { utils } from "ethers";
-import { accountsAggregation, contactAggregation } from "./account.aggregation";
+import { accountsAggregation, addressesAggregation, contactAggregation } from "./account.aggregation";
 import sanitize from 'mongo-sanitize'
 import { AESHelper } from "@servichain/helpers/AESHelper";
 const mongoose = require("mongoose");
@@ -38,6 +39,19 @@ export class AccountService extends ServiceProtected {
     this.generateOne = this.generateOne.bind(this);
     this.getAllByUser = this.getAllByUser.bind(this);
     this.getByCoinId = this.getByCoinId.bind(this)
+    this.getAllAddresses = this.getAllAddresses.bind(this)
+  }
+
+  public async getAllAddresses(query: any) {
+    let {coin} = query
+
+    const addressesPipeline = addressesAggregation(coin)
+    let addresses: Document[] = await this.model.aggregate(addressesPipeline)
+    let total: number = await this.model.count()
+    return new ValidResponse(EHttpStatusCode.OK, {
+      items: addresses,
+      total
+    })
   }
 
   private async getAllAggregated(query: any, userId: string): Promise<IResponseHandler> {
@@ -279,12 +293,13 @@ export class AccountService extends ServiceProtected {
 
   private async fetchCoins(account: any, RPCHelper: IRPC, AES: AESHelper) {
     let coinID: string = account.subscribedTo["_id"] as string;
-    account.subscribedTo["balance"] = await this.getBalance(
+    let balance = await this.getBalance(
       coinID,
       account,
       RPCHelper,
       AES
     );
+    account.subscribedTo["balance"] = balance
     return account;
   }
 
@@ -294,10 +309,13 @@ export class AccountService extends ServiceProtected {
     );
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account);
-    const balance = (
+    let balance = (
       await RPCHelper.getBalance(coin.contractAddress)
-    ).toString();
-    return utils.formatUnits(balance, coin.decimals);
+    )
+    if ((coin.network as INetwork).type === 1) {
+      return balance.toString()
+    } else
+      return utils.formatUnits(balance, coin.decimals);
   }
 
   public async getByAddressProtected(address: string, userId: string) {

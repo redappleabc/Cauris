@@ -5,7 +5,7 @@ import { JoiValidator } from '@servichain/middlewares/JoiValidator';
 export function insertSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     name: Joi.string().required(),
-    chainId: Joi.number().min(1).required(),
+    chainId: Joi.number().min(0).required(),
     rpcUrl: Joi.string().uri().required(),
     apiUrl: Joi.string().uri(),
     explorerUrl: Joi.string().uri(),

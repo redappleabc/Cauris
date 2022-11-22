@@ -9,12 +9,22 @@ export class AccountController extends ControllerProtected {
     this.generate = this.generate.bind(this)
     this.getByAddressProtected = this.getByAddressProtected.bind(this)
     this.getByCoinId = this.getByCoinId.bind(this)
+    this.getAllAddresses = this.getAllAddresses.bind(this)
   }
 
   public async generate(req: Request, res: Response, next: NextFunction) {
     try {
       const {wallet, accounts} = req.body;
       let handler: IResponseHandler = await (this.service as AccountService).generate(req.user['id'], wallet, accounts)
+      return handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  public async getAllAddresses(req: Request, res: Response, next: NextFunction) {
+    try {
+      let handler: IResponseHandler = await (this.service as AccountService).getAllAddresses(req.query)
       return handler.handleResponse(res)
     } catch (err) {
       next(err)
