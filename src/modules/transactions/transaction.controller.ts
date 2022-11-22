@@ -20,10 +20,10 @@ export class TransactionController extends ControllerProtected {
 
   public async send(req: Request, res: Response, next: NextFunction) {
     try {
-      let { coinId, from, to, value } = req.body;
+      let { coinId, from, to, value, unSpentTransactions } = req.body;
       const handler: IResponseHandler = await (
         this.service as TransactionService
-      ).send(req.user["id"], coinId, from, to, value);
+      ).send(req.user["id"], coinId, from, to, value, unSpentTransactions);
       handler.handleResponse(res);
     } catch (err) {
       next(err);

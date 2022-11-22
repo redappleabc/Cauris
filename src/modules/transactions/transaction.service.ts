@@ -291,7 +291,7 @@ export class TransactionService extends ServiceProtected {
     return new ValidResponse(EHttpStatusCode.OK, { fees: utils.formatUnits(gasFees, coin.decimals) })
   }
 
-  public async send(userId: string, coinId: string, from: string, to: string, value: string) {
+  public async send(userId: string, coinId: string, from: string, to: string, value: string, unSpentTransactions: string[]) {
     if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
       throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
 
@@ -301,7 +301,7 @@ export class TransactionService extends ServiceProtected {
     await AES.initialize()
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account);
-    const hash = await RPCHelper.transfer({ to, value }, coin);
+    const hash = await RPCHelper.transfer({ to, value }, coin, unSpentTransactions);
     return super.insert({
       user: userId,
       coin,

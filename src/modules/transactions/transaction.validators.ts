@@ -17,7 +17,8 @@ export function sendSchema(req: Request, res: Response, next: NextFunction) {
     coinId: Joi.string().alphanum().required(),
     from: Joi.string().required().alphanum(),
     to: Joi.string().required().alphanum(),
-    value: Joi.string().regex(/^(\d+(?:[\.\,]\d+)?)$/).empty('').required()
+    value: Joi.string().regex(/^(\d+(?:[\.\,]\d+)?)$/).empty('').required(),
+    unSpentTransactions: Joi.array().items(Joi.string().alphanum())
   })
   const validator = new JoiValidator(schema)
   validator.middleware(req, next)

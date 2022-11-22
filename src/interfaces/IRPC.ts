@@ -9,5 +9,5 @@ export interface IRPC {
   getBalance(contractAddress: string)
   getHistory(address: string, coin: ICoin, page: number)
   estimate(tx: ITxBody, coin: ICoin)
-  transfer(tx: ITxBody, coin: ICoin)
+  transfer(tx: ITxBody, coin: ICoin, _unSpentTransactions: string[])
 }

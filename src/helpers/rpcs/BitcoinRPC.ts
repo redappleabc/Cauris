@@ -73,18 +73,25 @@ export class BitcoinRPC implements IRPC {
   }
 
   public async getHistory() {
-    const txSpentUrl = `${this.rpcUrl}get_tx_spent/${this.currencySymbol}/${this.account.address}`;
-    const txUnspentUrl = `${this.rpcUrl}get_tx_unspent/${this.currencySymbol}/${this.account.address}`;
+    try {
+      const txSpentUrl = `${this.rpcUrl}get_tx_spent/${this.currencySymbol}/${this.account.address}`;
+      const txUnspentUrl = `${this.rpcUrl}get_tx_unspent/${this.currencySymbol}/${this.account.address}`;
+      const txs = [...(await axios.get(txUnspentUrl)).data.data.txs, ...(await axios.get(txSpentUrl)).data.data.txs]
+      return txs
+    } catch (e) {
 
-    const txs = [...(await axios.get(txUnspentUrl)).data.data.txs, ...(await axios.get(txSpentUrl)).data.data.txs]
-    return txs
+      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
+    }
+
   }
 
 
   public async estimate() {
     const feeUrl = 'https://bitcoinfees.earn.com/api/v1/fees/recommended';
     const response = await axios.get(feeUrl)
-    return response.data.fastestFee
+    const txCnt = (await this.getUnspentTransactions()).length;
+    if(txCnt <= 0) return 0;
+    return response.data.hourFee * ( 180 * txCnt +  34 * 2  + 10) //hourFee, fastestFee, halfHourFee
   }
 
 
@@ -100,12 +107,16 @@ export class BitcoinRPC implements IRPC {
   }
 
   public async getUnspentTransactions() {
-    const txUnspentUrl = `${this.rpcUrl}get_tx_unspent/${this.currencySymbol}/${this.account.address}`;
-
-    return (await axios.get(txUnspentUrl)).data.data.txs
+    try {
+      const txUnspentUrl = `${this.rpcUrl}get_tx_unspent/${this.currencySymbol}/${this.account.address}`;
+      return (await axios.get(txUnspentUrl)).data.data.txs
+    }
+    catch (e) {
+      return []
+    }
   }
 
-  public async transfer(tx: ITxBody, coin: ICoin) {
+  public async transfer(tx: ITxBody, coin: ICoin, _unSpentTransactions: string[] = []) {
     let { to, value } = tx;
     var satoshiValue: number = 0;
     if (typeof value === 'string')
@@ -116,7 +127,7 @@ export class BitcoinRPC implements IRPC {
 
     const unSpentTransactions = (await this.getUnspentTransactions())
 
-    if(!unSpentTransactions || unSpentTransactions.length <= 0){
+    if (unSpentTransactions.length <= 0) {
       throw new BaseError(EHttpStatusCode.BadRequest, "You don't have unspent transactions")
     }
 
@@ -127,9 +138,10 @@ export class BitcoinRPC implements IRPC {
     try {
       //psbt.addInput({ hash: latestTx.txid, index: latestTx.output_no, nonWitnessUtxo: Buffer.from(latestTx.tx_hex, 'hex') })
 
-      for(let i = 0; i < unSpentTransactions.length; i++){
+      for (let i = 0; i < unSpentTransactions.length; i++) {
         const tx = unSpentTransactions[i];
-        psbt.addInput({ hash: tx.txid, index: tx.output_no, nonWitnessUtxo: Buffer.from((await this.getTxHex(tx.txid)), 'hex') })
+        if(_unSpentTransactions.length === 0 || _unSpentTransactions.includes(tx.txid))
+          psbt.addInput({ hash: tx.txid, index: tx.output_no, nonWitnessUtxo: Buffer.from((await this.getTxHex(tx.txid)), 'hex') })
       }
 
       psbt.addOutput({ address: to, value: satoshiValue })

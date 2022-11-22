@@ -224,7 +224,7 @@ export class EthersRPC implements IRPC {
     return this.calculateFeesFromBigNum(estimateGas)
   }
 
-  public async transfer(tx: ITxBody, coin: ICoin) {
+  public async transfer(tx: ITxBody, coin: ICoin, _unSpentTransactions: string[] = []) {
     const { contractAddress = null } = coin
     if (typeof tx.value === 'string')
       tx.value = ethers.utils.parseUnits(tx.value, coin.decimals)
