@@ -15,7 +15,7 @@ import { EHttpStatusCode, EUserRole } from "@servichain/enums";
 import { IWallet } from "@servichain/interfaces/IWallet";
 import { utils } from "ethers";
 import { ValidResponse } from "@servichain/helpers/responses";
-import { EthersRPC } from "@servichain/helpers/rpcs";
+import { BitcoinRPC, EthersRPC } from "@servichain/helpers/rpcs";
 import { OptimalRate } from "paraswap-core";
 import { ITxBody } from "@servichain/interfaces/ITxBody";
 import { AESHelper } from "@servichain/helpers/AESHelper";
@@ -30,6 +30,7 @@ export class TransactionService extends ServiceProtected {
     this.estimateSwap = this.estimateSwap.bind(this)
     this.approveSwap = this.approveSwap.bind(this)
     this.sendSwap = this.sendSwap.bind(this)
+    this.getBtcUnspentTransactions = this.getBtcUnspentTransactions.bind(this)
   }
 
   private async getCoinById(coinId: string) {
@@ -166,6 +167,31 @@ export class TransactionService extends ServiceProtected {
       return await this.getAllbyQuery(userId, query)
     }
   }
+
+
+  public async getBtcUnspentTransactions(userId: string, query: any) {
+    const { coinId = null, address = null } = query
+    if (!!coinId && !!address) {
+      if (isValidObjectId(userId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
+      if ((coin.network as INetwork).type !== 1){
+        throw new BaseError(EHttpStatusCode.BadRequest, "Only supported on bitcoin network.", true)
+      }
+      const account = await this.retrieveAccountByAddress(userId, address)
+      const AES = new AESHelper(userId)
+      await AES.initialize()
+
+      account.privateKey = AES.decrypt(account.privateKey)
+      RPCHelper.setWallet(account)
+      const history = await (RPCHelper as BitcoinRPC).getUnspentTransactions()
+      console.log(history, "history")
+      return new ValidResponse(EHttpStatusCode.OK, history)
+    } else {
+      throw new BaseError(EHttpStatusCode.BadRequest, "Please enter query param 'address' & 'coinId'", true)
+    }
+  }
+
 
   public async estimateSwap(userId: string, srcCoinId: string, destCoinId: string, from: string, value: string) {
     if (srcCoinId === destCoinId)

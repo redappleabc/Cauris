@@ -300,6 +300,7 @@ export class AccountService extends ServiceProtected {
       AES
     );
     account.subscribedTo["balance"] = balance
+
     return account;
   }
 

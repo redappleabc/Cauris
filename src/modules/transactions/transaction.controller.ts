@@ -15,6 +15,7 @@ export class TransactionController extends ControllerProtected {
     this.estimateSwap = this.estimateSwap.bind(this)
     this.approveSwap = this.approveSwap.bind(this)
     this.sendSwap = this.sendSwap.bind(this)
+    this.getBtcUnspentTransactions = this.getBtcUnspentTransactions.bind(this)
   }
 
   public async send(req: Request, res: Response, next: NextFunction) {
@@ -81,6 +82,15 @@ export class TransactionController extends ControllerProtected {
    public async getAllByCoin(req: Request, res: Response, next: NextFunction) {
     try {
       const handler: IResponseHandler = await (this.service as TransactionService).getAllByCoin(req.user["id"], req.query)
+      return handler.handleResponse(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  public async getBtcUnspentTransactions(req: Request, res: Response, next: NextFunction) {
+    try {
+      const handler: IResponseHandler = await (this.service as TransactionService).getBtcUnspentTransactions(req.user["id"], req.query)
       return handler.handleResponse(res)
     } catch (err) {
       next(err)
