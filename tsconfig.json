@@ -20,5 +20,5 @@
     ]
   },
   "exclude": ["**/*.spec.ts", "node_modules"],
-  "include": ["src/**/*", "test/**/*", "./src/files/erc20.abi.json", "./src/files/test-token.json"]
+  "include": ["src/**/*", "test/**/*", "./src/files/erc20.abi.json", "./src/files/test-token.json",  "./src/files/paraswap-claimfee.json"]
 }

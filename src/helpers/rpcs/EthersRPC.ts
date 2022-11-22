@@ -1,6 +1,7 @@
 import { IAccount, ICoin, INetwork, IRPC } from '@servichain/interfaces'
 import * as ethers from 'ethers'
 import { abi } from '@servichain/files/test-token.json'
+import paraswapAbi from '@servichain/files/paraswap-claimfee.json'
 import { BaseError } from '@servichain/helpers/BaseError'
 import { EHttpStatusCode } from '@servichain/enums'
 import config from 'config'
@@ -188,7 +189,7 @@ export class EthersRPC implements IRPC {
       txSwap.gasPrice = (await this.parseGasScan()).gasPrice
     else if (typeof txSwap.gasPrice === 'string')
       txSwap.gasPrice = ethers.BigNumber.from(txSwap.gasPrice)
-    if(!txSwap.gasLimit)
+    if (!txSwap.gasLimit)
       txSwap.gasLimit = ethers.BigNumber.from("300000")
     else
       txSwap.gasLimit = ethers.BigNumber.from(txSwap.gasLimit)
@@ -242,5 +243,33 @@ export class EthersRPC implements IRPC {
       txRes = await this.wallet.sendTransaction(tx)
     }
     return txRes.hash
+  }
+
+  public async claimFee(coin: ICoin) {
+    let { contractAddress:coinAddress = null, network } = coin
+
+    if (!coinAddress)
+      coinAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+    var contractAddress = this.paraswap.claimFeeAddress(network)
+    var contract = new ethers.Contract(contractAddress, paraswapAbi, this.wallet)
+
+    const gasPrice = (await this.parseGasScan()).gasPrice
+    const txRes = await contract.withdrawAllERC20(coinAddress, this.account.address, {gasPrice, gasLimit: ethers.BigNumber.from("300000")})
+    console.log(txRes)
+    return txRes.hash
+  }
+
+  public async claimFeeEstimate(coin: ICoin) {
+    let { contractAddress:coinAddress = null, network } = coin
+
+    if (!coinAddress)
+      coinAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+    var contractAddress = this.paraswap.claimFeeAddress(network)
+
+    const signer = this.provider.getSigner(this.account.address)
+    var contract = new ethers.Contract(contractAddress, paraswapAbi, signer)
+    const balance = await contract.getBalance(coinAddress, this.account.address)
+    console.log(balance, "balance")
+    return balance
   }
 }

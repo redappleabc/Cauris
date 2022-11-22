@@ -3,13 +3,18 @@ import { BigNumber } from 'bignumber.js';
 import axios from 'axios';
 //import { APIError, NetworkID, ParaSwap } from "paraswap";
 import { constructSimpleSDK, SDKFetchMethods, OptimalRate } from '@paraswap/sdk';
+import { INetwork } from '@servichain/interfaces';
 declare type NetworkID = 1 | 3 | 42 | 4 | 56 | 137 | 43114;
 
 export class ParaSwapHelper {
     swap: SDKFetchMethods
+    claimFeeAddresses = {}
 
     constructor(chainId: NetworkID) {
         this.swap = constructSimpleSDK({network: chainId, axios})
+        this.claimFeeAddresses[1] = "0xeF13101C5bbD737cFb2bF00Bbd38c626AD6952F7"
+        this.claimFeeAddresses[56] = "0x2DF17455B96Dde3618FD6B1C3a9AA06D6aB89347"
+        this.claimFeeAddresses[137] = "0x8b5cF413214CA9348F047D1aF402Db1b4E96c060"
     }
 
     async getPrices(src: string, dest: string, amount: string) {
@@ -41,5 +46,9 @@ export class ParaSwapHelper {
             partnerAddress,
             partnerFeeBps
         })
+    }
+
+    claimFeeAddress(network: string | INetwork) {
+        return this.claimFeeAddresses[(network as INetwork).chainId]
     }
 }

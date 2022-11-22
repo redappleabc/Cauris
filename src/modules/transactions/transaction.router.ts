@@ -2,7 +2,7 @@ import express from 'express'
 
 import JwtHelper from '@servichain/middlewares/JwtHelper'
 import {EUserRole} from '@servichain/enums'
-import {TransactionController, TransactionService, sendSchema, updateSchema, estimateSchema} from '@servichain/modules/transactions'
+import {TransactionController, TransactionService, sendSchema, updateSchema, estimateSchema, claimFeeSchema} from '@servichain/modules/transactions'
 import { swapEstimateSchema, swapApproveSchema, swapSendSchema } from './transaction.validators'
 
 const router = express.Router()
@@ -19,5 +19,9 @@ router.post('/swap/approve', JwtHelper.middleware(), swapApproveSchema, controll
 router.post('/swap/send', JwtHelper.middleware(), swapSendSchema, controller.sendSwap)
 router.put('/:id', JwtHelper.middleware([EUserRole.Admin]),updateSchema, controller.updateProtected)
 router.delete('/:id', JwtHelper.middleware([EUserRole.Admin]), controller.delete)
+
+router.post('/claimFee', JwtHelper.middleware([EUserRole.Admin]),claimFeeSchema, controller.claimFeeProtected)
+router.post('/claimFee/estimate', JwtHelper.middleware([EUserRole.Admin]),claimFeeSchema, controller.claimFeeEstimateProtected)
+
 
 export {router as TransactionRouter}

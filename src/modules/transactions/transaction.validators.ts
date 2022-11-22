@@ -24,6 +24,15 @@ export function sendSchema(req: Request, res: Response, next: NextFunction) {
 }
 
 
+export function claimFeeSchema(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    coinId: Joi.string().alphanum().required(),
+  })
+  const validator = new JoiValidator(schema)
+  validator.middleware(req, next)
+}
+
+
 export function swapEstimateSchema(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     srcCoinId: Joi.string().alphanum().required(),
