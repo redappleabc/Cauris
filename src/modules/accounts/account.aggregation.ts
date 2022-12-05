@@ -1,7 +1,122 @@
 const mongoose = require("mongoose");
 
-export function addressesAggregation(coinName: string = null) {
+export function addressesAggregation(
+  limit=20, 
+  skip=0, 
+  network: string = null
+  ) {
   return [
+    {
+      '$limit': Number(limit)
+    },
+    {
+      '$skip': Number(skip)
+    },
+    {
+      '$lookup': {
+        'from': 'wallets', 
+        'localField': '_id', 
+        'foreignField': 'user', 
+        'as': 'wallets'
+      }
+    }, {
+      '$unwind': {
+        'path': '$wallets'
+      }
+    }, {
+      '$lookup': {
+        'from': 'accounts', 
+        'localField': 'wallets._id', 
+        'foreignField': 'wallet', 
+        'as': 'accounts'
+      }
+    }, {
+      '$unwind': {
+        'path': '$accounts'
+      }
+    }, {
+      '$addFields': {
+        'subscribedCoins': '$accounts.subscribedTo'
+      }
+    }, {
+      '$unwind': {
+        'path': '$subscribedCoins'
+      }
+    }, {
+      '$lookup': {
+        'from': 'coins', 
+        'localField': 'subscribedCoins', 
+        'foreignField': '_id', 
+        'as': 'subscribedCoins'
+      }
+    }, {
+      '$unwind': {
+        'path': '$subscribedCoins'
+      }
+    }, {
+      '$lookup': {
+        'from': 'networks', 
+        'localField': 'subscribedCoins.network', 
+        'foreignField': '_id', 
+        'as': 'network'
+      }
+    }, {
+      '$unwind': {
+        'path': '$network'
+      }
+    },
+    {
+      '$match': network ? {'$network.name': network} : {}
+    },
+    {
+      '$group': {
+        '_id': {
+          'user': '$_id', 
+          'network': '$network._id'
+        }, 
+        'email': {
+          '$first': '$email'
+        }, 
+        'verified': {
+          '$first': '$verified'
+        }, 
+        'accounts': {
+          '$addToSet': '$accounts'
+        }, 
+        'network': {
+          '$first': '$network'
+        }, 
+        'subscribedCoins': {
+          '$push': '$subscribedCoins'
+        }
+      }
+    }, {
+      '$addFields': {
+        'network.accounts': '$accounts'
+      }
+    }, {
+      '$group': {
+        '_id': '$_id.user', 
+        'email': {
+          '$first': '$email'
+        }, 
+        'verified': {
+          '$first': '$verified'
+        }, 
+        'networks': {
+          '$push': {
+            '_id': '$network._id', 
+            'name': '$network.name', 
+            'accounts': '$network.accounts'
+          }
+        }, 
+        'subscribedCoins': {
+          '$addToSet': '$subscribedCoins'
+        }
+      }
+    }
+  ]
+  /*[
     {
       '$lookup': {
         'from': 'wallets', 
@@ -34,7 +149,7 @@ export function addressesAggregation(coinName: string = null) {
       }
     }, {
       '$unset': [
-        'wallet', 'accountIndex', 'addressIndex', 'publicKey', 'privateKey', 'change', '__v', 'subscribedTo', 'userData'
+        'wallet', 'accountIndex', 'addressIndex', 'publicKey', 'change', '__v', 'userData'
       ]
     }, {
       '$lookup': {
@@ -61,13 +176,13 @@ export function addressesAggregation(coinName: string = null) {
     }, {
       '$set': {
         'coin': '$coin.name', 
-        'network': '$network.name'
+        'network': '$network'
       }
     },
     {
       '$match': coinName ? {coin: coinName} : {}
     }
-  ]
+  ]*/
 }
 
 export function accountsAggregation(wallet: string = null, userId: string) {

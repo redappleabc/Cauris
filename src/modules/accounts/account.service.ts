@@ -43,16 +43,56 @@ export class AccountService extends ServiceProtected {
   }
 
   public async getAllAddresses(query: any) {
-    let {coin} = query
-
-    const addressesPipeline = addressesAggregation(coin)
-    let addresses: Document[] = await this.model.aggregate(addressesPipeline)
-    let total: number = await this.model.count()
-    return new ValidResponse(EHttpStatusCode.OK, {
-      items: addresses,
-      total
-    })
+    try {
+      let {limit=20, skip=0, network=null} = query
+  
+      const addressesPipeline = addressesAggregation(limit, skip, network)
+      let users: Document[] = await db.User.aggregate(addressesPipeline)
+      for (let i = 0; i < users.length; i++) {
+        const AES = new AESHelper(users[i]['_id'])
+        await AES.initialize()
+        await this.getBalanceByNetwork(users[i], AES)
+        delete users[i]['subscribedCoins']
+      }
+      let total: number = await this.model.count()
+      return new ValidResponse(EHttpStatusCode.OK, {
+        items: users,
+        total
+      })
+    } catch (err) {
+      console.log(err)
+    }
   }
+
+  private async getBalanceByNetwork({networks}: any, AES: AESHelper) {
+    for (let x = 0; x < networks.length; x++) {
+      const RPCHelper: IRPC = rpcs.getInstance(networks[x].name)
+      for (let y = 0; y < networks[x].accounts.length; y++) {
+        networks[x].accounts[y] = await this.fetchCoinsAggregation(networks[x].accounts[y], RPCHelper, AES)
+      }
+    }
+  }
+
+  private async fetchCoinsAggregation(account: any, RPCHelper: IRPC, AES: AESHelper) {
+    for (let i = 0; i < account.subscribedTo.length; i++) {
+      let coinID = account.subscribedTo[i]
+      let {balance, coin} = await this.getBalance(
+      coinID,
+      account,
+      RPCHelper,
+      AES
+    )
+        account.subscribedTo[i] = {balance, name: coin.name}
+    }
+
+    delete account.publicKey
+    delete account.privateKey
+    delete account.accountIndex
+    delete account.change
+    delete account.addressIndex
+    return account;
+  }
+
 
   private async getAllAggregated(query: any, userId: string): Promise<IResponseHandler> {
     let { skip, limit, populate, wallet=null } = query;
@@ -142,7 +182,6 @@ export class AccountService extends ServiceProtected {
           N_account.network_infos= null
           accounts[i] = N_account;
         }
-        
       }
       account_list = [...account_list, ...accounts];
     }
@@ -169,8 +208,7 @@ export class AccountService extends ServiceProtected {
   }
 
   private getHDWalletByCoinIndex(coinIndex: number) {
-    
-    if(coinIndex < 60)
+    if(coinIndex === 0)
       return BitcoinWallet
     return EthereumWallet
   }
@@ -293,7 +331,7 @@ export class AccountService extends ServiceProtected {
 
   private async fetchCoins(account: any, RPCHelper: IRPC, AES: AESHelper) {
     let coinID: string = account.subscribedTo["_id"] as string;
-    let balance = await this.getBalance(
+    let {balance} = await this.getBalance(
       coinID,
       account,
       RPCHelper,
@@ -313,10 +351,11 @@ export class AccountService extends ServiceProtected {
     let balance = (
       await RPCHelper.getBalance(coin.contractAddress)
     )
+    account.privateKey = AES.encrypt(account.privateKey)
     if ((coin.network as INetwork).type === 1) {
-      return balance.toString()
+      return {balance: balance.toString(), coin}
     } else
-      return utils.formatUnits(balance, coin.decimals);
+      return {balance: utils.formatUnits(balance, coin.decimals), coin};
   }
 
   public async getByAddressProtected(address: string, userId: string) {
