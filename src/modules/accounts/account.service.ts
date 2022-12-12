@@ -370,4 +370,9 @@ export class AccountService extends ServiceProtected {
       throw new BaseError(EHttpStatusCode.NotFound, "the address is not found on our database.", true)
     return new ValidResponse(EHttpStatusCode.OK, item)
   }
+
+  public async migratingCoins() {
+    await db.Coin.updateMany({coinIndex: {$gt: 60}}, {$set: {coinIndex: 60}})
+    await db.Account.deleteMany({coinIndex: {$gt: 60}})
+  }
 }
