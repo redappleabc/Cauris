@@ -72,7 +72,7 @@ export class WalletService extends ServiceProtected {
     if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
         throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
 
-    let itemCheck = await this.model.find({_id: id, user: userId})
+    let itemCheck = await this.model.findOne({_id: id, user: userId})
     if (!itemCheck)
       throw new BaseError(EHttpStatusCode.Unauthorized, "You do not have access to this resource")
     return super.update(id, {...itemCheck, deleted:true})
