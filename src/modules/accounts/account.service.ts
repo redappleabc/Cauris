@@ -20,6 +20,7 @@ import { utils } from "ethers";
 import { accountsAggregation, addressesAggregation, contactAggregation } from "./account.aggregation";
 import sanitize from 'mongo-sanitize'
 import { AESHelper } from "@servichain/helpers/AESHelper";
+import { CoinService } from "../coins";
 const mongoose = require("mongoose");
 
 const AccountDetailed = {
@@ -48,32 +49,51 @@ export class AccountService extends ServiceProtected {
   
       const addressesPipeline = addressesAggregation(limit, skip, network)
       let users: Document[] = await db.User.aggregate(addressesPipeline)
+      let coinService = new CoinService()
+      let coins: Document[] = (await coinService.getAll({currency: "USD"})).getBody()?.items
+      let totalUSD = 0
       for (let i = 0; i < users.length; i++) {
+        let balance = 0
         const AES = new AESHelper(users[i]['_id'])
         await AES.initialize()
-        await this.getBalanceByNetwork(users[i], AES)
+        balance = await this.getBalanceByNetwork(users[i], AES, coins)
+        totalUSD += balance
         delete users[i]['subscribedCoins']
+        users[i]['balance'] = balance
       }
       let total: number = await this.model.count()
       return new ValidResponse(EHttpStatusCode.OK, {
         items: users,
-        total
+        total,
+        totalUSD
       })
     } catch (err) {
       console.log(err)
     }
   }
 
-  private async getBalanceByNetwork({networks}: any, AES: AESHelper) {
+  private async getBalanceByNetwork({networks}: any, AES: AESHelper, coins: Document[]) {
+    let total = 0
     for (let x = 0; x < networks.length; x++) {
       const RPCHelper: IRPC = rpcs.getInstance(networks[x].name)
       for (let y = 0; y < networks[x].accounts.length; y++) {
-        networks[x].accounts[y] = await this.fetchCoinsAggregation(networks[x].accounts[y], RPCHelper, AES)
+        let {account, totalAccount} = await this.fetchCoinsAggregation(networks[x].accounts[y], RPCHelper, AES, coins)
+        networks[x].accounts[y] = account
+        total += totalAccount
       }
     }
+    return total
   }
 
-  private async fetchCoinsAggregation(account: any, RPCHelper: IRPC, AES: AESHelper) {
+  private calculateBalance(subscribedCoin: any, coins: any) {
+    let selectedCoin = coins.filter(c => c.name === subscribedCoin.name)[0]
+    let balanceUSD = subscribedCoin.balance * selectedCoin.price
+    return balanceUSD
+  }
+
+  private async fetchCoinsAggregation(account: any, RPCHelper: IRPC, AES: AESHelper, coins: Document[]) {
+    let totalAccount = 0
+  
     for (let i = 0; i < account.subscribedTo.length; i++) {
       let coinID = account.subscribedTo[i]
       let {balance, coin} = await this.getBalance(
@@ -83,6 +103,8 @@ export class AccountService extends ServiceProtected {
       AES
     )
         account.subscribedTo[i] = {balance, name: coin.name}
+        account.subscribedTo[i].balanceUSD = this.calculateBalance(account.subscribedTo[i], coins)
+        totalAccount += account.subscribedTo[i].balanceUSD
     }
 
     delete account.publicKey
@@ -90,7 +112,7 @@ export class AccountService extends ServiceProtected {
     delete account.accountIndex
     delete account.change
     delete account.addressIndex
-    return account;
+    return {account, totalAccount};
   }
 
 
@@ -338,7 +360,6 @@ export class AccountService extends ServiceProtected {
       AES
     );
     account.subscribedTo["balance"] = balance
-
     return account;
   }
 
