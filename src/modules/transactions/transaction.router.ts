@@ -11,6 +11,7 @@ const controller = new TransactionController(service)
 
 /* Refresh Routes */
 router.get('/', JwtHelper.middleware(), controller.getAllByCoin)
+router.get('/metrics', JwtHelper.middleware([EUserRole.Admin]), controller.getAll)
 router.get('/unspent', JwtHelper.middleware(), controller.getBtcUnspentTransactions)
 router.get('/:id', JwtHelper.middleware(), controller.getByIdProtected)
 router.post('/', JwtHelper.middleware(), sendSchema, controller.send)
