@@ -21,6 +21,8 @@ import { ITxBody } from "@servichain/interfaces/ITxBody";
 import { AESHelper } from "@servichain/helpers/AESHelper";
 const mongoose = require("mongoose");
 
+const CRYPTO_DECIMALS = "18"
+
 export class TransactionService extends ServiceProtected {
   constructor(model: Model<any> = db.Transaction) {
     super(model);
@@ -218,11 +220,11 @@ export class TransactionService extends ServiceProtected {
         const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
         const gasFees = await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
         console.log('done')
-        return new ValidResponse(EHttpStatusCode.OK, { priceRoute, txSwap, fees: utils.formatUnits(gasFees, "18"), needApproval: false })
+        return new ValidResponse(EHttpStatusCode.OK, { priceRoute, txSwap, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS), needApproval: false })
       } else {
         const gasFees = await (RPCHelper as EthersRPC).estimate({ to: priceRoute.tokenTransferProxy, value: priceRoute.srcAmount }, coin, "approve")
         console.log('done')
-        return new ValidResponse(EHttpStatusCode.OK, { priceRoute, txSwap: null, fees: utils.formatUnits(gasFees, "18"), needApproval: true })
+        return new ValidResponse(EHttpStatusCode.OK, { priceRoute, txSwap: null, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS), needApproval: true })
       }
     } catch (e) {
       console.log("error eccoured", e.message)
@@ -248,7 +250,7 @@ export class TransactionService extends ServiceProtected {
         coin.contractAddress = priceRoute.srcToken;
       }
       const gasFees = await (RPCHelper as EthersRPC).estimate(txSwap, coin)
-      return new ValidResponse(EHttpStatusCode.OK, { txAllowed, txSwap, fees: utils.formatUnits(gasFees, "18") })
+      return new ValidResponse(EHttpStatusCode.OK, { txAllowed, txSwap, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS) })
     }
     catch (e) {
       throw new BaseError(EHttpStatusCode.BadRequest, e.message)
@@ -288,7 +290,14 @@ export class TransactionService extends ServiceProtected {
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
     const gasFees = await RPCHelper.estimate({ to, value }, coin)
-    return new ValidResponse(EHttpStatusCode.OK, { fees: utils.formatUnits(gasFees, coin.decimals) })
+    return new ValidResponse(EHttpStatusCode.OK, { fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS) })
+  }
+
+  private async retrieveCrypto(network: INetwork | string) {
+    const crypto = await db.Coin.findOne({network, contractAddress: {$exists: false}})
+    if (!crypto)
+      throw new BaseError(EHttpStatusCode.BadRequest, "The network does not have any crypto assigned")
+    return crypto
   }
 
   public async send(userId: string, coinId: string, from: string, to: string, value: string, unSpentTransactions: string[]) {
