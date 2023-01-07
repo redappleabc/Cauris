@@ -17,6 +17,7 @@ export class ParaSwapHelper {
         this.claimFeeAddresses[137] = "0x8b5cF413214CA9348F047D1aF402Db1b4E96c060"
     }
 
+    
     async getPrices(src: string, dest: string, amount: string) {
         const priceRoute: OptimalRate = await this.swap.getRate({srcToken:src, destToken:dest, amount:amount})
         return priceRoute
