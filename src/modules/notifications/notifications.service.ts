@@ -5,6 +5,6 @@ import sanitize from 'mongo-sanitize'
 
 export class NotificationsService extends ServiceProtected {
   constructor(model: Model<any> = db.Notification) {
-    super(model)
+    super(model, "[Notification Service]")
   }
 }

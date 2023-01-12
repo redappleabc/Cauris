@@ -56,7 +56,6 @@ export class ControllerProtected extends Controller {
       );
       handler.handleResponse(res)
     } catch (err) {
-      console.log(err.message)
       next(err)
     }
   }
@@ -69,7 +68,6 @@ export class ControllerProtected extends Controller {
       );
       handler.handleResponse(res)
     } catch (err) {
-      console.log(err.message)
       next(err)
     }
   }

@@ -13,6 +13,7 @@ import * as ecc from 'tiny-secp256k1'
 
 import { ECPairFactory } from 'ecpair';
 import { BaseError } from "../BaseError";
+import { EError } from "@servichain/enums/EError";
 
 const ECPair = ECPairFactory(ecc);
 
@@ -40,9 +41,13 @@ export class BitcoinRPC implements IRPC {
   }
 
   public async getBalance() {
-    const balanceUrl = `${this.rpcUrl}get_address_balance/${this.currencySymbol}/${this.account.address}`
-    const response = await axios.get(balanceUrl)
-    return response.data.data.confirmed_balance
+    try {
+      const balanceUrl = `${this.rpcUrl}get_address_balance/${this.currencySymbol}/${this.account.address}`
+      const response = await axios.get(balanceUrl)
+      return response.data.data.confirmed_balance
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCOffline, e, true)
+    }
   }
 
 
@@ -56,7 +61,7 @@ export class BitcoinRPC implements IRPC {
       const txHex = (await axios.get(txUrl)).data.data.tx_hex
       return { ...latestTx, tx_hex: txHex }
     } catch (e) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCOffline)
     }
 
   }
@@ -67,7 +72,7 @@ export class BitcoinRPC implements IRPC {
       const txHex = (await axios.get(txUrl)).data.data.tx_hex
       return txHex
     } catch (e) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCOffline, e, true)
     }
 
   }
@@ -79,19 +84,22 @@ export class BitcoinRPC implements IRPC {
       const txs = [...(await axios.get(txUnspentUrl)).data.data.txs, ...(await axios.get(txSpentUrl)).data.data.txs]
       return txs
     } catch (e) {
-
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCOffline, e, true)
     }
 
   }
 
 
   public async estimate() {
-    const feeUrl = 'https://bitcoinfees.earn.com/api/v1/fees/recommended';
-    const response = await axios.get(feeUrl)
-    const txCnt = (await this.getUnspentTransactions()).length;
-    if(txCnt <= 0) return 0;
-    return response.data.hourFee * ( 180 * txCnt +  34 * 2  + 10) //hourFee, fastestFee, halfHourFee
+    try {
+      const feeUrl = 'https://bitcoinfees.earn.com/api/v1/fees/recommended';
+      const response = await axios.get(feeUrl)
+      const txCnt = (await this.getUnspentTransactions()).length;
+      if(txCnt <= 0) return 0;
+      return response.data.hourFee * ( 180 * txCnt +  34 * 2  + 10) //hourFee, fastestFee, halfHourFee
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCOffline, e, true)
+    }
   }
 
 
@@ -100,7 +108,6 @@ export class BitcoinRPC implements IRPC {
     msghash: Buffer,
     signature: Buffer,
   ): boolean => ECPair.fromPublicKey(pubkey).verify(msghash, signature);
-
 
   private toSatoshi(value: string) {
     return parseFloat(value) * 100000000
@@ -117,62 +124,38 @@ export class BitcoinRPC implements IRPC {
   }
 
   public async transfer(tx: ITxBody, coin: ICoin, _unSpentTransactions: string[] = []) {
-    let { to, value } = tx;
-    var satoshiValue: number = 0;
-    if (typeof value === 'string')
-      satoshiValue = this.toSatoshi(value)
-
-
-    const latestTx = await this.getLastTxId()
-
-    const unSpentTransactions = (await this.getUnspentTransactions())
-
-    if (unSpentTransactions.length <= 0) {
-      throw new BaseError(EHttpStatusCode.BadRequest, "You don't have unspent transactions")
-    }
-
-    const fee = await this.estimate()
-
-    const psbt = new bitcoin.Psbt({ network: this.currencySymbol === "BTCTEST" ? testNetwork : network })
-
     try {
-      //psbt.addInput({ hash: latestTx.txid, index: latestTx.output_no, nonWitnessUtxo: Buffer.from(latestTx.tx_hex, 'hex') })
+      let { to, value } = tx;
+      var satoshiValue: number = 0;
+      if (typeof value === 'string')
+        satoshiValue = this.toSatoshi(value)
+      const latestTx = await this.getLastTxId()
+      const unSpentTransactions = (await this.getUnspentTransactions())
+
+      if (unSpentTransactions.length <= 0) {
+        throw new BaseError(EHttpStatusCode.BadRequest, "You don't have unspent transactions")
+      }
+
+      const fee = await this.estimate()
+      const psbt = new bitcoin.Psbt({ network: this.currencySymbol === "BTCTEST" ? testNetwork : network })
 
       for (let i = 0; i < unSpentTransactions.length; i++) {
         const tx = unSpentTransactions[i];
         if(_unSpentTransactions.length === 0 || _unSpentTransactions.includes(tx.txid))
           psbt.addInput({ hash: tx.txid, index: tx.output_no, nonWitnessUtxo: Buffer.from((await this.getTxHex(tx.txid)), 'hex') })
       }
-
       psbt.addOutput({ address: to, value: satoshiValue })
-
       psbt.addOutput({ address: this.account.address, value: this.toSatoshi(latestTx.value) - satoshiValue - fee })
-
       psbt.signInput(0, ECPair.fromWIF(this.account.privateKey));
-
       psbt.validateSignaturesOfInput(0);
       psbt.finalizeAllInputs();
-    } catch (e) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
-    }
-
-
-
-    var Transaction = psbt.extractTransaction(true).toHex();
-
-    try {
-      console.log(`${this.rpcUrl}send_tx/${this.currencySymbol}`)
+    
+      var Transaction = psbt.extractTransaction(true).toHex();
       const response = await axios.post(`${this.rpcUrl}send_tx/${this.currencySymbol}`, { tx_hex: Transaction })
-
-      console.log("Transaction ID:\n" + JSON.stringify(response.data));
-
       return response.data.data.txid
 
     } catch (e) {
-      throw new BaseError(EHttpStatusCode.InternalServerError, "JsonRPC : " + e.message)
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCOffline, e, true)
     }
-
-
   }
-
 }

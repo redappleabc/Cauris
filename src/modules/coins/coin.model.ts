@@ -1,5 +1,8 @@
 import mongoose from 'mongoose'
 import { AccountModel } from '../accounts/account.model'
+import { BaseError } from '@servichain/helpers/BaseError'
+import { EError } from '@servichain/enums/EError'
+import { EHttpStatusCode } from '@servichain/enums'
 
 const Schema = mongoose.Schema
 
@@ -24,7 +27,7 @@ schema.pre('deleteMany', async function (next) {
       AccountModel.updateMany({}, { $pull: { "subscribedTo": item._id } }).exec()
     })
   } catch (e) {
-    console.log("error", e)
+    throw new BaseError(EHttpStatusCode.InternalServerError, EError.MongoOffline, e, true)
   }
   next();
 });

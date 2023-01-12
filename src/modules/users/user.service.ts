@@ -11,6 +11,7 @@ import { EUserRole, EHttpStatusCode, ETokenType } from "@servichain/enums";
 import { IUser } from "@servichain/interfaces";
 import speakeasy from "speakeasy";
 import { randomBytes } from "ethers/lib/utils";
+import { EError } from "@servichain/enums/EError";
 
 const UserDetailed = {
   virtuals: true,
@@ -46,10 +47,7 @@ export class UserService extends Service {
     const user: IUser = await this.model.findOne({ email });
     if (!user || !bcrypt.compareSync(password, user.password)) {
       throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "Could not found User",
-        true
-      );
+        EHttpStatusCode.NotFound, EError.ReqUsurpation);
     }
     const { jwtToken } = JwtHelper.generate(user);
     const refreshService = new RefreshService();
@@ -69,16 +67,11 @@ export class UserService extends Service {
     const user = await this.model.findById(userId);
     if (!user)
       throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "Could not found User",
-        true
-      );
+        EHttpStatusCode.NotFound, EError.MongoEmpty);
     user.password = await this.genHash(password);
     user.save();
     return new ValidResponse(
-      EHttpStatusCode.Accepted,
-      "Password was changed"
-    );
+      EHttpStatusCode.Accepted, "Password was changed");
   }
 
   public async updatePassword(
@@ -89,20 +82,15 @@ export class UserService extends Service {
   ) {
     const user = await this.model.findById(userId);
     if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
-      throw new BaseError(EHttpStatusCode.NotFound, "Invalid password", true);
+      throw new BaseError(EHttpStatusCode.NotFound, EError.ReqUsurpation);
     }
     if (newPassword !== newPasswordRepeat)
       throw new BaseError(
-        EHttpStatusCode.BadRequest,
-        "Password confirmation must be the same",
-        true
-      );
+        EHttpStatusCode.BadRequest, "Password confirmation must be the same");
     user.password = await this.genHash(newPassword);
     user.save();
     return new ValidResponse(
-      EHttpStatusCode.Accepted,
-      "Password was updated"
-    );
+      EHttpStatusCode.Accepted, "Password was updated");
   }
 
   public async generateSecret(userId: string) {
@@ -110,10 +98,7 @@ export class UserService extends Service {
 
     if (!user) {
       throw new BaseError(
-        EHttpStatusCode.Unauthorized,
-        "Invalid user credentials",
-        true
-      );
+        EHttpStatusCode.NotFound, EError.MongoEmpty);
     }
     const secret = speakeasy.generateSecret({
       name: "S-Wallet: " + user.email,
@@ -121,92 +106,92 @@ export class UserService extends Service {
     user.secret=secret.base32
     user.secretGenerated= true
     user.save()
-    return new ValidResponse(EHttpStatusCode.OK, {
-      user,
-    });
+    return new ValidResponse(EHttpStatusCode.OK, {user});
   }
 
   public async verifySecret(secret:string, encoding: speakeasy.Encoding, token: string, userId:string) {
-    const user = await this.model.findById(userId);
-
-    if (!user) {
-      throw new BaseError(
-        EHttpStatusCode.Unauthorized,
-        "Invalid user credentials",
-        true
-      );
-    }
-    if (!!user.secret && user.secret===secret) {
-      const verification = speakeasy.totp.verify({
-        secret,
-        encoding,
-        token,
-      });
-      if (verification) {
-        user.verified2FA=true;
-        user.save()
-        return new ValidResponse(EHttpStatusCode.OK, {
-          verification,
-        });
-      } else {
-        return new ValidResponse(EHttpStatusCode.BadRequest, {
-          verification,
-        });
+    try {
+      const user = await this.model.findById(userId);
+  
+      if (!user) {
+        throw new BaseError(EHttpStatusCode.Unauthorized, "Invalid user credentials");
       }
-    } else {
-      return new ValidResponse(EHttpStatusCode.BadRequest, "Generate a secret first");
+      if (!!user.secret && user.secret===secret) {
+        const verification = speakeasy.totp.verify({
+          secret,
+          encoding,
+          token,
+        });
+        if (verification) {
+          user.verified2FA=true;
+          user.save()
+          return new ValidResponse(EHttpStatusCode.OK, {
+            verification,
+          });
+        } else {
+          return new ValidResponse(EHttpStatusCode.BadRequest, {
+            verification,
+          });
+        }
+      } else {
+        return new ValidResponse(EHttpStatusCode.BadRequest, "Generate a secret first");
+      }
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline, e, true)
     }
   }
 
   public async verifyUser(userId: string) {
-    const user = await this.model.findById(userId);
-
-    if (!user)
-      throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "Could not found User",
-        true
-      );
-    user.verified = true;
-    user.save();
-    return new ValidResponse(
-      EHttpStatusCode.Accepted,
-      "User is now verified"
-    );
+    try {
+      const user = await this.model.findById(userId);
+      if (!user)
+        throw new BaseError(EHttpStatusCode.NotFound, EError.MongoEmpty);
+      user.verified = true;
+      user.save();
+      return new ValidResponse(EHttpStatusCode.Accepted, "User is now verified");
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline, e, true)
+    }
   }
 
   public async insert(data: any) {
-    data.role = await this.checkFirstUser();
-    data.password = await this.genHash(data.password);
-    let iv = Buffer.from(randomBytes(16)).toString('hex')
-    data.iv = iv
-    const validationService = new ValidationService();
-    const result = await super.insert(data);
-    await validationService.generateToken(ETokenType.Verification, data.email);
-    return result;
+    try {
+      data.role = await this.checkFirstUser();
+      data.password = await this.genHash(data.password);
+      let iv = Buffer.from(randomBytes(16)).toString('hex')
+      data.iv = iv
+      const validationService = new ValidationService();
+      const result = await super.insert(data);
+      await validationService.generateToken(ETokenType.Verification, data.email);
+      return result;
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline, e, true)
+    }
   }
 
   public async getByIdDetailed(query: any) {
-    let responseHandler: ValidResponse = (await super.getById(query)) as ValidResponse;
-    responseHandler.data.toObject(UserDetailed);
-    return responseHandler;
+    try {
+      let responseHandler: ValidResponse = (await super.getById(query)) as ValidResponse;
+      responseHandler.data.toObject(UserDetailed);
+      return responseHandler;
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline, e, true)
+    }
   }
 
   public async getByUsername(query: any) {
-    const { username } = query;
-    if (!username) {
-      throw new BaseError(
-        EHttpStatusCode.BadRequest,
-        "Please specify an username"
-      );
+    try {
+      const { username } = query;
+      if (!username) {
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.ReqIncompleteQuery);
+      }
+      const result = await db.User.findOne({ username });
+      if (!result)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoEmpty);
+      return new ValidResponse(EHttpStatusCode.OK, result.id);
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline, e, true)
     }
-    const result = await db.User.findOne({ username });
-    if (!result)
-      throw new BaseError(
-        EHttpStatusCode.BadRequest,
-        "The username does not belong to any user"
-      );
-    return new ValidResponse(EHttpStatusCode.OK, result.id);
   }
 
   //internal

@@ -13,6 +13,9 @@ import {CoinModel} from '@servichain/modules/coins/coin.model'
 import { PayModel } from '@servichain/modules/payments/payments.model'
 import config from 'config'
 import mongoose from 'mongoose'
+import { BaseError } from './BaseError'
+import { EHttpStatusCode } from '@servichain/enums'
+import { EError } from '@servichain/enums/EError'
 const mongoDB: string = config.get('mongoDB')
 
 export class MongooseClient {
@@ -29,9 +32,13 @@ export class MongooseClient {
   Payment: Model<any> = PayModel
 
   constructor() {
-    const url = process.env.MONGO_URI || mongoDB
-    mongoose.Promise = global.Promise
-    mongoose.connect(url)
+    try {
+      const url = process.env.MONGO_URI || mongoDB
+      mongoose.Promise = global.Promise
+      mongoose.connect(url)
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.MongoOffline, e, true)
+    }
   }
 
   isValidID(id: any) {

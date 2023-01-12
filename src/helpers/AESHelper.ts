@@ -3,6 +3,9 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
 import {readFileSync, writeFileSync, existsSync} from 'fs'
 import {smh} from '@servichain/helpers/aws/SecretManagerHelper'
 import { db } from './MongooseSingleton'
+import { BaseError } from './BaseError'
+import { EHttpStatusCode } from '@servichain/enums'
+import { EError } from '@servichain/enums/EError'
 
 export class AESHelper {
     private readonly ALGORITHM = 'aes-256-cbc'
@@ -27,20 +30,30 @@ export class AESHelper {
             this.iv = Buffer.from(user.iv, 'hex')
             this.key = Buffer.from((await smh.getSecret('servichain-aes-secret'))['SECRET_KEY'], 'hex')
             return true
-        } catch (err) {throw err}
+        } catch (e) {
+            throw new BaseError(EHttpStatusCode.InternalServerError, EError.AESFailed, e, true)
+        }
     }
 
     encrypt(str: string): string {
-        const cipher = createCipheriv(this.ALGORITHM, this.key, this.iv)
-        let enc = cipher.update(str, 'utf8', 'base64')
-        enc += cipher.final('base64')
-        return enc
+        try {
+            const cipher = createCipheriv(this.ALGORITHM, this.key, this.iv)
+            let enc = cipher.update(str, 'utf8', 'base64')
+            enc += cipher.final('base64')
+            return enc
+        } catch (e) {
+            throw new BaseError(EHttpStatusCode.InternalServerError, EError.AESCipher, e, true)
+        }
     }
 
     decrypt(enc: string) {
-        const decipher = createDecipheriv(this.ALGORITHM, this.key, this.iv);
-        let str = decipher.update(enc, 'base64', 'utf8');
-        str += decipher.final('utf8');
-        return str;
+        try {
+            const decipher = createDecipheriv(this.ALGORITHM, this.key, this.iv);
+            let str = decipher.update(enc, 'base64', 'utf8');
+            str += decipher.final('utf8');
+            return str;
+        } catch (e) {
+            throw new BaseError(EHttpStatusCode.InternalServerError, EError.AESDecipher, e, true)
+        }
     }
-} 
+}

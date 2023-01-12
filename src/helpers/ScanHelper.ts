@@ -1,4 +1,5 @@
 import { EHttpStatusCode } from "@servichain/enums"
+import { EError } from "@servichain/enums/EError"
 import { BaseError } from "./BaseError"
 
 const axios = require('axios').default
@@ -55,8 +56,8 @@ export class ScanHelper {
           ...parameters
       }})
       return res.data
-    } catch (err) {
-      return new BaseError(EHttpStatusCode.InternalServerError, "Could not request scan API")
+    } catch (e) {
+      return new BaseError(EHttpStatusCode.InternalServerError, EError.ScannerOffline, e, true)
     }
   }
 }

@@ -4,6 +4,6 @@ import { Model } from 'mongoose'
 
 export class NetworkService extends Service {
   constructor(model: Model<any> = db.Network) {
-    super(model)
+    super(model, "[Network Service]")
   }
 }

@@ -8,6 +8,7 @@ import { isValidObjectId, Model } from 'mongoose'
 import { ITokenExplorer } from '@servichain/interfaces/ITokenExplorer'
 import { TokenNomics } from '@servichain/helpers/trackers/TokenNomics'
 import { CurrencyManager } from '@servichain/helpers/trackers/CurrencyManager'
+import { EError } from '@servichain/enums/EError'
 
 const CoinDetailed = {
   vituals: true,
@@ -23,7 +24,7 @@ export class CoinService extends Service {
   coin: CurrencyManager
 
   constructor(model: Model<any> = db.Coin) {
-    super(model)
+    super(model, "[Coin Service]")
     this.insert = this.insert.bind(this)
     this.getAll = this.getAll.bind(this)
     this.getById = this.getById.bind(this)
@@ -32,29 +33,41 @@ export class CoinService extends Service {
   }
 
   public async insert(data: ICoin): Promise<IResponseHandler> {
-    let { network } = data
-    if (isValidObjectId(network) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-    let netDoc = await db.Network.findOne({ _id: network })
-    if (!netDoc)
-      throw new BaseError(EHttpStatusCode.NotFound, "Could not find the specified network ID")
-    return super.insert(data)
+    try {
+      let { network } = data
+      if (isValidObjectId(network) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID")
+      let netDoc = await db.Network.findOne({ _id: network })
+      if (!netDoc)
+        throw new BaseError(EHttpStatusCode.NotFound, "Could not find the specified network ID")
+      return super.insert(data)
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
   public async getAll(query: any): Promise<IResponseHandler> {
-    const {currency} = query
-    let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
-    if (responseHandler.data?.items?.length && await this.coin.ping()) {
-      responseHandler.data.items = await this.coin.getCoins(responseHandler.data.items, currency)
+    try {
+      const {currency} = query
+      let responseHandler : ValidResponse = (await super.getAll(query) as ValidResponse);
+      if (responseHandler.data?.items?.length && await this.coin.ping()) {
+        responseHandler.data.items = await this.coin.getCoins(responseHandler.data.items, currency)
+      }
+      return responseHandler
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
     }
-    return responseHandler
   }
 
   public async getById(query: any): Promise<IResponseHandler> {
-    const {currency} = query
-    let responseHandler : ValidResponse = (await super.getById(query) as ValidResponse);
-    if (await this.coin.ping())
-      responseHandler.message = await this.coin.getCoin(responseHandler.message, currency)
-    return responseHandler
+    try {
+      const {currency} = query
+      let responseHandler : ValidResponse = (await super.getById(query) as ValidResponse);
+      if (await this.coin.ping())
+        responseHandler.message = await this.coin.getCoin(responseHandler.message, currency)
+      return responseHandler
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 }

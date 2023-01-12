@@ -12,16 +12,16 @@ export class BitcoinWallet extends HDWallet {
   }
 
   generatePublicKey(childrenNode: bitcoin.BIP32Interface): string{
-    return childrenNode.publicKey.toString('hex')
+    return childrenNode?.publicKey?.toString('hex')
   }
 
   generatePrivateKey(childrenNode: bitcoin.BIP32Interface): string {
-    return childrenNode.toWIF()
+    return childrenNode?.toWIF()
   }
 
   getAddress(childrenNode: bitcoin.BIP32Interface): string {
     return bitcoin.payments.p2pkh({
-      pubkey: childrenNode.publicKey,
+      pubkey: childrenNode?.publicKey,
       network: this.coinIndex?testNetwork: network
     }).address
   }
