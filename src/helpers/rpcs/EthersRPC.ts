@@ -9,7 +9,6 @@ import { ScanHelper } from '../ScanHelper'
 import { ParaSwapHelper } from '../ParaSwapHelper'
 import { OptimalRate } from "@paraswap/sdk";
 import { ITxBody } from '@servichain/interfaces/ITxBody'
-import { genSalt } from 'bcryptjs'
 import { EError } from '@servichain/enums/EError'
 declare type NetworkID = 1 | 3 | 42 | 4 | 56 | 137 | 43114;
 export class EthersRPC implements IRPC {
@@ -178,7 +177,15 @@ export class EthersRPC implements IRPC {
         var allowed = await this.isAllowanced(to, value, contractAddress)
         if (!allowed) {
           var contract = new ethers.Contract(contractAddress, abi, this.wallet)
-          var txRes = await contract.approve(to, value)
+          try {
+            var txRes = await contract.approve(to, value)
+          } catch (e) {
+            try {
+              var txRes = await contract.approve(to, ethers.BigNumber.from('0'))
+            } catch (e) {
+              throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCEstimation, e, true)
+            }
+          }
           return await txRes.wait()
         }
         return allowed
@@ -232,7 +239,15 @@ export class EthersRPC implements IRPC {
       if (!!contractAddress) {
         var contract = new ethers.Contract(contractAddress, abi, signer)
         delete tx.data
-        estimateGas = await contract.estimateGas[call](tx.to, tx.value)
+        try {
+          estimateGas = await contract.estimateGas[call](tx.to, tx.value)
+        } catch (e) {
+          try {
+            estimateGas = await contract.estimateGas[call](tx.to, ethers.BigNumber.from("0"))
+          } catch (e) {
+            throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCEstimation, e, true)
+          }
+        }
       } else {
         delete tx.data
         estimateGas = await this.provider.estimateGas(tx)
