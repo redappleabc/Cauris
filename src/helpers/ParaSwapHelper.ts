@@ -59,7 +59,7 @@ export class ParaSwapHelper {
                 partnerFeeBps
             })
         } catch (e) {
-            throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCParaBuild, e, true)
+            throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCParaBuild + ' - ' + e?.response?.data?.error, e?.response?.data?.error, true)
         }
     }
 

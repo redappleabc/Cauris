@@ -47,7 +47,7 @@ export class UserService extends Service {
     const user: IUser = await this.model.findOne({ email });
     if (!user || !bcrypt.compareSync(password, user.password)) {
       throw new BaseError(
-        EHttpStatusCode.NotFound, EError.ReqUsurpation);
+        EHttpStatusCode.NotFound, EError.BadCredentials);
     }
     const { jwtToken } = JwtHelper.generate(user);
     const refreshService = new RefreshService();
@@ -82,11 +82,11 @@ export class UserService extends Service {
   ) {
     const user = await this.model.findById(userId);
     if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
-      throw new BaseError(EHttpStatusCode.NotFound, EError.ReqUsurpation);
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.BadCredentials);
     }
     if (newPassword !== newPasswordRepeat)
       throw new BaseError(
-        EHttpStatusCode.BadRequest, "Password confirmation must be the same");
+        EHttpStatusCode.BadRequest, EError.BadCredentials);
     user.password = await this.genHash(newPassword);
     user.save();
     return new ValidResponse(

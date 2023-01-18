@@ -197,7 +197,7 @@ export class TransactionService extends ServiceProtected {
       RPCHelper.setWallet(account)
       const priceRoute = await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
       const isAllowed = await (RPCHelper as EthersRPC).isAllowanced(priceRoute?.tokenTransferProxy, priceRoute?.srcAmount as string, coin.contractAddress ? priceRoute?.srcToken : null)
-
+      
       if (isAllowed) {
         const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
         const gasFees = await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
@@ -225,7 +225,7 @@ export class TransactionService extends ServiceProtected {
     if (coin.contractAddress) {
       coin.contractAddress = priceRoute.srcToken;
     }
-    const gasFees = await (RPCHelper as EthersRPC).estimate(txSwap, coin)
+    const gasFees = await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
     return new ValidResponse(EHttpStatusCode.OK, { txAllowed, txSwap, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS) })
     }
     catch (e) {
