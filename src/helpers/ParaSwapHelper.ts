@@ -20,7 +20,7 @@ export class ParaSwapHelper {
             this.claimFeeAddresses[56] = "0x2DF17455B96Dde3618FD6B1C3a9AA06D6aB89347"
             this.claimFeeAddresses[137] = "0x8b5cF413214CA9348F047D1aF402Db1b4E96c060"
         } catch (e) {
-            throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCParaOffline, e, true)
+            throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCParaOffline, e?.response?.data?.error, true)
         }
     }
 
@@ -29,7 +29,7 @@ export class ParaSwapHelper {
             const priceRoute: OptimalRate = await this.swap.getRate({srcToken:src, destToken:dest, amount:amount})
             return priceRoute
         } catch (e) {
-            throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCParaRate, e, true)
+            throw new BaseError(EHttpStatusCode.InternalServerError, EError.BCParaRate + ' ' + e?.response?.data?.error, e?.response?.data?.error, true)
         }
     }
 
