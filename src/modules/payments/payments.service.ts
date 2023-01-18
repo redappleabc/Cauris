@@ -7,6 +7,6 @@ import { Model } from 'mongoose'
 
 export class PaymentsService extends ServiceProtected {
   constructor(model: Model<any> = db.Payment) {
-    super(model)
+    super(model, "[Payment Service]")
   }
 }

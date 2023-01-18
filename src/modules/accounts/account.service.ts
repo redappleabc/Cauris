@@ -21,6 +21,7 @@ import { accountsAggregation, addressesAggregation, contactAggregation } from ".
 import sanitize from 'mongo-sanitize'
 import { AESHelper } from "@servichain/helpers/AESHelper";
 import { CoinService } from "../coins";
+import { EError } from "@servichain/enums/EError";
 const mongoose = require("mongoose");
 
 const AccountDetailed = {
@@ -35,7 +36,7 @@ const AccountDetailed = {
 
 export class AccountService extends ServiceProtected {
   constructor(model: Model<any> = db.Account) {
-    super(model);
+    super(model, "[Account Service]");
     this.generate = this.generate.bind(this);
     this.generateOne = this.generateOne.bind(this);
     this.getAllByUser = this.getAllByUser.bind(this);
@@ -67,8 +68,8 @@ export class AccountService extends ServiceProtected {
         total,
         totalUSD
       })
-    } catch (err) {
-      console.log(err)
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
     }
   }
 
@@ -128,17 +129,17 @@ export class AccountService extends ServiceProtected {
     delete query.$match
 
     if (isValidObjectId(userId) === false || isValidObjectId(wallet) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
     let walletExist = db.Wallet.findOne({_id: wallet, user: userId})
     if (!walletExist)
-      throw new BaseError(EHttpStatusCode.BadRequest, "This wallet does not exist or does not belong to you")
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoEmpty)
     const aggregationPipeline = accountsAggregation(wallet, userId)
     let accountsByNetwork: Document[] = await this.model
       .aggregate(aggregationPipeline)
       .group({ _id: "$network_infos", accounts: { $push: "$$ROOT" } });
     let total: number = await this.model.count(query);
     if (!accountsByNetwork)
-      throw new BaseError(EHttpStatusCode.NotFound, "Empty list.", true);
+      throw new BaseError(EHttpStatusCode.NotFound, EError.MongoEmpty);
     return new ValidResponse(EHttpStatusCode.OK, {
       items: accountsByNetwork,
       total,
@@ -146,87 +147,99 @@ export class AccountService extends ServiceProtected {
   }
 
   public async getByCoinId(query: any): Promise<IResponseHandler> {
-    let {username = null, coinId = null} = query
+    try {
+      let {username = null, coinId = null} = query
 
-    if (!username || !coinId)
-      throw new BaseError(EHttpStatusCode.BadRequest, "You must specify an username and coinId in the query")
-    if (isValidObjectId(coinId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-    username = sanitize(username)
-    const aggregationPipeline = contactAggregation(username, coinId)
-    let user: Document[] = await db.User.aggregate(aggregationPipeline)
-    if (!user || !user.length)
-      throw new BaseError(EHttpStatusCode.BadRequest, "The username or the coin specified may be invalid")
-    return new ValidResponse(EHttpStatusCode.OK, {
-      address: user[0]['address']
-    })
+      if (!username || !coinId)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.ReqIncompleteQuery + this.name)
+      if (isValidObjectId(coinId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID + this.name)
+      username = sanitize(username)
+      const aggregationPipeline = contactAggregation(username, coinId)
+      let user: Document[] = await db.User.aggregate(aggregationPipeline)
+      if (!user || !user.length)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoEmpty + this.name)
+      return new ValidResponse(EHttpStatusCode.OK, {
+        address: user[0]['address']
+      })
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
   public async getAllByUser(query: any, userId: string) {
-    if (!userId || isValidObjectId(userId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-
-    let responseHandler = await this.getAllAggregated(query, userId);
-    let accountsnetworks: any = responseHandler.getBody()["items"];
-    let account_list = [];
-
-    const AES = new AESHelper(userId)
-    await AES.initialize()
-
-    for (let i = 0; i < accountsnetworks.length; i++) {
-      const netAccount = accountsnetworks[i];
-      let network = netAccount._id;
-      let accounts = netAccount.accounts;
-
-      if (network && network !== "hidden") {
-        const RPCHelper: IRPC = rpcs.getInstance(network.name)
-        accounts = accounts.filter((item) => item.wallet.user == userId);
-        for (let i = 0; i < accounts.length; i++) {
-          let account = accounts[i];
-          let N_account = { ...account, id: account._id };
-          delete N_account._id;
-          if (N_account.subscribedTo) {
-            N_account = await this.fetchCoins(N_account, RPCHelper, AES);
-          }
-          delete N_account.privateKey;
-          N_account.wallet = N_account.wallet._id;
-          accounts[i] = N_account;
-        }
-      }else{
-          // the hidden accounts : without network infos and subscribedTo
+    try {
+      if (!userId || isValidObjectId(userId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID")
+  
+      let responseHandler = await this.getAllAggregated(query, userId);
+      let accountsnetworks: any = responseHandler.getBody()["items"];
+      let account_list = [];
+  
+      const AES = new AESHelper(userId)
+      await AES.initialize()
+  
+      for (let i = 0; i < accountsnetworks.length; i++) {
+        const netAccount = accountsnetworks[i];
+        let network = netAccount._id;
+        let accounts = netAccount.accounts;
+  
+        if (network && network !== "hidden") {
+          const RPCHelper: IRPC = rpcs.getInstance(network.name)
+          accounts = accounts.filter((item) => item.wallet.user == userId);
           for (let i = 0; i < accounts.length; i++) {
-          let account = accounts[i];
-          let N_account = { ...account, id: account._id };
-          delete N_account._id;
-          delete N_account.privateKey;
-          N_account.wallet = N_account.wallet._id;
-          N_account.subscribedTo= null
-          N_account.network_infos= null
-          accounts[i] = N_account;
+            let account = accounts[i];
+            let N_account = { ...account, id: account._id };
+            delete N_account._id;
+            if (N_account.subscribedTo) {
+              N_account = await this.fetchCoins(N_account, RPCHelper, AES);
+            }
+            delete N_account.privateKey;
+            N_account.wallet = N_account.wallet._id;
+            accounts[i] = N_account;
+          }
+        }else{
+            // the hidden accounts : without network infos and subscribedTo
+            for (let i = 0; i < accounts.length; i++) {
+            let account = accounts[i];
+            let N_account = { ...account, id: account._id };
+            delete N_account._id;
+            delete N_account.privateKey;
+            N_account.wallet = N_account.wallet._id;
+            N_account.subscribedTo= null
+            N_account.network_infos= null
+            accounts[i] = N_account;
+          }
         }
+        account_list = [...account_list, ...accounts];
       }
-      account_list = [...account_list, ...accounts];
+      responseHandler.message.items = account_list;
+      responseHandler.message.total = account_list.length;
+      return responseHandler;
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
     }
-    responseHandler.message.items = account_list;
-    responseHandler.message.total = account_list.length;
-    return responseHandler;
   }
 
   public async updateProtected(id: string, userId: string, data: IAccount) {
-    if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-    let itemCheck = await this.model.find({ _id: id, "wallet.user": userId });
-    if (!itemCheck)
-      throw new BaseError(
-        EHttpStatusCode.Unauthorized,
-        "You do not have access to this resource"
-      );
-    if (!(await this.checkCoinIds(data.subscribedTo as string[])))
-      throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "Specified coin index not found"
-      );
-    return super.update(id, data);
+    try {
+      if (isValidObjectId(id) === false || isValidObjectId(userId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
+      let itemCheck = await this.model.find({ _id: id, "wallet.user": userId });
+      if (!itemCheck)
+        throw new BaseError(
+          EHttpStatusCode.Unauthorized,
+          "You do not have access to this resource"
+        );
+      if (!(await this.checkCoinIds(data.subscribedTo as string[])))
+        throw new BaseError(
+          EHttpStatusCode.NotFound,
+          "Specified coin index not found"
+        );
+      return super.update(id, data);
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
   private getHDWalletByCoinIndex(coinIndex: number) {
@@ -240,52 +253,47 @@ export class AccountService extends ServiceProtected {
     walletId: string,
     accountsArray: [IAccount] | IAccount
   ) {
-    if (isValidObjectId(userId) === false || isValidObjectId(walletId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-    const userWallet: IWallet = await db.Wallet.findOne({
-      user: userId,
-      _id: walletId,
-    });
-    if (!userWallet)
-      throw new BaseError(
-        EHttpStatusCode.Forbidden,
-        "You cannot generate an account without owning a wallet"
-      );
-    const AES = new AESHelper(userId)
-    await AES.initialize()
-
-
-    if (accountsArray instanceof Array === false) {
-      let responseItem: IAccount = await this.generateOne(
-        walletId,
-        userWallet,
-        AES,
-        accountsArray as IAccount
-      );
-      if (!responseItem)
-        throw new BaseError(
-          EHttpStatusCode.NotFound,
-          "Specified coin index not found"
-        );
-      return new ValidResponse(EHttpStatusCode.Created, responseItem);
-    } else {
-      let responseArray: Array<IAccount> = [];
-      for (let i = 0; i < (accountsArray as [IAccount]).length; i++) {
-        let item = (accountsArray as [IAccount])[i];
-        let accountResponse = await this.generateOne(
+    try {
+      if (isValidObjectId(userId) === false || isValidObjectId(walletId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
+      const userWallet: IWallet = await db.Wallet.findOne({
+        user: userId,
+        _id: walletId,
+      });
+      if (!userWallet)
+        throw new BaseError(EHttpStatusCode.Forbidden, EError.AccountNoWallet);
+      const AES = new AESHelper(userId)
+      await AES.initialize()
+  
+  
+      if (accountsArray instanceof Array === false) {
+        let responseItem: IAccount = await this.generateOne(
           walletId,
           userWallet,
           AES,
-          item
+          accountsArray as IAccount
         );
-        if (accountResponse) responseArray.push(accountResponse);
+        if (!responseItem)
+          throw new BaseError( EHttpStatusCode.NotFound, EError.MongoEmpty);
+        return new ValidResponse(EHttpStatusCode.Created, responseItem);
+      } else {
+        let responseArray: Array<IAccount> = [];
+        for (let i = 0; i < (accountsArray as [IAccount]).length; i++) {
+          let item = (accountsArray as [IAccount])[i];
+          let accountResponse = await this.generateOne(
+            walletId,
+            userWallet,
+            AES,
+            item
+          );
+          if (accountResponse) responseArray.push(accountResponse);
+        }
+        if (!responseArray.length)
+          throw new BaseError(EHttpStatusCode.NotFound, EError.MongoEmpty);
+        return new ValidResponse(EHttpStatusCode.Created, responseArray);
       }
-      if (!responseArray.length)
-        throw new BaseError(
-          EHttpStatusCode.NotFound,
-          "Specified coin index not found"
-        );
-      return new ValidResponse(EHttpStatusCode.Created, responseArray);
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
     }
   }
 
@@ -301,38 +309,39 @@ export class AccountService extends ServiceProtected {
       subscribedTo,
     }: IAccount
   ): Promise<IAccount> {
-    const coinItem: ICoin = await db.Coin.findOne({ coinIndex });
-    if (!coinItem) return null;
-
-    const hdWallet: HDWallet = new (this.getHDWalletByCoinIndex(coinIndex))(AES.decrypt(userWallet.mnemonic));
-
-    let keyPair = hdWallet.generateKeyPair(
-      coinIndex,
-      accountIndex,
-      change,
-      addressIndex
-    );
-    if (
-      subscribedTo &&
-      (await this.checkCoinIds(subscribedTo as string[])) === false
-    ) {
-      throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "Could not find corresponding coin ID"
+    try {
+      const coinItem: ICoin = await db.Coin.findOne({ coinIndex });
+      if (!coinItem) return null;
+  
+      const hdWallet: HDWallet = new (this.getHDWalletByCoinIndex(coinIndex))(AES.decrypt(userWallet.mnemonic));
+  
+      let keyPair = hdWallet.generateKeyPair(
+        coinIndex,
+        accountIndex,
+        change,
+        addressIndex
       );
-    } else if (!subscribedTo)
-      subscribedTo = await this.defaultSubscription(coinIndex);
-    keyPair.privateKey = AES.encrypt(keyPair.privateKey)
-    let newAccount: IAccount = {
-      wallet,
-      coinIndex,
-      accountIndex,
-      change,
-      addressIndex,
-      subscribedTo,
-      ...keyPair,
-    };
-    return this.model.create(newAccount);
+      if (
+        subscribedTo &&
+        (await this.checkCoinIds(subscribedTo as string[])) === false
+      ) {
+        throw new BaseError(EHttpStatusCode.NotFound, EError.MongoEmpty);
+      } else if (!subscribedTo)
+        subscribedTo = await this.defaultSubscription(coinIndex);
+      keyPair.privateKey = AES.encrypt(keyPair.privateKey)
+      let newAccount: IAccount = {
+        wallet,
+        coinIndex,
+        accountIndex,
+        change,
+        addressIndex,
+        subscribedTo,
+        ...keyPair,
+      };
+      return this.model.create(newAccount);
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
   private async checkCoinIds(coinArray: string[]) {
@@ -380,20 +389,28 @@ export class AccountService extends ServiceProtected {
   }
 
   public async getByAddressProtected(address: string, userId: string) {
-    let item = await this.model.findOne({address}).populate({ 
-      path: 'wallet',
-      populate: {
-        path: 'user',
-        model: 'User'
-      } 
-   })
-    if (!item)
-      throw new BaseError(EHttpStatusCode.NotFound, "the address is not found on our database.", true)
-    return new ValidResponse(EHttpStatusCode.OK, item)
+    try {
+      let item = await this.model.findOne({address}).populate({ 
+        path: 'wallet',
+        populate: {
+          path: 'user',
+          model: 'User'
+        } 
+     })
+      if (!item)
+        throw new BaseError(EHttpStatusCode.NotFound, EError.MongoEmpty)
+      return new ValidResponse(EHttpStatusCode.OK, item)
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
   public async migratingCoins() {
-    await db.Coin.updateMany({coinIndex: {$gt: 60}}, {$set: {coinIndex: 60}})
-    await db.Account.deleteMany({coinIndex: {$gt: 60}})
+    try {
+      await db.Coin.updateMany({coinIndex: {$gt: 60}}, {$set: {coinIndex: 60}})
+      await db.Account.deleteMany({coinIndex: {$gt: 60}})
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 }

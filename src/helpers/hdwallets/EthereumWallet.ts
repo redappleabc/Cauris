@@ -8,17 +8,17 @@ export class EthereumWallet extends HDWallet {
   }
 
   generatePublicKey(childrenNode: BIP32Interface): string {
-    const keystring: string = childrenNode.publicKey.toString('hex')
+    const keystring: string = childrenNode?.publicKey?.toString('hex')
     return ethereum.toChecksumAddress("0x" + keystring)
   }
 
   generatePrivateKey(childrenNode: BIP32Interface): string {
-    const keystring: string = childrenNode.privateKey.toString('hex')
+    const keystring: string = childrenNode?.privateKey?.toString('hex')
     return ethereum.toChecksumAddress("0x" + keystring)
   }
 
   getAddress(childrenNode: BIP32Interface): string {
-    const privKeyBuffer: Buffer = childrenNode.privateKey
+    const privKeyBuffer: Buffer = childrenNode?.privateKey
     const pubKey = ethereum.privateToPublic(privKeyBuffer)
     const addr = "0x" + ethereum.publicToAddress(pubKey).toString('hex')
     return ethereum.toChecksumAddress(addr)

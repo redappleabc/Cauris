@@ -7,18 +7,27 @@ import jwt from 'express-jwt';
 import {db} from "@servichain/helpers/MongooseSingleton";
 import config from 'config'
 import { EHttpStatusCode } from "@servichain/enums";
+import { EError } from "@servichain/enums/EError";
 
 const secret: string = config.get('secrets.app')
 const refreshTokenExpiresIn: number = config.get('tokens.refreshExpiresIn')
 
 class JwtHelper {
   public generate(user: any) {
-    const token = sign(user.toJSON() , secret, {algorithm: 'HS256', expiresIn: refreshTokenExpiresIn})
-    return { jwtToken: token, refreshTokenExpiresIn }
+    try {
+      const token = sign(user.toJSON() , secret, {algorithm: 'HS256', expiresIn: refreshTokenExpiresIn})
+      return { jwtToken: token, refreshTokenExpiresIn }
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.JWTGenerating, e, true)
+    }
   }
 
   public decode(token: string) {
-    return verify(token, secret, { algorithms: 'HS256'})
+    try {
+      return verify(token, secret, { algorithms: 'HS256'})
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.JWTDecoding, e, true)
+    }
   }
 
   public middleware(roles: Array<EUserRole> = []) {
@@ -28,12 +37,12 @@ class JwtHelper {
         try {
           const user = await db.User.findById(req.user['id'])
           if (!user.verified)
-            throw new BaseError(EHttpStatusCode.Unauthorized, "Please verify your email to access the app", true)
+            throw new BaseError(EHttpStatusCode.Unauthorized, "Please verify your email to access the app")
           const refreshToken = await db.RefreshToken.find({user: req.user['id']})
           user['ownsToken'] = token => !!refreshToken.find(x => x.token === token)
           res['locals'].user = user
           if (roles.length && !roles.includes(user['role'])) {
-            throw new BaseError(EHttpStatusCode.Unauthorized, "Unauthorized", true)
+            throw new BaseError(EHttpStatusCode.Unauthorized, "Unauthorized")
           }
           next()
         } catch (err) {

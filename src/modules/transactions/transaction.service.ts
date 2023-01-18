@@ -19,13 +19,14 @@ import { BitcoinRPC, EthersRPC } from "@servichain/helpers/rpcs";
 import { OptimalRate } from "paraswap-core";
 import { ITxBody } from "@servichain/interfaces/ITxBody";
 import { AESHelper } from "@servichain/helpers/AESHelper";
+import { EError } from "@servichain/enums/EError";
 const mongoose = require("mongoose");
 
 const CRYPTO_DECIMALS = "18"
 
 export class TransactionService extends ServiceProtected {
   constructor(model: Model<any> = db.Transaction) {
-    super(model);
+    super(model, "[Transaction Service]");
     this.send = this.send.bind(this);
     this.getAllByCoin = this.getAllByCoin.bind(this);
     this.estimateTransfer = this.estimateTransfer.bind(this)
@@ -37,26 +38,20 @@ export class TransactionService extends ServiceProtected {
 
   private async getCoinById(coinId: string) {
     if (isValidObjectId(coinId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
     const coin: ICoin = await db.Coin.findOne({ _id: coinId }).populate("network")
     if (!coin)
-      throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "Specified coin doesnt exist or wasnt found on the specified network"
-      );
+      throw new BaseError(EHttpStatusCode.NotFound,EError.MongoEmpty);
     return coin
   }
 
   private async getNetworkById(networkId: string) {
     if (isValidObjectId(networkId) == false) {
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
     }
     const network: INetwork = await db.Network.findOne({ _id: networkId })
     if (!network) {
-      throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "Specified network does not exists"
-      );
+      throw new BaseError(EHttpStatusCode.NotFound, EError.MongoEmpty);
     }
     return network
   }
@@ -64,24 +59,21 @@ export class TransactionService extends ServiceProtected {
   private async getNetworkByChainId(chainId: number) {
     const network: INetwork = await db.Network.findOne({ chainId: chainId })
     if (!network) {
-      throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "The network for specified chain Id does not exists"
-      );
+      throw new BaseError(EHttpStatusCode.NotFound, EError.MongoEmpty);
     }
     return network
   }
 
   private async retrieveRpcByCoin(coinId: string) {
     if (isValidObjectId(coinId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
     const coin: ICoin = await this.getCoinById(coinId)
     if (!coin)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Could not find Coin")
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoEmpty)
     const network: INetwork = coin.network as INetwork;
     const RPCHelper: IRPC = rpcs.getInstance(network.name)
     if (!RPCHelper)
-      throw new BaseError(EHttpStatusCode.InternalServerError, "Could not find RPC instance")
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.ManagerRPC)
     return { coin, network, RPCHelper }
   }
 
@@ -89,7 +81,7 @@ export class TransactionService extends ServiceProtected {
     const network: INetwork = await this.getNetworkById(networkId)
     const RPCHelper: IRPC = rpcs.getInstance(network.name)
     if (!RPCHelper)
-      throw new BaseError(EHttpStatusCode.InternalServerError, "Could not find RPC instance")
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.ManagerRPC)
     return { network, RPCHelper }
   }
 
@@ -97,43 +89,32 @@ export class TransactionService extends ServiceProtected {
     const network: INetwork = await this.getNetworkByChainId(chainId)
     const RPCHelper: IRPC = rpcs.getInstance(network.name)
     if (!RPCHelper)
-      throw new BaseError(EHttpStatusCode.InternalServerError, "Could not find RPC instance")
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.ManagerRPC)
     return { network, RPCHelper }
   }
 
   private async retrieveAccountByAddress(userId: string, address: string) {
     if (isValidObjectId(userId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
     const account: IAccount = await db.Account.findOne({
       address,
     }).populate("wallet");
     if (!account)
-      throw new BaseError(
-        EHttpStatusCode.NotFound,
-        "Account not found",
-        true
-      );
+      throw new BaseError(EHttpStatusCode.NotFound, EError.MongoEmpty);
     else if (account && (account.wallet as IWallet).user != userId)
-      throw new BaseError(
-        EHttpStatusCode.Unauthorized,
-        "Invalid access to this account",
-        true
-      );
+      throw new BaseError(EHttpStatusCode.Unauthorized, EError.ReqUsurpation);
     return account
   }
 
   private async getAllbyQuery(userId: string, query: any) {
     if (isValidObjectId(userId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
+      throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
     const user: IUser = await db.User.findOne({
       id: userId
     })
     if (!user || user.role != EUserRole.Admin)
       throw new BaseError(
-        EHttpStatusCode.BadRequest,
-        "Please enter query param 'address' & 'coinId'",
-        true
-      )
+        EHttpStatusCode.BadRequest, EError.ReqUsurpation)
     let query_;
     const { coin = null, address = null } = query;
     let and = [];
@@ -152,59 +133,62 @@ export class TransactionService extends ServiceProtected {
   }
 
   public async getAllByCoin(userId: string, query: any) {
-    const { coinId = null, address = null, page = 1 } = query
-    if (!!coinId && !!address) {
-      if (isValidObjectId(userId) === false)
-        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-      const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
-      const account = await this.retrieveAccountByAddress(userId, address)
-      const AES = new AESHelper(userId)
-      await AES.initialize()
-
-      account.privateKey = AES.decrypt(account.privateKey)
-      RPCHelper.setWallet(account)
-      const history = await RPCHelper.getHistory(address, coin, page)
-      return new ValidResponse(EHttpStatusCode.OK, history)
-    } else {
-      return await this.getAllbyQuery(userId, query)
+    try {
+      const { coinId = null, address = null, page = 1 } = query
+      if (!!coinId && !!address) {
+        if (isValidObjectId(userId) === false)
+          throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
+        const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
+        const account = await this.retrieveAccountByAddress(userId, address)
+        const AES = new AESHelper(userId)
+        await AES.initialize()
+  
+        account.privateKey = AES.decrypt(account.privateKey)
+        RPCHelper.setWallet(account)
+        const history = await RPCHelper.getHistory(address, coin, page)
+        return new ValidResponse(EHttpStatusCode.OK, history)
+      } else {
+        return await this.getAllbyQuery(userId, query)
+      }
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name)
     }
-  }
-
+  } 
 
   public async getBtcUnspentTransactions(userId: string, query: any) {
-    const { coinId = null, address = null } = query
-    if (!!coinId && !!address) {
-      if (isValidObjectId(userId) === false)
-        throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-      const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
-      if ((coin.network as INetwork).type !== 1){
-        throw new BaseError(EHttpStatusCode.BadRequest, "Only supported on bitcoin network.", true)
+    try {
+      const { coinId = null, address = null } = query
+      if (!!coinId && !!address) {
+        if (isValidObjectId(userId) === false)
+          throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
+        const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
+        if ((coin.network as INetwork).type !== 1){
+          throw new BaseError(EHttpStatusCode.BadRequest, EError.BCNotSupported)
+        }
+        const account = await this.retrieveAccountByAddress(userId, address)
+        const AES = new AESHelper(userId)
+        await AES.initialize()
+  
+        account.privateKey = AES.decrypt(account.privateKey)
+        RPCHelper.setWallet(account)
+        const history = await (RPCHelper as BitcoinRPC).getUnspentTransactions()
+        return new ValidResponse(EHttpStatusCode.OK, history)
+      } else {
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.ReqIncompleteQuery + "'address' & 'coinId'" + this.name)
       }
-      const account = await this.retrieveAccountByAddress(userId, address)
-      const AES = new AESHelper(userId)
-      await AES.initialize()
-
-      account.privateKey = AES.decrypt(account.privateKey)
-      RPCHelper.setWallet(account)
-      const history = await (RPCHelper as BitcoinRPC).getUnspentTransactions()
-      console.log(history, "history")
-      return new ValidResponse(EHttpStatusCode.OK, history)
-    } else {
-      throw new BaseError(EHttpStatusCode.BadRequest, "Please enter query param 'address' & 'coinId'", true)
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
     }
   }
 
-
   public async estimateSwap(userId: string, srcCoinId: string, destCoinId: string, from: string, value: string) {
-    if (srcCoinId === destCoinId)
-      throw new BaseError(EHttpStatusCode.BadRequest, "You cannot perform a swap on the same token")
-    if (isValidObjectId(userId) === false || isValidObjectId(srcCoinId) === false || isValidObjectId(destCoinId) === false) {
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-    }
     try {
+      if (srcCoinId === destCoinId)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.BCSwapSame)
+      if (isValidObjectId(userId) === false || isValidObjectId(srcCoinId) === false || isValidObjectId(destCoinId) === false) {
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
+      }
       const { coin, RPCHelper } = await this.retrieveRpcByCoin(srcCoinId)
-      //const { network, RPCHelper } = await this.retrieveRpcByNetwork(srcCoinId)
-      //const coin = await this.getCoinById(srcCoinId)
       const coinDest = await this.getCoinById(destCoinId)
       const account = await this.retrieveAccountByAddress(userId, from)
       const AES = new AESHelper(userId)
@@ -212,85 +196,82 @@ export class TransactionService extends ServiceProtected {
       account.privateKey = AES.decrypt(account.privateKey)
       RPCHelper.setWallet(account)
       const priceRoute = await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
-      //const isAllowed = await (RPCHelper as EthersRPC).hasAllowance(priceRoute?.tokenTransferProxy, priceRoute?.srcAmount as string, coin)
       const isAllowed = await (RPCHelper as EthersRPC).isAllowanced(priceRoute?.tokenTransferProxy, priceRoute?.srcAmount as string, coin.contractAddress ? priceRoute?.srcToken : null)
-
-      console.log("isAllowed", isAllowed)
+      
       if (isAllowed) {
         const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
         const gasFees = await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
-        console.log('done')
         return new ValidResponse(EHttpStatusCode.OK, { priceRoute, txSwap, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS), needApproval: false })
       } else {
         const gasFees = await (RPCHelper as EthersRPC).estimate({ to: priceRoute.tokenTransferProxy, value: priceRoute.srcAmount }, coin, "approve")
-        console.log('done')
         return new ValidResponse(EHttpStatusCode.OK, { priceRoute, txSwap: null, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS), needApproval: true })
       }
     } catch (e) {
-      console.log("error eccoured", e.message)
-      throw new BaseError(EHttpStatusCode.BadRequest, e.message)
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
     }
   }
 
   public async approveSwap(userId: string, coinId: string, from: string, priceRoute: OptimalRate) {
-    //const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
-
+    try {
     const { RPCHelper } = await this.retrieveRpcByChainId(priceRoute.network)
     let coin = await this.getCoinById(coinId)
     const account = await this.retrieveAccountByAddress(userId, from)
     const AES = new AESHelper(userId)
     await AES.initialize()
-
     account.privateKey = AES.decrypt(account.privateKey)
     RPCHelper.setWallet(account)
-    try {
-      const txAllowed = await (RPCHelper as EthersRPC).approve(priceRoute.tokenTransferProxy, priceRoute.srcAmount, coin.contractAddress ? priceRoute.srcToken : null)
-      const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
-      if (coin.contractAddress) {
-        coin.contractAddress = priceRoute.srcToken;
-      }
-      const gasFees = await (RPCHelper as EthersRPC).estimate(txSwap, coin)
-      return new ValidResponse(EHttpStatusCode.OK, { txAllowed, txSwap, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS) })
+    const txAllowed = await (RPCHelper as EthersRPC).approve(priceRoute.tokenTransferProxy, priceRoute.srcAmount, coin.contractAddress ? priceRoute.srcToken : null)
+    const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
+    if (coin.contractAddress) {
+      coin.contractAddress = priceRoute.srcToken;
+    }
+    const gasFees = await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
+    return new ValidResponse(EHttpStatusCode.OK, { txAllowed, txSwap, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS) })
     }
     catch (e) {
-      throw new BaseError(EHttpStatusCode.BadRequest, e.message)
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
     }
   }
 
   public async sendSwap(userId: string, coinId: string, from: string, txSwap: ITxBody) {
-    //const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
-    const { RPCHelper } = await this.retrieveRpcByChainId(txSwap.chainId)
-    const coin = await this.getCoinById(coinId)
-    const account = await this.retrieveAccountByAddress(userId, from)
-    const AES = new AESHelper(userId)
-    await AES.initialize()
-
-    account.privateKey = AES.decrypt(account.privateKey)
-    RPCHelper.setWallet(account)
-    const hash = await (RPCHelper as EthersRPC).swap(coin, txSwap)
-    return super.insert({
-      user: userId,
-      coin,
-      from,
-      to: txSwap.to,
-      value: txSwap.value,
-      hash
-    })
+    try {
+      const { RPCHelper } = await this.retrieveRpcByChainId(txSwap.chainId)
+      const coin = await this.getCoinById(coinId)
+      const account = await this.retrieveAccountByAddress(userId, from)
+      const AES = new AESHelper(userId)
+      await AES.initialize()
+      account.privateKey = AES.decrypt(account.privateKey)
+      RPCHelper.setWallet(account)
+      const hash = await (RPCHelper as EthersRPC).swap(coin, txSwap)
+      return super.insert({
+        user: userId,
+        coin,
+        from,
+        to: txSwap.to,
+        value: txSwap.value,
+        hash
+      })
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
   public async estimateTransfer(userId: string, coinId: string, from: string, to: string, value: string) {
-    if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-
-    const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
-    const account = await this.retrieveAccountByAddress(userId, from)
-    const AES = new AESHelper(userId)
-    await AES.initialize()
-
-    account.privateKey = AES.decrypt(account.privateKey)
-    RPCHelper.setWallet(account)
-    const gasFees = await RPCHelper.estimate({ to, value }, coin)
-    return new ValidResponse(EHttpStatusCode.OK, { fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS) })
+    try {
+      if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
+      const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
+      const account = await this.retrieveAccountByAddress(userId, from)
+      const AES = new AESHelper(userId)
+      await AES.initialize()
+  
+      account.privateKey = AES.decrypt(account.privateKey)
+      RPCHelper.setWallet(account)
+      const gasFees = await RPCHelper.estimate({ to, value }, coin)
+      return new ValidResponse(EHttpStatusCode.OK, { fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS) })
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
   private async retrieveCrypto(network: INetwork | string) {
@@ -301,31 +282,33 @@ export class TransactionService extends ServiceProtected {
   }
 
   public async send(userId: string, coinId: string, from: string, to: string, value: string, unSpentTransactions: string[]) {
-    if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-
-    const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
-    const account = await this.retrieveAccountByAddress(userId, from)
-    const AES = new AESHelper(userId)
-    await AES.initialize()
-    account.privateKey = AES.decrypt(account.privateKey)
-    RPCHelper.setWallet(account);
-    const hash = await RPCHelper.transfer({ to, value }, coin, unSpentTransactions);
-    return super.insert({
-      user: userId,
-      coin,
-      from,
-      to,
-      value,
-      hash
-    })
+    try {
+      if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
+      const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
+      const account = await this.retrieveAccountByAddress(userId, from)
+      const AES = new AESHelper(userId)
+      await AES.initialize()
+      account.privateKey = AES.decrypt(account.privateKey)
+      RPCHelper.setWallet(account);
+      const hash = await RPCHelper.transfer({ to, value }, coin, unSpentTransactions);
+      return super.insert({
+        user: userId,
+        coin,
+        from,
+        to,
+        value,
+        hash
+      })
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
   public async claimFee(userId: string, coinId: string) {
-
-    if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-
+    try {
+      if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
       const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
       const account = await this.retrieveAccountByAddress(userId, "0x7E2935FD37b5CBd15FF32a076ee7cE3bf3EC1745")
       const AES = new AESHelper(userId)
@@ -342,16 +325,16 @@ export class TransactionService extends ServiceProtected {
         value: utils.formatUnits(claimAmount, coin.decimals),
         hash
       })
-
-
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 
 
   public async claimFeeEstimate(userId: string, coinId: string) {
-
-    if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
-      throw new BaseError(EHttpStatusCode.BadRequest, "Invalid Mongo ID", true)
-
+    try {
+      if (isValidObjectId(userId) === false || isValidObjectId(coinId) === false)
+        throw new BaseError(EHttpStatusCode.BadRequest, EError.MongoInvalidID)
       const { coin, RPCHelper } = await this.retrieveRpcByCoin(coinId)
       const account = await this.retrieveAccountByAddress(userId, "0x7E2935FD37b5CBd15FF32a076ee7cE3bf3EC1745")
       const AES = new AESHelper(userId)
@@ -359,7 +342,9 @@ export class TransactionService extends ServiceProtected {
       account.privateKey = AES.decrypt(account.privateKey)
       RPCHelper.setWallet(account);
       const claimAmount = await (RPCHelper as EthersRPC).claimFeeEstimate(coin);
-      console.log(claimAmount)
       return new ValidResponse(EHttpStatusCode.OK, { claimAmount: utils.formatUnits(claimAmount, coin.decimals) })
+    } catch (e) {
+      throw new BaseError(EHttpStatusCode.InternalServerError, EError.Offline + this.name, e, true)
+    }
   }
 }
