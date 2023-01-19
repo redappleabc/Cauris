@@ -197,10 +197,11 @@ export class TransactionService extends ServiceProtected {
       RPCHelper.setWallet(account)
       const priceRoute = await (RPCHelper as EthersRPC).getSwapPrice(coin, coinDest, value)
       const isAllowed = await (RPCHelper as EthersRPC).isAllowanced(priceRoute?.tokenTransferProxy, priceRoute?.srcAmount as string, coin.contractAddress ? priceRoute?.srcToken : null)
-      
       if (isAllowed) {
         const txSwap = await (RPCHelper as EthersRPC).buidSwapTx(priceRoute)
-        const gasFees = await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
+        const gasFees = (!!txSwap.gasPrice && !!txSwap.gasLimit) ? 
+          (RPCHelper as EthersRPC).calculateGasFees(txSwap.gasPrice, txSwap.gasLimit) :
+          await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
         return new ValidResponse(EHttpStatusCode.OK, { priceRoute, txSwap, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS), needApproval: false })
       } else {
         const gasFees = await (RPCHelper as EthersRPC).estimate({ to: priceRoute.tokenTransferProxy, value: priceRoute.srcAmount }, coin, "approve")
@@ -225,7 +226,9 @@ export class TransactionService extends ServiceProtected {
     if (coin.contractAddress) {
       coin.contractAddress = priceRoute.srcToken;
     }
-    const gasFees = await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
+    const gasFees = (!!txSwap.gasPrice && !!txSwap.gasLimit) ? 
+      (RPCHelper as EthersRPC).calculateGasFees(txSwap.gasPrice, txSwap.gasLimit) :
+      await (RPCHelper as EthersRPC).estimate({ to: txSwap.to, value: txSwap.value, data: txSwap.data }, coin)
     return new ValidResponse(EHttpStatusCode.OK, { txAllowed, txSwap, fees: utils.formatUnits(gasFees, CRYPTO_DECIMALS) })
     }
     catch (e) {

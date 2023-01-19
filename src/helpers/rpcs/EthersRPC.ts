@@ -56,6 +56,14 @@ export class EthersRPC implements IRPC {
     return (gasPrice.add(maxPriorityFeePerGas)).mul(estimateGas)
   }
 
+  public calculateGasFees(gasPrice: string | ethers.BigNumber, gasLimit: string | ethers.BigNumber) {
+    if (typeof gasPrice === "string")
+      gasPrice = ethers.BigNumber.from(gasPrice)
+    if (typeof gasLimit === 'string')
+      gasLimit = ethers.BigNumber.from(gasLimit)
+    return gasPrice.mul(gasLimit)
+  }
+
   private parseHistory(rawHistory: any, decimals: number) {
     let history = []
     let unparsedArray: [] = (!!rawHistory.result) ? rawHistory.result : []
@@ -177,7 +185,9 @@ export class EthersRPC implements IRPC {
         var allowed = await this.isAllowanced(to, value, contractAddress)
         if (!allowed) {
           var contract = new ethers.Contract(contractAddress, abi, this.wallet)
-          try {
+        if ((await this.getBalance(contractAddress)).lt(value))
+          throw new BaseError(EHttpStatusCode.BadRequest, EError.BCBalance)
+        try {
             var txRes = await contract.approve(to, value)
           } catch (e) {
             try {
