@@ -13,6 +13,7 @@ import speakeasy from "speakeasy";
 import { randomBytes } from "ethers/lib/utils";
 import { EError } from "@servichain/enums/EError";
 
+
 const UserDetailed = {
   virtuals: true,
   versionKey: false,
