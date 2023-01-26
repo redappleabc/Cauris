@@ -15,6 +15,8 @@ import { ECPairFactory } from 'ecpair';
 import { BaseError } from "../BaseError";
 import { EError } from "@servichain/enums/EError";
 
+import config from "config";
+
 const ECPair = ECPairFactory(ecc);
 
 const network = bitcoin.networks.bitcoin
@@ -27,6 +29,7 @@ export class BitcoinRPC implements IRPC {
   rpcUrl: string
   chainId: number
   currencySymbol: string
+  apiConfig: any
 
 
   constructor(network: INetwork) {
@@ -34,6 +37,7 @@ export class BitcoinRPC implements IRPC {
     this.rpcUrl = rpcUrl
     this.chainId = chainId
     this.currencySymbol = currencySymbol
+    this.apiConfig = {"API-KEY": config.get("api.bitcoin")}
   }
 
   public setWallet(account: any) {
